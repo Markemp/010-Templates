@@ -1,0 +1,364 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: Cryengine3.4-Structs
+//   Authors: Geoff Gerber
+//   Version: 1
+//   Purpose: Structures used in Cryengine 3.4
+//  Category: Structures
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Cryengine3.4-Enums.bt"
+#ifndef STRUCTS_H
+    #define STRUCTS_H
+
+struct MATRIX3x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+};
+
+struct MATRIX3x3 {
+    float M11;
+    float M12;
+    float M13;
+    float M21;
+    float M22;
+    float M23;
+    float M31;
+    float M32;
+    float M33;
+};
+
+struct MATRIX4x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+    float M41;
+    float M42;
+    float M43;
+    float M44;
+};
+
+// read the chunk header table
+struct CHUNKTABLEENTRY {
+    CHUNKTYPE chunkType;
+    uint version <format=hex>;  
+    uint offset <format=hex>;
+    uint id <format=hex>;
+    uint size <format=hex>;
+};
+
+struct CHUNKTABLE {
+    int numChunks;
+    CHUNKTABLEENTRY chunks[numChunks] <comment=GetChunkTableType>;
+};
+
+struct SKINNINGINFO {
+    
+};
+
+struct MTLNAME {
+    int NFlags;
+    int NFlags2;
+    char Name[128];
+    int PhysicalizeType;
+    int NumberOfSubmaterials;
+    int SubMaterialChunkID[32];
+    int AdvancedDataChunkID;
+    float Opacity;
+    int reserved[32];
+};
+
+struct HEADER {
+    char fileSig[8];
+    uint fileType <format=hex>;
+    uint chunkVersion;
+    int fileOffset;  // location of header chunks
+};
+
+struct VECTOR3 {
+    float x;
+    float y;
+    float z;
+};
+
+struct VECTOR4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct QUATERNION {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct CRYLINK {        // CryHeader.h
+    int boneID;
+    VECTOR3 offset;
+    float blending;
+};
+
+struct COLORB {
+    float red;
+    float blue;
+    float green;
+    int flag;
+};
+
+struct STOREDSKINNINGINFO {
+    int ticksPerFrame;
+    float secsPerTick;
+    int start;
+    int end;
+    float speed;
+    float distance;
+    float slope;
+    int assetFlags;
+    float lHeelStart, lHeelEnd;
+    float lToeStart, lToeEnd;
+    float rHeelStart, rHeelEnd;
+    float rToeStart, rToeEnd;
+    VECTOR3 moveDirection;
+};
+
+struct INTSKINVERTEX {
+    VECTOR3 obsolete;
+    VECTOR3 position;
+    VECTOR3 obsolete2;
+    uint16 boneIDs[4];
+    float weights[4];
+    COLORB color;
+};
+
+struct UV {
+    hfloat u;
+    hfloat v;
+};
+
+struct IRGBA {
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+};
+
+struct BREAKABLEPHYSICSCHUNK {
+    uint granularity;
+    int nMode;
+    int nRetVtx;
+    int nRetTets;
+    int reserved[10];
+};
+
+struct PHYSICSGEOMETRY {
+    int physicGeom;
+    int flags;
+    VECTOR3 min <comment=PrintVector3>;
+    VECTOR3 max <comment=PrintVector3>;
+    VECTOR3 spring_angle <comment=PrintVector3>;
+    VECTOR3 spring_tension <comment=PrintVector3>;
+    VECTOR3 damping <comment=PrintVector3>;
+    MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
+};
+
+struct COMPILEDBONE {
+    uint controllerID;
+    PHYSICSGEOMETRY physicsGeo[2];
+    float mass;
+    MATRIX3x4 worldToBone <comment=PrintMatrix3x4>;    //initialpose matrix World2Bone
+    MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+    char boneName[256];
+    int limbID;
+    int offsetParent;       // this bone parent is this[m_nOffsetParent], 0 if the bone is root. Normally this is <= 0
+    uint numChildren;       // The whole hierarchy of bones is kept in one big array that belongs to the ModelState
+                            // Each bone that has children has its own range of bone objects in that array,
+                            // and this points to the beginning of that range and defines the number of bones.
+
+    int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
+                            // this is 0 if there are no children
+};
+
+
+struct COMPILEDBONE_801 {
+    uint controllerId;
+    uint mass;
+    char unknown[208];
+    char name[48];
+    int offsetParent;
+    uint numChildren;
+    uint offsetChild;
+    MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+};
+
+struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
+    uint boneIndex;            // The number of the bone found.  Index in COMPILEDBONE
+    uint parentIndex;          // Index of the parent bone
+    uint numChildren;       // Number of child bones
+    uint controllerID;      // controllerID for this bone.
+    char prop[32];          // 32 byte char array
+    PHYSICSGEOMETRY phys;   // physics.
+};
+
+struct COMPILEDPHYSICALPROXIES {
+    uint numberOfProxies;
+    for (i = 0; i < numberOfProxies; i++) {
+        uint id;
+        uint numberOfVertices;
+        uint numberOfIndices;
+        uint material;              // Size of weird null bytes at end of structure
+        VECTOR3 v;
+    };
+};
+
+struct MATERIALCHUNK {
+    uint chunkType;
+    uint version;
+    uint offset;
+    uint id;
+};
+
+struct DATASTREAMCHUNK {
+    uint Flags;
+    DATASTREAMTYPE DataStreamType;
+    uint NumElements;
+    uint ByesPerElement;
+    uint Reserved1;
+    uint Reserved2;
+};
+
+struct NODECHUNK {
+    char name[64];
+    uint objectNodeId; // Mesh chunk ID
+    uint parentNodeId; // Chunk ID of parent node
+    uint numberOfChildren;
+    uint materialId;
+    uint skipBytes;
+    MATRIX4x4 transform <comment=PrintMatrix4x4>;
+    VECTOR3 position <comment=PrintVector3>;
+    QUATERNION rotation <comment=PrintQuaternion>;
+    VECTOR3 scale <comment=PrintVector3>;
+};
+
+struct MESHCHUNK {
+    uint Flags1;
+    uint Flags2;
+    uint NumVertices;
+    uint NumIndices;
+    //uint NumVertSubsets; // 801 format
+    uint MeshSubsets;
+    uint VerticesData <format=hex>;
+    uint NumBuffs <format=hex>;
+    uint NormalsData <format=hex>;
+    uint UVsData <format=hex>;
+    uint ColorsData <format=hex>;
+    uint Colors2Data <format=hex>;
+    uint IndicesData <format=hex>;
+    uint TangentsData <format=hex>;
+    uint ShCoeffsData <format=hex>;
+    uint ShapeDeformationData <format=hex>;
+    uint BoneMapData <format=hex>;
+    uint FaceMapData <format=hex>;
+    uint VertMatsData <format=hex>;
+    //uint MeshPhysicsData <format=hex>; // 801 format
+    uint VertsUVData <format=hex>;
+    uint PhysicsData[4] <format=hex>;
+    VECTOR3 MinBound;
+    VECTOR3 MaxBound;
+};
+
+struct MESHSUBSET {
+    byte chunk[360] ;
+    
+};
+
+struct CHUNK {
+    CHUNKTYPE chunkType;
+    uint version <format=hex>;
+    uint fOffset <format=hex>;
+    uint id <format=hex>;
+    switch (chunkType) {
+        case 0xACDC0000 : {
+            char padding[32];
+            //int numberOfBones = GetNumberOfBones();
+            if (version == 800h) {
+                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
+                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
+                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
+                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
+                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
+            } else if (version == 801h) {
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;    
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+            }
+            break;
+        }
+        case 0xCCCC0014 : {
+            MTLNAME mtlName;
+            break;
+        }
+        case 0xCCCC000B: {
+            NODECHUNK nodeChunk;
+            break;
+        }
+        case 0xCCCC0000 : {
+            MESHCHUNK chunkMesh;
+            break;
+        }
+        case 0xCCCC0016 : {                 // Datastreams
+            DATASTREAMCHUNK chunkDatastream;
+            break;
+        }
+        case 0xACDC0001 : {
+            char padding[32];
+            COMPILEDPHYSICALBONE compiledPhysicalBone;
+            COMPILEDPHYSICALBONE compiledPhysicalBone;
+            COMPILEDPHYSICALBONE compiledPhysicalBone;
+            COMPILEDPHYSICALBONE compiledPhysicalBone;
+            break;
+        }
+        case 0xACDC0006 : {
+            BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
+            break;
+        }
+    }
+};
+
+#endif

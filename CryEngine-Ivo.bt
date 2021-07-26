@@ -1,0 +1,322 @@
+//------------------------------------------------
+//--- 010 Editor v11.0 Binary Template
+//
+//      File: 
+//   Authors: Geoffrey Gerber
+//   Version: 0.1
+//   Purpose: Star Citizen #ivo files
+//  Category: Games
+// File Mask: #ivo
+//  ID Bytes: 4
+//   History: 
+//------------------------------------------------
+
+#include "Cryengine-Common.bt"
+
+local uint pos;
+local int64 fileSize = FileSize() ;
+
+struct HEADER {
+    char fileSig[4];
+    uint version;
+    uint numChunks;
+    int chunkHeaderTableOffset;  // location of header chunks
+} headerInfo <bgcolor=cLtBlue>;
+
+enum <uint> CHUNKTYPE {
+    Skeleton1               = 0x0000300d,
+    DBAData                 = 0x194fbc50,
+    DBA                     = 0xf7351608,
+    Skeleton                = 0x1bbc4103,
+    BShapes                 = 0xf5c6eb5b,
+    BShapesGPU              = 0x57a3befd,
+    MaterialName            = 0x8335674e,
+    BShapes3                = 0x875ccb28,
+    SkinMesh                = 0xb875b2d9,
+    CompiledBones           = 0xc201973c,
+    CompiledPhysicalBones   = 0x90c687dc,
+    MeshChunk               = 0x9293b9d8
+};
+
+enum <uint> DATASTREAMTYPE {
+    VERTICES = 0x0,
+    NORMALS = 0x1,
+    UVS = 0x2,
+    COLORS2 = 0x4,
+    SHCOEFFS = 0x7,
+    SHAPEDEFORMATION = 0x8,
+    FACEMAP = 0xA,
+    VERTMATS = 0xB,
+    IvoNormals = 0x9CF3F615,
+    IvoNormals2 = 0x38A581FE,
+    IvoNormals3 = 0xD9EED421,
+    IvoIndices = 0xEECDC168,
+    IvoTangents = 0xB95E9A1B,
+    IvoBoneMap = 0x677C7B23,
+    IvoVertsUvs = 0x91329AE9,
+    IvoUnknown2 = 0x6ECA3708
+};
+
+struct CHUNKTABLE {
+    CHUNKTYPE chunkType <format=hex>;
+    uint version <format=hex>;  
+    uint64 offset <format=hex>;
+};
+
+struct NODECHUNK {
+    char nodeName[128];
+};
+
+struct MESHCHUNK {
+    uint flags2;  // 4 = no normals datastream, 5 has normals datastream
+    uint numberOfVertices;
+    uint numberOfIndices;
+    uint numberOfSubmeshes;
+    uint unknown;
+    VECTOR3 minBound <comment=PrintVector3>;
+    VECTOR3 maxBound <comment=PrintVector3>;
+    uint unknown2;
+};
+
+struct BONEMAPDATA {
+    ushort boneIndex[4];
+    byte weight[4];
+};
+
+struct BONETOWORLD {
+    float row1[4];
+    float row2[4];
+    float row3[4];
+};
+
+struct BONE {
+    uint controllerId;
+    uint limbId;
+    int parentIndex;
+    QUATERION relativeQuat <comment=GetQuaterion>;
+    VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
+    QUATERION worldQuat <comment=GetQuaterion>;
+    VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
+};
+
+string PrintBoneInfo(BONE &bone) {
+    string result;
+    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
+    return result;
+}
+
+struct BONENAME {
+    string boneName ;
+};
+
+struct COMPILEDBONES {
+    uint numberOfBones;
+    local int i;
+    for (i = 0; i < numberOfBones; i++) {
+        BONE bone <comment=PrintBoneInfo>;
+    };
+    for (i = 0; i < numberOfBones; i++) {
+        BONENAME boneName <comment=GetBoneName>;
+    };
+};
+
+struct COMPILEDPHYSICALBONES {
+    char physics[100];
+};
+
+struct IVOINDICES(int numberOfIndices) {
+    // DATASTREAMTYPE type;
+    uint bytesPerElement;
+    ushort indices[numberOfIndices];
+    if (numberOfIndices % 2 == 1) {
+        ushort filler;
+    } else {
+        uint filler;
+        if (filler != 0) {
+            FSeek(FTell() - 4);
+        }
+    }
+};
+
+struct IVOVERTSUVS(int numberOfVertices) {
+    // DATASTREAMTYPE type = DATASTREAMTYPE.IvoVertsUvs;
+    uint bytesPerElement;
+
+    struct VERTUV {
+        VECTOR3 vertex <comment=PrintVector3>;
+        COLOR color <comment=PrintColor>;
+        UV uv <comment=PrintUV>;
+    };
+    VERTUV vertUvs[numberOfVertices];
+    if (numberOfVertices % 2 == 1) {
+            uint filler;
+        }
+};
+
+struct IVOCOLORS(int numberOfVertices) {
+    // DATASTREAMTYPE type;
+    uint bytesPerElement;
+    COLOR vertexColors[numberOfVertices] <comment=PrintColor>;
+};
+
+struct IVONORMALS(int numberOfVertices) {
+    uint bytesPerElement;
+    IVONORMAL normals[numberOfVertices] <comment=PrintNormal>;
+    if (numberOfVertices % 2 == 1) {
+        uint filler;
+    }
+};
+
+struct TANGENTS(int numberOfVertices) {
+    // DATASTREAMTYPE type;
+    uint bytesPerElement;
+    struct COMBINED_TANGENT {
+        TANGENT_BYTE tangent <comment=PrintTangentByte>;
+        TANGENT_BYTE biTangent <comment=PrintTangentByte>;
+    };
+    COMBINED_TANGENT tangents[numberOfVertices];
+};
+
+struct BONEMAP(int numberOfVertices) {
+    // DATASTREAMTYPE type;
+    uint bytesPerElement;
+    BONEMAPDATA bonemap[numberOfVertices];
+};
+
+struct UNKNOWN(int numberOfVertices) {
+    uint bytesPerElement;
+    UNKNOWN_4BYTE unknown[numberOfVertices];
+};
+
+struct MTLNAME {
+    char Name[128];
+};
+
+struct IVOMESHSUBSET {
+    uint materialId;
+    uint firstIndex;
+    uint numIndices;
+    uint firstVertex;
+    uint numVertices;
+    float radius;
+    VECTOR3 center <comment=PrintVector3>;
+    uint matId <format=hex>;
+    uint unknown1;
+    uint unknown2;
+};
+
+struct SKINMESH {
+    uint flags;
+    MESHCHUNK meshChunk;
+    char unknown2[116] <fgcolor=cAqua>;
+    // char unknown3[428];
+    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
+    while (!FEof()) {
+        DATASTREAMTYPE type;
+        switch (type) {
+            case IvoVertsUvs: {
+                IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices);
+                break;
+            }
+            case IvoIndices: {
+                IVOINDICES indices(meshChunk.numberOfIndices);
+                break;
+            }
+            case IvoNormals: {
+                IVONORMALS normals(meshChunk.numberOfVertices);
+                break;
+            }
+            case IvoNormals2: {
+                IVONORMALS normals(meshChunk.numberOfVertices);
+                break;
+            }    
+            case IvoNormals3: {
+                IVONORMALS normals(meshChunk.numberOfVertices);
+                break;
+            }
+            case IvoTangents: {
+                TANGENTS tangents(meshChunk.numberOfVertices);
+                break;
+            }
+            case IvoBoneMap: {
+                BONEMAP bonemap(meshChunk.numberOfVertices);
+                break;
+            }
+            case IvoUnknown: {
+                UNKNOWN unknown(meshChunk.numberOfVertices);
+                break;
+            }
+        }
+    };
+};
+
+string GetB2W(BONETOWORLD &b2w) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", b2w.row1[0], b2w.row1[1], b2w.row1[2], b2w.row1[3], b2w.row2[0],b2w.row2[1],b2w.row2[2], b2w.row2[3], b2w.row3[0],b2w.row3[1],b2w.row3[2], b2w.row3[3]);
+    return result;
+};
+
+string GetChunkTableType(CHUNKTABLE &chunk) {
+    string result;
+    SPrintf(result, "Type = %s, ID = %u", EnumToString(chunk.chunkType), chunk.id);
+    return result; 
+};
+
+string GetChunkTypeFromChunkTableEntry(CHUNKTABLE &entry) {
+    string result;
+    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
+    return result;
+};
+
+string GetBoneName(BONENAME &boneName) {
+    string result;
+    SPrintf(result, "Bone Name: %s", boneName.boneName);
+    return result;
+};
+
+string PrintUV(UV &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+pos = FTell(); // save read position
+
+FSeek(headerInfo.chunkHeaderTableOffset);
+
+local int i = 0;
+for (i = 0; i < headerInfo.numChunks; i++) {
+    CHUNKTABLE chunkTable <bgcolor=cDkBlue,comment=GetChunkTypeFromChunkTableEntry>;
+};
+
+FSeek(pos);
+
+for (i = 0; i < headerInfo.numChunks; i++) {
+    FSeek(chunkTable[i].offset);
+    switch (chunkTable[i].chunkType) {
+        case MeshChunk: {
+            MESHCHUNK meshChunk;
+            break;
+        }
+        case CompiledBones: {
+            local int64 chunkSize = chunkTable[i+1].offset - chunkTable[i].offset;
+            COMPILEDBONES compiledBones  <bgcolor=cDkRed>;
+            break;
+        }
+        case CompiledPhysicalBones: {
+            COMPILEDPHYSICALBONES compiledPhysicalBones <bgcolor=cLtGreen>;
+            break;
+        }
+        case SkinMesh: {
+            SKINMESH skinMesh;
+            break;
+        }
+        case MaterialName: {
+            MTLNAME materialName <bgcolor=cDkGreen>;
+            break;
+        };
+        default: {
+            break;
+        }
+    }
+}

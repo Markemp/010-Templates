@@ -1,0 +1,341 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: CryEngine-Structs.bt
+//   Authors: Geoffrey Gerber
+//   Version: 1.0
+//   Purpose: Structures used in newer Cryengine games (Star Citizen specific)
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#include "Cryengine3.8-Enums.bt"
+#ifndef STRUCTS_H
+    #define STRUCTS_H
+
+struct CHUNKTABLEENTRY {
+    CHUNKTYPE chunkType;
+    short version <format=hex>;  
+    uint id <format=hex>;
+    uint size <format=hex>;
+    uint offset <format=hex>;
+};
+
+struct CHUNK {
+    uint fOffset <format=hex>;
+    uint chunkType <format=hex>;
+    uint version <format=hex>;
+    uint id <format=hex>;
+    uint size <format=hex>;
+};
+
+struct UV {
+    hfloat u;
+    hfloat v;
+};
+
+struct IRGBA {
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+};
+
+struct VECTOR3 {
+    float x;
+    float y;
+    float z;
+};
+
+struct VECTOR4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct VECTOR4SHORT {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
+};
+
+struct QUATERNION {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct MATRIX3x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+};
+
+struct MATRIX3x3 {
+    float M11;
+    float M12;
+    float M13;
+    float M21;
+    float M22;
+    float M23;
+    float M31;
+    float M32;
+    float M33;
+};
+
+struct MATRIX4x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+    float M41;
+    float M42;
+    float M43;
+    float M44;
+};
+
+struct MESHSUBSET {
+    uint firstIndex;
+    uint numIndices;
+    uint firstVertex;
+    uint numVertices;
+    uint matId;
+    float radius;
+    VECTOR3 center;
+};
+
+struct MESHSUBSETCHUNK {
+    uint flags;
+    uint numberOfMeshSubsets;
+    byte skip[8];
+    MESHSUBSET meshSubSet[numberOfMeshSubsets];
+};
+
+struct NODECHUNK {
+    char Name[64];
+    uint Mesh <format=hex>;
+    int Parent <format=hex>;
+    uint NumChildren;
+    uint MatID <format=hex>;
+    uint Filler;
+    MATRIX4x4 TranslationMatrix <comment=PrintMatrix4x4>;
+    VECTOR3 Transform <comment=PrintVector3>;
+    QUATERNION Quat <comment=PrintQuaternion>;
+    VECTOR3 Scale <comment=PrintVector3>;
+    int ControllerPos <format=hex>;
+    int RotationPos <format=hex>;
+    int ScalePos <format=hex>;
+};
+
+struct HELPER {
+    uint type;  // Type of helper. 0=point,1=Dummy
+    VECTOR3 Pos <comment=PrintVector3>;
+};
+
+struct MTLNAMECHUNK {
+    char Name[128];
+    int NumberOfSubmaterials;
+    MtlNamePhysicsType SubMaterialChunkID[NumberOfSubmaterials];
+};
+
+struct PHYSICSGEOMETRY {
+    uint physicGeom;
+    uint flags;
+    VECTOR3 minimum <comment=PrintVector3>;
+    VECTOR3 maximum <comment=PrintVector3>;
+    VECTOR3 spring_angle <comment=PrintVector3>;
+    VECTOR3 spring_tension <comment=PrintVector3>;
+    VECTOR3 damping[3] <comment=PrintVector3>;
+    MATRIX3x3 framemtx;
+};
+
+struct COMPILEDBONE {
+    uint controllerID;
+    PHYSICSGEOMETRY physicsGeo[2];
+    float mass;
+    MATRIX3x4 worldToBone;    //initialpose matrix World2Bone
+    //BONETOWORLD boneToWorld <comment=GetB2W>;
+    char boneName[256];
+    int limbID;
+    int offsetParent;       // this bone parent is this[m_nOffsetParent], 0 if the bone is root. Normally this is <= 0
+    uint numChildren;       // The whole hierarchy of bones is kept in one big array that belongs to the ModelState
+                            // Each bone that has children has its own range of bone objects in that array,
+                            // and this points to the beginning of that range and defines the number of bones.
+
+    int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
+                            // this is 0 if there are no children
+};
+
+struct COMPILEDBONESCHUNK {
+    char padding[32];
+    //VECTOR3 localTranslation <comment=PrintVector3>;
+    //MATRIX33 localRotation;
+};
+
+
+struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
+    uint boneID;            // The number of the bone found.  Index in COMPILEDBONE
+    uint parentID;          // Index of the parent bone
+    uint numChildren;       // Number of child bones
+    uint controllerID;      // controllerID for this bone.
+    char prop[32];          // 32 byte char array
+    PHYSICSGEOMETRY phys;   // physics.
+};
+
+struct COMPILEDPHYSICALBONESCHUNK(int numberOfBones) {
+    char buffer[32];
+    COMPILEDPHYSICALBONE physicalBones[numberOfBones];
+};
+
+struct COMPILEDBONES(int numberOfBones) {
+    COMPILEDBONE bones[numberOfBones];
+};
+
+struct DATASTREAMCHUNK {
+    uint Flags;
+    DATASTREAMTYPE DataStreamType;
+    uint NumElements;
+    uint ByesPerElement;
+    uint Reserved1;
+    uint Reserved2;
+};
+
+struct BONEMAPDATA {
+    ushort boneIndex[4];
+    byte weight[4];
+};
+
+struct MESHCHUNK {
+    uint Flags1;
+    uint Flags2;
+    uint NumVertices;
+    uint NumIndices;
+    //uint NumVertSubsets; // 801 format
+    uint MeshSubsets;
+    uint VerticesData <format=hex>;
+    uint NumBuffs <format=hex>;
+    uint NormalsData <format=hex>;
+    uint UVsData <format=hex>;
+    uint ColorsData <format=hex>;
+    uint Colors2Data <format=hex>;
+    uint IndicesData <format=hex>;
+    uint TangentsData <format=hex>;
+    uint ShCoeffsData <format=hex>;
+    uint ShapeDeformationData <format=hex>;
+    uint BoneMapData <format=hex>;
+    uint FaceMapData <format=hex>;
+    uint VertMatsData <format=hex>;
+    //uint MeshPhysicsData <format=hex>; // 801 format
+    uint VertsUVData <format=hex>;
+    uint PhysicsData[4] <format=hex>;
+    VECTOR3 MinBound;
+    VECTOR3 MaxBound;
+};
+
+struct BREAKABLEPHYSICSCHUNK {
+    uint granularity;
+    int nMode;
+    int nRetVtx;
+    int nRetTets;
+    int reserved[10];
+};
+
+struct QTANGENT {
+    VECTOR4SHORT tangents;
+};
+
+struct VertsUvs {
+    VECTOR3 vertices <comment=PrintVector3>;
+    IRGBA color <comment=PrintColor>;
+    UV uv <comment=PrintUV>;
+};
+
+struct DATASTREAM {
+    local int i;
+    
+    uint flags2;
+    DATASTREAMTYPE datastreamType;
+    uint numberOfElements;
+    ushort bytesPerElement;
+    ushort unknown;
+    
+    switch (datastreamType) {
+        case VERTICES: {
+            uint flags[2];
+            for (i = 0; i < numberOfElements; i++) {
+                VECTOR3 vertices <comment=PrintVector3>;
+            }   
+            break;
+        }
+        case VERTSUVS: {
+            uint flags[2];
+            for (i = 0; i < numberOfElements; i++) {
+                VertsUvs vertsUvs;
+            }
+            break;
+        }
+        case NORMALS: {
+            uint flags[2];
+            VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+            break;
+        }
+        case UVS: {
+            uint flags[2];
+            UV uv[numberOfElements] <comment=PrintUV>;
+            break;   
+        }
+        case COLORS: {
+            uint flags[2];
+            IRGBA colors[numberOfElements] <comment=PrintColor>;
+            break;   
+        }
+        case INDICES: {
+            uint flags[2];
+            uint16 indices[numberOfElements];
+            break;   
+        }
+        case TANGENTS: {
+            uint flags[2];
+            for (i=0; i < numberOfElements; i++) {
+                VECTOR4SHORT tangents;
+                VECTOR4SHORT binormals;
+            }
+            break;   
+        }
+        case BONEMAP: {
+            uint flags[2];
+            BONEMAPDATA boneMap[numberOfElements];
+            break;
+        }
+        case QTANGENTS: {
+            uint flags[2];
+            QTANGENT qtangents[numberOfElements];
+        }
+        default: {
+            break;
+        }
+    }
+};
+
+#endif

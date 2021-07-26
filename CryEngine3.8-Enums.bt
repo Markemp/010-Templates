@@ -1,0 +1,121 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: CryEngine3.8-Enums.bt
+//   Authors: Geoffrey Gerber
+//   Version: 1.0
+//   Purpose: Enums used in newer Cryengine games (Star Citizen specific)
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#ifndef ENUMS_H
+    #define ENUMS_H
+
+enum <ushort> CHUNKTYPE { 
+        Any = 0x0,
+        Mesh = 0x1000,
+        Helper = 0x1001,
+        VertAnim = 0x1002,
+        BoneAnim = 0x1003,
+        GeomNameList = 0x1004,
+        BoneNameList = 0x1005,
+        MtlList = 0x1006,
+        MRM = 0x1007, //obsolete
+        SceneProps = 0x1008,
+        Light = 0x1009,
+        PatchMesh = 0x100A,
+        Node = 0x100B,
+        Mtl = 0x100C,
+        Controller = 0x100D,
+        Timing = 0x100E,
+        BoneMesh = 0x100F,
+        BoneLightBinding = 0x1010,
+        MeshMorphTarget = 0x1011,
+        BoneInitialPos = 0x1012,
+        SourceInfo = 0x1013, //Describes the source from which the cgf was exported: source max file, machine and user.
+        MtlName = 0x1014, //provides material name as used in the material.xml file
+        ExportFlags = 0x1015, //Describes export information.
+        DataStream = 0x1016, //A data Stream
+        MeshSubsets = 0x1017, //Describes an array of mesh subsets
+        MeshPhysicalData = 0x1018, //Physicalized mesh data
+        CompiledBones = 0x2000,           //  
+        CompiledPhysicalBones = 0x2001,
+        CompiledMorphtargets = 0x2002,
+        CompiledPhysicalProxies = 0x2003,
+        CompiledIntFaces = 0x2004,
+        CompiledIntSkinVertices = 0x2005, 
+        CompiledExt2IntMap = 0x2006,
+        BoneBoxes = 0x3004                   //  Not sure on this
+} ;
+
+enum DATASTREAMTYPE {
+    VERTICES = 0x0,
+    NORMALS = 0x1,
+    UVS = 0x2,
+    COLORS = 0x3,
+    COLORS2 = 0x4,
+    INDICES = 0x5,
+    TANGENTS = 0x6,
+    SHCOEFFS = 0x7,
+    SHAPEDEFORMATION = 0x8,
+    BONEMAP = 0x9,
+    FACEMAP = 0xA,
+    VERTMATS = 0xB,
+    QTANGENTS = 0xC,      // Seen in Hunt models
+    VERTSUVS = 0xF
+} ;
+
+enum MtlNameTypeEnum {
+        // It looks like there is a 0x04 type now as well, for mech parts.  Not sure what that is.
+        // Also a 0x0B type now as well.
+        Library = 0x01,
+        Single = 0x10,
+        Child = 0x12,
+        Unknown1 = 0x0B,        // Collision materials?  In MWO, these are the torsos, arms, legs from body/<mech>.mtl
+        Unknown2 = 0x04
+} ;
+
+enum LightType {
+        OMNI,
+        SPOT,
+        DIRECT,
+        AMBIENT
+} ;
+
+enum CtrlType {
+        NONE,
+        CRYBONE,
+        LINEAR1,
+        LINEAR3,
+        LINEARQ,
+        BEZIER1,
+        BEZIER3,
+        BEZIERQ,
+        TBC1,
+        TBC3,
+        TBCQ,
+        BSPLINE2O,
+        BSPLINE1O,
+        BSPLINE2C,
+        BSPLINE1C,
+        CONST          // this was given a value of 11, which is the same as BSPLINE2o.
+};
+
+enum NodeType {
+    NODE_MESH,
+    NODE_LIGHT,
+    NODE_HELPER
+};
+
+enum <uint> MtlNamePhysicsType {
+    NOMTLTYPE = 0xFFFFFFFF,     // Should be NONE, but meh
+    DEFAULT = 0x00000000,
+    NOCOLLIDE = 0x00000001,
+    OBSTRUCT = 0x00000002,
+    DEFAULTPROXY = 0x000000FF,  // this needs to be checked.  cgf.xml says 256; not sure if hex or dec
+    UNKNOWN = 0x00001100,       // collision mesh?
+};
+
+#endif

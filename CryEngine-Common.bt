@@ -1,0 +1,103 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: CryEngine-Common.bt
+//   Authors: Geoff Gerber
+//   Version: 0.1
+//   Purpose: Common structs and functions for all CryEngine versions
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct VECTOR3 {
+    float x;
+    float y;
+    float z;
+};
+
+struct UNKNOWN_4BYTE {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+string PrintVector3 (VECTOR3 &vector) {
+    string result;
+    SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
+    return result;
+};
+
+struct QUATERION {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct COLOR {
+    ubyte red;
+    ubyte blue;
+    ubyte green;
+    ubyte alpha;
+};
+
+string PrintColor(COLOR &color) {
+    string result;
+    SPrintf(result, "damage: %d, glow: %d, AO: %d, wear: %d", color.red, color.green, color.blue, color.alpha);
+    return result;
+};
+
+struct UV {
+    hfloat u;
+    hfloat v;
+};
+
+string GetQuaterion(QUATERION &quat) {
+    string result;
+    SPrintf(result, "[%f, %f, %f, %f]", quat.x, quat.y, quat.z, quat.w);
+    return result;
+};
+
+struct IVONORMAL {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+struct TANGENT_BYTE {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+string PrintTangentByte(TANGENT_BYTE &tan) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", tan.x/127.0, tan.y/127.0, tan.z/127.0, tan.w/127.0);
+    return result;
+}
+
+string PrintTangent(TANGENT_BYTE &tan) {
+    string result;
+    local VECTOR3 tangent;
+    tangent.x = (2 * (tan.x/127.0 * tan.z/127.0 + tan.y/127.0 * tan.w/127.0));
+    tangent.y = (2 * (tan.y/127.0 * tan.z/127.0 - tan.x/127.0 * tan.w/127.0));
+    tangent.z = (2 * (tan.z/127.0 * tan.z/127.0 + tan.w/127.0 * tan.w/127.0)) - 1;
+    SPrintf(result, "%f, %f, %f", tangent.x, tangent.y, tangent.z);
+    return result;
+};
+
+
+string PrintNormal(IVONORMAL &normal) {
+    string result;
+    local VECTOR3 norm;
+    norm.x = (2 * (normal.x/127.0 * normal.z/127.0 + normal.y/127.0 * normal.w/127.0));
+    norm.y = (2 * (normal.y/127.0 * normal.z/127.0 - normal.x/127.0 * normal.w/127.0));
+    norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
+    SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
+    return result;
+};

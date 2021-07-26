@@ -1,0 +1,30 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: Cryengine
+//   Authors: Geoff Gerber
+//   Version: 0.1
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+HighlightAllowInstanceSharing(true);
+
+#include "Cryengine-Common.bt"
+
+local uint pos;
+local int64 fileSize;
+
+// Read third char to determine file type
+
+enum <string> FILETYPE { CRYENGINE_3_4, CRYENGINE_3_8, CRYENGINE_IVO };
+
+struct HEADER {
+    string fileSig[8];
+    uint version;
+    uint numChunks;
+    int chunkHeaderTableOffset;  // location of header chunks
+} headerInfo <bgcolor=cLtBlue>;

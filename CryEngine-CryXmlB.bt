@@ -1,0 +1,36 @@
+//------------------------------------------------
+//--- 010 Editor v8.0 Binary Template
+//
+//      File: CryXmlB
+//   Authors: Geoff Gerber 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+string ToString(char charArray[]) {
+    int i = Strlen(charArray);
+    string result = memcpy(charArray);
+    return result;
+};
+
+struct NODETABLE {
+    
+};
+
+struct HEADER {
+    char fileSig[8];
+    uint fileLength ;
+    uint nodeTableOffset <format=hex>;
+    uint nodeTableCount <format=hex>;
+    uint referenceTableOffset <format=hex>;
+    uint referenceTableCount <format=hex>;
+    uint offset3 <format=hex>;
+    uint count3 <format=hex>;
+    uint contentOffset <format=hex>;
+    uint contentLength <format=hex>;
+} headerInfo <bgcolor=cLtBlue>;
+
