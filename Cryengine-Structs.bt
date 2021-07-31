@@ -1,0 +1,19 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: CryEngine-Structs
+//   Authors: Geoff Gerber
+//   Version: v0.1
+//   Purpose: Structs used in Cryengine files
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+
+struct VECTOR3 {
+    float x;
+    float y;
+    float z;
+};

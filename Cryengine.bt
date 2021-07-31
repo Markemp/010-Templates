@@ -11,19 +11,18 @@
 //   History: 
 //------------------------------------------------
 
-HighlightAllowInstanceSharing(true);
-
-#include "Cryengine-Common.bt"
+#include "Cryengine-Structs.bt"
+#include "CryEngine-Common.bt"
 
 local uint pos;
 local int64 fileSize;
 
 // Read third char to determine file type
 
-enum <string> FILETYPE { CRYENGINE_3_4, CRYENGINE_3_8, CRYENGINE_IVO };
+enum <string> FILETYPE { CRYENGINE_3_4, CRYENGINE_3_8, CRYENGINE_IVO, O3DE };
 
 struct HEADER {
-    string fileSig[8];
+    char fileSig[4];
     uint version;
     uint numChunks;
     int chunkHeaderTableOffset;  // location of header chunks
