@@ -231,10 +231,10 @@ struct MESHCHUNK {
     uint Flags2;
     uint NumVertices;
     uint NumIndices;
-    //uint NumVertSubsets; // 801 format
+    uint NumVertSubsets; // 801 format
     uint MeshSubsets;
     uint VerticesData <format=hex>;
-    uint NumBuffs <format=hex>;
+    uint Unknown <format=hex>;
     uint NormalsData <format=hex>;
     uint UVsData <format=hex>;
     uint ColorsData <format=hex>;
@@ -246,7 +246,7 @@ struct MESHCHUNK {
     uint BoneMapData <format=hex>;
     uint FaceMapData <format=hex>;
     uint VertMatsData <format=hex>;
-    //uint MeshPhysicsData <format=hex>; // 801 format
+    uint MeshPhysicsData <format=hex>; // 801 format
     uint VertsUVData <format=hex>;
     uint PhysicsData[4] <format=hex>;
     VECTOR3 MinBound;
@@ -262,7 +262,10 @@ struct BREAKABLEPHYSICSCHUNK {
 };
 
 struct QTANGENT {
-    VECTOR4SHORT tangents;
+    short x;
+    short y;
+    short z;
+    short w;
 };
 
 struct VertsUvs {
@@ -317,10 +320,7 @@ struct DATASTREAM {
         }
         case TANGENTS: {
             uint flags[2];
-            for (i=0; i < numberOfElements; i++) {
-                VECTOR4SHORT tangents;
-                VECTOR4SHORT binormals;
-            }
+            VECTOR4SHORT tangent[numberOfElements];
             break;   
         }
         case BONEMAP: {

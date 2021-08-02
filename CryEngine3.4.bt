@@ -88,13 +88,13 @@ string PrintCompiledBoneInfo(COMPILEDBONE &bone) {
 HEADER headerInfo <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
-FSeek( headerInfo.fileOffset );
+FSeek(headerInfo.fileOffset);
 
 CHUNKTABLE chunkTable;
 
-FSeek( pos );
+FSeek(pos);
 
-for ( i = 0; i < chunkTable.numChunks; i++ ) {
+for (i = 0; i < chunkTable.numChunks; i++) {
     FSeek ( chunkTable.chunks[i].offset );
     CHUNK chunk <comment=GetChunkType>;
 };

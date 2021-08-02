@@ -224,7 +224,7 @@ struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
     PHYSICSGEOMETRY phys;   // physics.
 };
 
-struct COMPILEDPHYSICALPROXIES {
+struct COMPILEDPHYSICALPROXIES(uint version) {
     uint numberOfProxies;
     for (i = 0; i < numberOfProxies; i++) {
         uint id;
@@ -302,7 +302,7 @@ struct CHUNK {
     uint fOffset <format=hex>;
     uint id <format=hex>;
     switch (chunkType) {
-        case 0xACDC0000 : {
+        case CompiledPhysicalBones: {
             char padding[32];
             //int numberOfBones = GetNumberOfBones();
             if (version == 800h) {
@@ -330,7 +330,7 @@ struct CHUNK {
             }
             break;
         }
-        case 0xCCCC0014 : {
+        case 0xCCCC0014: {
             MTLNAME mtlName;
             break;
         }
@@ -338,15 +338,15 @@ struct CHUNK {
             NODECHUNK nodeChunk;
             break;
         }
-        case 0xCCCC0000 : {
+        case 0xCCCC0000: {
             MESHCHUNK chunkMesh;
             break;
         }
-        case 0xCCCC0016 : {                 // Datastreams
+        case 0xCCCC0016: {                 // Datastreams
             DATASTREAMCHUNK chunkDatastream;
             break;
         }
-        case 0xACDC0001 : {
+        case 0xACDC0001: {
             char padding[32];
             COMPILEDPHYSICALBONE compiledPhysicalBone;
             COMPILEDPHYSICALBONE compiledPhysicalBone;
@@ -354,10 +354,14 @@ struct CHUNK {
             COMPILEDPHYSICALBONE compiledPhysicalBone;
             break;
         }
-        case 0xACDC0006 : {
+        case 0xACDC0006: {
             BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
             break;
         }
+        case CompiledPhysicalProxies: {
+            COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
+            break;
+        };
     }
 };
 

@@ -49,7 +49,7 @@ enum <uint> DATASTREAMTYPE {
     VERTMATS = 0xB,
     IvoNormals = 0x9CF3F615,
     IvoNormals2 = 0x38A581FE,
-    IvoNormals3 = 0xD9EED421,
+    IvoColors2 = 0xD9EED421,
     IvoIndices = 0xEECDC168,
     IvoTangents = 0xB95E9A1B,
     IvoBoneMap = 0x677C7B23,
@@ -149,14 +149,17 @@ struct IVOVERTSUVS(int numberOfVertices) {
     };
     VERTUV vertUvs[numberOfVertices];
     if (numberOfVertices % 2 == 1) {
-            uint filler;
-        }
+        uint filler;
+    }
 };
 
 struct IVOCOLORS(int numberOfVertices) {
     // DATASTREAMTYPE type;
     uint bytesPerElement;
     COLOR vertexColors[numberOfVertices] <comment=PrintColor>;
+    if (numberOfVertices % 2 == 1) {
+        uint filler;
+    }
 };
 
 struct IVONORMALS(int numberOfVertices) {
@@ -170,11 +173,17 @@ struct IVONORMALS(int numberOfVertices) {
 struct TANGENTS(int numberOfVertices) {
     // DATASTREAMTYPE type;
     uint bytesPerElement;
-    struct COMBINED_TANGENT {
+    for (i = 0; i < numberOfVertices; i++) {
         TANGENT_BYTE tangent <comment=PrintTangentByte>;
-        TANGENT_BYTE biTangent <comment=PrintTangentByte>;
     };
-    COMBINED_TANGENT tangents[numberOfVertices];
+    for (i = 0; i < numberOfVertices; i++) {
+        TANGENT_BYTE bitangent <comment=PrintTangentByte>;
+    };
+    //struct COMBINED_TANGENT {
+    //    TANGENT_BYTE tangent <comment=PrintTangentByte>;
+    //    TANGENT_BYTE biTangent <comment=PrintTangentByte>;
+    //};
+    //COMBINED_TANGENT tangents[numberOfVertices];
 };
 
 struct BONEMAP(int numberOfVertices) {
@@ -230,8 +239,8 @@ struct SKINMESH {
                 IVONORMALS normals(meshChunk.numberOfVertices);
                 break;
             }    
-            case IvoNormals3: {
-                IVONORMALS normals(meshChunk.numberOfVertices);
+            case IvoColors2: {
+                IVOCOLORS colors2(meshChunk.numberOfVertices);
                 break;
             }
             case IvoTangents: {
@@ -242,7 +251,7 @@ struct SKINMESH {
                 BONEMAP bonemap(meshChunk.numberOfVertices);
                 break;
             }
-            case IvoUnknown: {
+            case IvoUnknown2: {
                 UNKNOWN unknown(meshChunk.numberOfVertices);
                 break;
             }

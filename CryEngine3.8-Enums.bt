@@ -34,12 +34,12 @@ enum <ushort> CHUNKTYPE {
         BoneLightBinding = 0x1010,
         MeshMorphTarget = 0x1011,
         BoneInitialPos = 0x1012,
-        SourceInfo = 0x1013, //Describes the source from which the cgf was exported: source max file, machine and user.
-        MtlName = 0x1014, //provides material name as used in the material.xml file
-        ExportFlags = 0x1015, //Describes export information.
-        DataStream = 0x1016, //A data Stream
-        MeshSubsets = 0x1017, //Describes an array of mesh subsets
-        MeshPhysicalData = 0x1018, //Physicalized mesh data
+        SourceInfo = 0x1013, // Describes the source from which the cgf was exported: source max file, machine and user.
+        MtlName = 0x1014, // provides material name as used in the material.xml file
+        ExportFlags = 0x1015, // Describes export information.
+        DataStream = 0x1016, // A data Stream
+        MeshSubsets = 0x1017, // Describes an array of mesh subsets
+        MeshPhysicalData = 0x1018, // Physicalized mesh data
         CompiledBones = 0x2000,           //  
         CompiledPhysicalBones = 0x2001,
         CompiledMorphtargets = 0x2002,
@@ -47,7 +47,7 @@ enum <ushort> CHUNKTYPE {
         CompiledIntFaces = 0x2004,
         CompiledIntSkinVertices = 0x2005, 
         CompiledExt2IntMap = 0x2006,
-        BoneBoxes = 0x3004                   //  Not sure on this
+        BoneBoxes = 0x3004
 } ;
 
 enum DATASTREAMTYPE {
