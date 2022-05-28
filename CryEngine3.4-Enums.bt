@@ -10,8 +10,12 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
+#ifndef ENUMS_COMMON_H
+    #include "Cryengine-Enums.bt"
+#endif
+
 #ifndef ENUMS_H
-    #define ENUMS_H
+#define ENUMS_H
 
 enum CHUNKTYPE {
         Any = 0x0,
@@ -53,21 +57,6 @@ enum CHUNKTYPE {
         FootPlantInfo = 0xAAFC0003, // Footplant info
         BonesBoxes = 0xAAFC0004, // unknown chunk
         UnknownAAFC0005 = 0xAAFC0005 //unknown chunk
-} ;
-
-enum DATASTREAMTYPE {
-    VERTICES = 0x0,
-    NORMALS = 0x1,
-    UVS = 0x2,
-    COLORS = 0x3,
-    COLORS2 = 0x4,
-    INDICES = 0x5,
-    TANGENTS = 0x6,
-    SHCOEFFS = 0x7,
-    SHAPEDEFORMATION = 0x8,
-    BONEMAP = 0x9,
-    FACEMAP = 0xA,
-    VERTMATS = 0xB
 } ;
 
 enum MtlNameTypeEnum {
