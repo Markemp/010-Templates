@@ -118,7 +118,7 @@ struct PHYSICSGEOMETRY {
     MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
 };
 
-struct COMPILEDBONE {
+struct COMPILEDBONE_800 {
     uint controllerID;
     PHYSICSGEOMETRY physicsGeo[2];
     float mass;
@@ -156,7 +156,7 @@ struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
 };
 
 struct COMPILEDPHYSICALPROXIES(uint version) {
-    uint numberOfProxies;
+    uint numberOfProxies, i;
     for (i = 0; i < numberOfProxies; i++) {
         uint id;
         uint numberOfVertices;
@@ -173,13 +173,14 @@ struct MATERIALCHUNK {
     uint id;
 };
 
-struct DATASTREAMCHUNK {
-    uint Flags;
-    DATASTREAMTYPE DataStreamType;
-    uint NumElements;
-    uint ByesPerElement;
-    uint Reserved1;
-    uint Reserved2;
+struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
+    string sourceFile;
+    string fileDate;
+    string author;
+    local CHUNKTYPE chunkType = tableEntry.chunkType;
+    local uint version = tableEntry.version;
+    local uint offset = tableEntry.offset;
+    local uint size = tableEntry.size;
 };
 
 struct NODECHUNK {
@@ -227,40 +228,96 @@ struct MESHSUBSET {
     
 };
 
-struct CHUNK {
-    CHUNKTYPE chunkType;
-    uint version <format=hex>;
-    uint fOffset <format=hex>;
-    uint id <format=hex>;
+struct DATASTREAMCHUNK {
+    local int i;
+    
+    uint flags2;
+    DATASTREAMTYPE datastreamType;
+    uint numberOfElements;
+    uint bytesPerElement;
+    uint reserved1;
+    uint reserved2;
+    //ushort unknown;
+    
+    switch (datastreamType) {
+        case VERTICES: {
+            for (i = 0; i < numberOfElements; i++) {
+                VECTOR3 vertices <comment=PrintVector3>;
+            }   
+            break;
+        }
+        case VERTSUVS: {
+            for (i = 0; i < numberOfElements; i++) {
+                VertsUvs vertsUvs;
+            }
+            break;
+        }
+        case NORMALS: {
+            VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+            break;
+        }
+        case UVS: {
+            UV uv[numberOfElements] <comment=PrintUV>;
+            break;   
+        }
+        case COLORS: {
+            IRGBA colors[numberOfElements] <comment=PrintColor>;
+            break;   
+        }
+        case INDICES: {
+            uint16 indices[numberOfElements];
+            break;   
+        }
+        case TANGENTS: {
+            VECTOR4 tangent[numberOfElements];
+            break;   
+        }
+        //case BONEMAP: {
+        //    uint flags[2];
+        //    BONEMAPDATA boneMap[numberOfElements];
+        //    break;
+        //}
+        //case QTANGENTS: {
+        //    uint flags[2];
+        //    QTANGENT qtangents[numberOfElements];
+        //}
+        default: {
+            break;
+        }
+    }
+};
 
-    switch (chunkTable.chunks[i].chunkType) {
+struct CHUNK(CHUNKTABLEENTRY &chunkTableEntry) {
+    if (chunkTableEntry.chunkType != SourceInfo) {
+        CHUNKTYPE chunkType;
+        uint version <format=hex>;
+        uint fOffset <format=hex>;
+        uint id <format=hex>;
+    } else {
+        local CHUNKTYPE chunkType = SourceInfo;
+    }
+
+    switch (chunkTableEntry.chunkType) {
+        case SourceInfo: {
+            SOURCEINFO sourceInfo(chunkTableEntry);
+            break;
+        }
         case CompiledPhysicalBones: {
-            //CHUNK chunkHeader;
-            //char padding[32];
-            //int numberOfBones = GetNumberOfBones();
-            //if (version == 800h) {
-            //    COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-            //    COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-            //    COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-            //    COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-            //    COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-            //} else if (version == 801h) {
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;    
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //    COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-            //}
+            char padding[32];
+            local int numberOfBones, i;
+            numberOfBones = (chunkTableEntry.size - 32)/584;
+            for (i = 0; i < numberOfBones; i++) {
+                COMPILEDPHYSICALBONE compiledPhysicalBone;
+            }
+            break;
+        }
+        case CompiledBones: {
+            char padding[32];
+            local int numberOfBones, i;
+            numberOfBones = (chunkTableEntry.size - 32)/584;
+            for (i = 0; i < numberOfBones; i++) {
+                COMPILEDBONE_800 compiledBone <comment=PrintCompiledBoneInfo>;
+            }
             break;
         }
         case MtlName: {

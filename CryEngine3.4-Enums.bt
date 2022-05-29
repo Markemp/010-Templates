@@ -57,24 +57,14 @@ enum CHUNKTYPE {
         FootPlantInfo = 0xAAFC0003, // Footplant info
         BonesBoxes = 0xAAFC0004, // unknown chunk
         UnknownAAFC0005 = 0xAAFC0005 //unknown chunk
-} ;
-
-enum MtlNameTypeEnum {
-        // It looks like there is a 0x04 type now as well, for mech parts.  Not sure what that is.
-        // Also a 0x0B type now as well.
-        Library = 0x01,
-        Single = 0x10,
-        Child = 0x12,
-        Unknown1 = 0x0B,        // Collision materials?  In MWO, these are the torsos, arms, legs from body/<mech>.mtl
-        Unknown2 = 0x04
-} ;
+};
 
 enum LightType {
         OMNI,
         SPOT,
         DIRECT,
         AMBIENT
-} ;
+};
 
 enum CtrlType {
         NONE,
@@ -93,7 +83,7 @@ enum CtrlType {
         BSPLINE2C,
         BSPLINE1C,
         CONST          // this was given a value of 11, which is the same as BSPLINE2o.
-} ;
+};
 
 enum NodeType {
     NODE_MESH,

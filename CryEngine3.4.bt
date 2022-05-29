@@ -13,8 +13,6 @@
 local uint pos;
 local uint i;
 
-
-
 HEADER headerInfo <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
@@ -25,6 +23,6 @@ CHUNKTABLE chunkTable;
 FSeek(pos);
 
 for (i = 0; i < chunkTable.numChunks; i++) {
-    FSeek ( chunkTable.chunks[i].offset );
-    CHUNK chunk <comment=GetChunkType>;
+    FSeek (chunkTable.chunks[i].offset);
+    CHUNK chunk(chunkTable.chunks[i]) <name=GetChunkType>;
 };

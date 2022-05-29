@@ -26,11 +26,15 @@ string GetChunkTableType(CHUNKTABLEENTRY &chunk) {
 
 string GetChunkType(CHUNK &chunk) {
     string result;
-    SPrintf(result, "Type = %s, ID = %X", EnumToString(chunk.chunkType), chunk.id);
+    if (chunk.chunkType == SourceInfo) {
+        SPrintf(result, "SourceInfo");
+    } else {
+        SPrintf(result, "Type = %s, ID = %X", EnumToString(chunk.chunkType), chunk.id);
+    }
     return result;
 };
 
-string GetBoneName(COMPILEDBONE_801 &bone) {
+string PrintCompiledBoneName(COMPILEDBONE_801 &bone) {
     string result;
     SPrintf(result, "Bone Name = %s", bone.name);
     return result;
@@ -84,9 +88,9 @@ string PrintColor(IRGBA &color) {
     return result;
 };
 
-string PrintCompiledBoneInfo(COMPILEDBONE &bone) {
+string PrintCompiledBoneInfo(COMPILEDBONE_800 &bone) {
     string result;
-    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.worldToBone.M14, bone.worldToBone.M24, bone.worldToBone.M34, bone.boneToWorld.M14, bone.boneToWorld.M24, bone.boneToWorld.M34);
+    SPrintf(result, "%s, Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.boneName, bone.worldToBone.M14, bone.worldToBone.M24, bone.worldToBone.M34, bone.boneToWorld.M14, bone.boneToWorld.M24, bone.boneToWorld.M34);
     return result;
 }
 

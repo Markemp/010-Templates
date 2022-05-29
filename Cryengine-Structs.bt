@@ -79,16 +79,22 @@ struct MATRIX4x4 {
     float M44;
 };
 
-struct UV {
-    hfloat u;
-    hfloat v;
-};
-
 struct IRGBA {
     ubyte r;
     ubyte g;
     ubyte b;
     ubyte a;
+};
+
+struct UV {
+    float u;
+    float v;
+};
+
+struct VertsUvs {
+    VECTOR3 vertices <comment=PrintVector3>;
+    IRGBA color <comment=PrintColor>;
+    UV uv <comment=PrintUV>;
 };
 
 #endif
