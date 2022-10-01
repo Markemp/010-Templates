@@ -10,55 +10,18 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-#include "Cryengine3.4-Enums.bt"
+#ifndef ENUMS_H
+    #include "Cryengine3.4-Enums.bt"
+#endif
+#ifndef STRUCTS_COMMON_H
+    #include "Cryengine-Structs.bt"
+#endif
+#ifndef HELPERS_H
+//    #include "Cryengine-Helpers.bt"
+#endif
+
 #ifndef STRUCTS_H
-    #define STRUCTS_H
-
-struct MATRIX3x4 {
-    float M11;
-    float M12;
-    float M13;
-    float M14;
-    float M21;
-    float M22;
-    float M23;
-    float M24;
-    float M31;
-    float M32;
-    float M33;
-    float M34;
-};
-
-struct MATRIX3x3 {
-    float M11;
-    float M12;
-    float M13;
-    float M21;
-    float M22;
-    float M23;
-    float M31;
-    float M32;
-    float M33;
-};
-
-struct MATRIX4x4 {
-    float M11;
-    float M12;
-    float M13;
-    float M14;
-    float M21;
-    float M22;
-    float M23;
-    float M24;
-    float M31;
-    float M32;
-    float M33;
-    float M34;
-    float M41;
-    float M42;
-    float M43;
-    float M44;
-};
+#define STRUCTS_H
 
 // read the chunk header table
 struct CHUNKTABLEENTRY {
@@ -95,26 +58,6 @@ struct HEADER {
     uint fileType <format=hex>;
     uint chunkVersion;
     int fileOffset;  // location of header chunks
-};
-
-struct VECTOR3 {
-    float x;
-    float y;
-    float z;
-};
-
-struct VECTOR4 {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct QUATERNION {
-    float x;
-    float y;
-    float z;
-    float w;
 };
 
 struct CRYLINK {        // CryHeader.h
@@ -155,17 +98,6 @@ struct INTSKINVERTEX {
     COLORB color;
 };
 
-struct UV {
-    hfloat u;
-    hfloat v;
-};
-
-struct IRGBA {
-    ubyte r;
-    ubyte g;
-    ubyte b;
-    ubyte a;
-};
 
 struct BREAKABLEPHYSICSCHUNK {
     uint granularity;
@@ -186,7 +118,7 @@ struct PHYSICSGEOMETRY {
     MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
 };
 
-struct COMPILEDBONE {
+struct COMPILEDBONE_800 {
     uint controllerID;
     PHYSICSGEOMETRY physicsGeo[2];
     float mass;
@@ -202,7 +134,6 @@ struct COMPILEDBONE {
     int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
                             // this is 0 if there are no children
 };
-
 
 struct COMPILEDBONE_801 {
     uint controllerId;
@@ -225,7 +156,7 @@ struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
 };
 
 struct COMPILEDPHYSICALPROXIES(uint version) {
-    uint numberOfProxies;
+    uint numberOfProxies, i;
     for (i = 0; i < numberOfProxies; i++) {
         uint id;
         uint numberOfVertices;
@@ -242,21 +173,22 @@ struct MATERIALCHUNK {
     uint id;
 };
 
-struct DATASTREAMCHUNK {
-    uint Flags;
-    DATASTREAMTYPE DataStreamType;
-    uint NumElements;
-    uint ByesPerElement;
-    uint Reserved1;
-    uint Reserved2;
+struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
+    string sourceFile;
+    string fileDate;
+    string author;
+    local CHUNKTYPE chunkType = tableEntry.chunkType;
+    local uint version = tableEntry.version;
+    local uint offset = tableEntry.offset;
+    local uint size = tableEntry.size;
 };
 
 struct NODECHUNK {
     char name[64];
-    uint objectNodeId; // Mesh chunk ID
-    uint parentNodeId; // Chunk ID of parent node
+    uint objectNodeId <format=hex>; // Mesh chunk ID
+    uint parentNodeId <format=hex>; // Chunk ID of parent node
     uint numberOfChildren;
-    uint materialId;
+    uint materialId <format=hex>;
     uint skipBytes;
     MATRIX4x4 transform <comment=PrintMatrix4x4>;
     VECTOR3 position <comment=PrintVector3>;
@@ -287,8 +219,8 @@ struct MESHCHUNK {
     //uint MeshPhysicsData <format=hex>; // 801 format
     uint VertsUVData <format=hex>;
     uint PhysicsData[4] <format=hex>;
-    VECTOR3 MinBound;
-    VECTOR3 MaxBound;
+    VECTOR3 MinBound <comment=PrintVector3>;
+    VECTOR3 MaxBound <comment=PrintVector3>;
 };
 
 struct MESHSUBSET {
@@ -296,70 +228,120 @@ struct MESHSUBSET {
     
 };
 
-struct CHUNK {
-    CHUNKTYPE chunkType;
-    uint version <format=hex>;
-    uint fOffset <format=hex>;
-    uint id <format=hex>;
-    switch (chunkType) {
-        case CompiledPhysicalBones: {
-            char padding[32];
-            //int numberOfBones = GetNumberOfBones();
-            if (version == 800h) {
-                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-                COMPILEDBONE compiledBone <comment=PrintCompiledBoneInfo>;
-            } else if (version == 801h) {
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;    
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
-                COMPILEDBONE_801 compiledBone <comment=GetBoneName>;
+struct DATASTREAMCHUNK {
+    local int i;
+    
+    uint flags2;
+    DATASTREAMTYPE datastreamType;
+    uint numberOfElements;
+    uint bytesPerElement;
+    uint reserved1;
+    uint reserved2;
+    //ushort unknown;
+    
+    switch (datastreamType) {
+        case VERTICES: {
+            for (i = 0; i < numberOfElements; i++) {
+                VECTOR3 vertices <comment=PrintVector3>;
+            }   
+            break;
+        }
+        case VERTSUVS: {
+            for (i = 0; i < numberOfElements; i++) {
+                VertsUvs vertsUvs;
             }
             break;
         }
-        case 0xCCCC0014: {
+        case NORMALS: {
+            VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+            break;
+        }
+        case UVS: {
+            UV uv[numberOfElements] <comment=PrintUV>;
+            break;   
+        }
+        case COLORS: {
+            IRGBA colors[numberOfElements] <comment=PrintColor>;
+            break;   
+        }
+        case INDICES: {
+            uint16 indices[numberOfElements];
+            break;   
+        }
+        case TANGENTS: {
+            VECTOR4 tangent[numberOfElements];
+            break;   
+        }
+        //case BONEMAP: {
+        //    uint flags[2];
+        //    BONEMAPDATA boneMap[numberOfElements];
+        //    break;
+        //}
+        //case QTANGENTS: {
+        //    uint flags[2];
+        //    QTANGENT qtangents[numberOfElements];
+        //}
+        default: {
+            break;
+        }
+    }
+};
+
+struct CHUNK(CHUNKTABLEENTRY &chunkTableEntry) {
+    if (chunkTableEntry.chunkType != SourceInfo) {
+        CHUNKTYPE chunkType;
+        uint version <format=hex>;
+        uint fOffset <format=hex>;
+        uint id <format=hex>;
+    } else {
+        local CHUNKTYPE chunkType = SourceInfo;
+    }
+
+    switch (chunkTableEntry.chunkType) {
+        case SourceInfo: {
+            SOURCEINFO sourceInfo(chunkTableEntry);
+            break;
+        }
+        case CompiledPhysicalBones: {
+            char padding[32];
+            local int numberOfBones, i;
+            numberOfBones = (chunkTableEntry.size - 32)/584;
+            for (i = 0; i < numberOfBones; i++) {
+                COMPILEDPHYSICALBONE compiledPhysicalBone;
+            }
+            break;
+        }
+        case CompiledBones: {
+            char padding[32];
+            local int numberOfBones, i;
+            numberOfBones = (chunkTableEntry.size - 32)/584;
+            for (i = 0; i < numberOfBones; i++) {
+                COMPILEDBONE_800 compiledBone <comment=PrintCompiledBoneInfo>;
+            }
+            break;
+        }
+        case MtlName: {
             MTLNAME mtlName;
             break;
         }
-        case 0xCCCC000B: {
+        case Node: {
             NODECHUNK nodeChunk;
             break;
         }
-        case 0xCCCC0000: {
+        case Mesh: {
             MESHCHUNK chunkMesh;
             break;
         }
-        case 0xCCCC0016: {                 // Datastreams
+        case DataStream: {
             DATASTREAMCHUNK chunkDatastream;
             break;
         }
-        case 0xACDC0001: {
-            char padding[32];
-            COMPILEDPHYSICALBONE compiledPhysicalBone;
-            COMPILEDPHYSICALBONE compiledPhysicalBone;
-            COMPILEDPHYSICALBONE compiledPhysicalBone;
-            COMPILEDPHYSICALBONE compiledPhysicalBone;
-            break;
-        }
-        case 0xACDC0006: {
-            BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
+        case CompiledExt2IntMap: {
+            //BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
             break;
         }
         case CompiledPhysicalProxies: {
-            COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
+            //COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
             break;
         };
     }

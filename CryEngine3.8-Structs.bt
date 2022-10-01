@@ -246,7 +246,9 @@ struct MESHCHUNK {
     uint BoneMapData <format=hex>;
     uint FaceMapData <format=hex>;
     uint VertMatsData <format=hex>;
-    uint MeshPhysicsData <format=hex>; // 801 format
+    uint QTangentsData <format=hex>; // 801 format
+    uint SkinData;
+    uint Dummy2;                    // Old console data
     uint VertsUVData <format=hex>;
     uint PhysicsData[4] <format=hex>;
     VECTOR3 MinBound;

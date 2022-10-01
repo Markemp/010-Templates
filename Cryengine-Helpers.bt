@@ -1,0 +1,97 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: Cryengine-Helpers.bt
+//   Authors: Geoff Gerber
+//   Version: 
+//   Purpose: Useful functions for converting Cryengine files
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#ifndef STRUCTS_H
+    #include "Cryengine3.4-Structs.bt"
+#endif
+
+#ifndef HELPERS_H
+#define HELPERS_H
+
+// custom read function
+string GetChunkTableType(CHUNKTABLEENTRY &chunk) {
+    string result;
+    SPrintf(result, "Type = %s, ID = %X", EnumToString(chunk.chunkType), chunk.id);
+    return result; 
+};
+
+string GetChunkType(CHUNK &chunk) {
+    string result;
+    if (chunk.chunkType == SourceInfo) {
+        SPrintf(result, "SourceInfo");
+    } else {
+        SPrintf(result, "Type = %s, ID = %X", EnumToString(chunk.chunkType), chunk.id);
+    }
+    return result;
+};
+
+string PrintCompiledBoneName(COMPILEDBONE_801 &bone) {
+    string result;
+    SPrintf(result, "Bone Name = %s", bone.name);
+    return result;
+};
+
+string PrintMatrix4x4(MATRIX4x4 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44);
+    return result;
+};
+
+string PrintMatrix3x4(MATRIX3x4 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34);
+    return result;
+};
+
+string PrintMatrix3x3(MATRIX3x3 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f] [%f, %f, %f] [%f, %f, %f]]", m.M11, m.M12, m.M13, m.M21, m.M22, m.M23, m.M31, m.M32, m.M33);
+    return result;
+};
+
+string PrintVector3(VECTOR3 &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
+    return result;
+};
+
+string PrintVector4(VECTOR4 &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", vertex.x, vertex.y, vertex.z, vertex.w);
+    return result;
+};
+
+string PrintQuaternion(QUATERNION &quat) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", quat.x, quat.y, quat.z, quat.w);
+    return result;
+};
+
+string PrintUV(UV &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+string PrintColor(IRGBA &color) {
+    string result;
+    SPrintf(result, "%d, %d, %d, %d", color.r, color.g, color.b, color.a);
+    return result;
+};
+
+string PrintCompiledBoneInfo(COMPILEDBONE_800 &bone) {
+    string result;
+    SPrintf(result, "%s, Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.boneName, bone.worldToBone.M14, bone.worldToBone.M24, bone.worldToBone.M34, bone.boneToWorld.M14, bone.boneToWorld.M24, bone.boneToWorld.M34);
+    return result;
+}
+
+#endif

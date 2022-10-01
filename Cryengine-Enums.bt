@@ -1,0 +1,43 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#ifndef ENUMS_COMMON_H
+#define ENUMS_COMMON_H
+
+enum DATASTREAMTYPE {
+    VERTICES = 0x0,
+    NORMALS = 0x1,
+    UVS = 0x2,
+    COLORS = 0x3,
+    COLORS2 = 0x4,
+    INDICES = 0x5,
+    TANGENTS = 0x6,
+    SHCOEFFS = 0x7,
+    SHAPEDEFORMATION = 0x8,
+    BONEMAP = 0x9,
+    FACEMAP = 0xA,
+    VERTMATS = 0xB,
+    QTANGENTS = 0xC,      // Seen in Hunt models
+    VERTSUVS = 0xF
+};
+
+enum MtlNameTypeEnum {
+        // It looks like there is a 0x04 type now as well, for mech parts.  Not sure what that is.
+        // Also a 0x0B type now as well.
+        Library = 0x01,
+        Single = 0x10,
+        Child = 0x12,
+        Unknown1 = 0x0B,        // Collision materials?  In MWO, these are the torsos, arms, legs from body/<mech>.mtl
+        Unknown2 = 0x04
+};
+
+#endif

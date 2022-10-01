@@ -10,7 +10,8 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-
+#ifndef STRUCTS_COMMON_H
+#define STRUCTS_COMMON_H
 
 struct VECTOR3 {
     float x;
@@ -23,3 +24,83 @@ string PrintVector3 (VECTOR3 &vector) {
     SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
     return result;
 };
+=======
+struct VECTOR4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct QUATERNION {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct MATRIX3x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+};
+
+struct MATRIX3x3 {
+    float M11;
+    float M12;
+    float M13;
+    float M21;
+    float M22;
+    float M23;
+    float M31;
+    float M32;
+    float M33;
+};
+
+struct MATRIX4x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+    float M41;
+    float M42;
+    float M43;
+    float M44;
+};
+
+struct IRGBA {
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+};
+
+struct UV {
+    float u;
+    float v;
+};
+
+struct VertsUvs {
+    VECTOR3 vertices <comment=PrintVector3>;
+    IRGBA color <comment=PrintColor>;
+    UV uv <comment=PrintUV>;
+};
+
+#endif
