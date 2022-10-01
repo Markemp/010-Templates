@@ -17,3 +17,9 @@ struct VECTOR3 {
     float y;
     float z;
 };
+
+string PrintVector3 (VECTOR3 &vector) {
+    string result;
+    SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
+    return result;
+};

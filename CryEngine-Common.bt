@@ -20,14 +20,6 @@ struct UNKNOWN_4BYTE {
     byte w;
 };
 
-
-string PrintVector3 (VECTOR3 &vector) {
-    string result;
-    SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
-    return result;
-};
-
-
 struct QUATERION {
     float x;
     float y;
