@@ -11,17 +11,54 @@
 //   History: 
 //------------------------------------------------
 
-#include "Cryengine-Structs.bt"
 #include "CryEngine-Common.bt"
 
 local uint pos;
-local int64 fileSize;
-
-// Read third char to determine file type
+local uint i;
 
 enum <string> FILETYPE { CRYENGINE_3_4, CRYENGINE_3_8, CRYENGINE_IVO, O3DE };
+local FILETYPE filetype;
 
-struct HEADER {
+char magic[4];
+
+switch (magic) {
+    case "#ivo":
+        filetype = CRYENGINE_IVO;
+        break;
+    case "CryT":
+        filetype = CRYENGINE_3_4;
+        break;
+    case "CrCh":
+        filetype = CRYENGINE_3_8;
+        break;
+    default:
+        break;
+};
+
+pos = FTell(); // save read position
+FSeek(0);
+
+struct Header {
+    FILETYPE filetype;
+    uint version;
+    uint numChunks;
+    int chuckHeaderTableOffset;
+};
+
+// Read header
+switch (filetype) {
+    case CRYENGINE_3_4:
+        Header header;
+        header.filetype = CRYENGINE_3_4
+        
+};
+
+
+
+// Read chunk table
+
+
+struct HEADER(FILETYPE filetype) {
     char fileSig[4];
     uint version;
     uint numChunks;

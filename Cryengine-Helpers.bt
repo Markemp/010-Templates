@@ -52,11 +52,11 @@ string PrintMatrix3x3(MATRIX3x3 &m) {
     return result;
 };
 
-string PrintVector3(VECTOR3 &vertex) {
-    string result;
-    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
-    return result;
-};
+//string PrintVector3(VECTOR3 &vertex) {
+//    string result;
+//    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
+//    return result;
+//};
 
 string PrintVector4(VECTOR4 &vertex) {
     string result;

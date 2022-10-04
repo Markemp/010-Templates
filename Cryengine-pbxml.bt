@@ -1,7 +1,7 @@
 //------------------------------------------------
 //--- 010 Editor v11.0.1 Binary Template
 //
-//      File: pbxml (binary XML)
+//      File: 
 //   Authors: 
 //   Version: 
 //   Purpose: 
@@ -10,7 +10,53 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-string header;
-int numberOfElements;
+
+struct Attribute;
+
+struct Attribute {
+    string key;
+    string value;
+};
+
+string PrintAttribute(Attribute &attribute) {
+    string result;
+    SPrintf(result, "%s = %s", attribute.key, attribute.value);
+    return result;
+};
+
+struct Element;
+
+struct Element(byte numAttributes, byte numChildren) {
+    local int j;
+    string name;
+    for (j = 0; j < numAttributes; j++) {
+        Attribute attribute <comment=PrintAttribute>;
+    };
+    for (j = 0; j < numChildren; j++) {
+        byte filler1 <bgcolor=cLtGreen>;
+        byte filler2 <bgcolor=cDkGreen>;
+        //if ( !(filler2 == 0 || filler2 == 75 || filler2 == 77)) {
+        if (filler2 < 0) {
+            byte filler3 <bgcolor=cLtGreen>;
+        };
+        byte elementChildren <bgcolor=cPurple>;
+        byte elementAttributes <bgcolor=cLtPurple>;
+        Element child(elementAttributes, elementChildren) <comment=PrintElement>;
+    };
+};
 
 
+
+string PrintElement(Element &element) {
+    string result;
+    SPrintf(result, "Element name: %s", element.name);
+    return result;
+};
+
+local int i;
+string header <bgcolor=cLtYellow>;
+
+byte numberOfChildren <bgcolor=cPurple>;
+byte numberOfAttributes <bgcolor=cLtPurple>;
+
+Element element(1,1) <comment=PrintElement, bgcolor=cLtBlue>;
