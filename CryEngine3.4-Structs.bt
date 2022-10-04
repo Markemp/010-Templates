@@ -42,7 +42,7 @@ struct SKINNINGINFO {
 };
 
 struct MTLNAME {
-    int NFlags;
+    MtlNameTypeEnum NFlags;
     int NFlags2;
     char Name[128];
     int PhysicalizeType;
@@ -135,6 +135,10 @@ struct COMPILEDBONE_800 {
                             // this is 0 if there are no children
 };
 
+struct BONENAMELIST {
+    string boneName;
+};
+
 struct COMPILEDBONE_801 {
     uint controllerId;
     uint mass;
@@ -223,9 +227,21 @@ struct MESHCHUNK {
     VECTOR3 MaxBound <comment=PrintVector3>;
 };
 
-struct MESHSUBSET {
-    byte chunk[360] ;
-    
+struct MESHSUBSETS {
+    local int i;
+    uint flags;
+    int numberOfMeshSubsets;
+    uint unknown;  // skip bytes
+    uint unknown2;  // skip bytes
+    for (i = 0; i < numberOfMeshSubsets; i++) {
+        uint firstVertex;
+        uint numberOfVertices;
+        uint firstIndex;
+        uint numberOfIndices;
+        uint material;
+        float radius;
+        VECTOR3 center <comment=PrintVector3>;
+    };
 };
 
 struct DATASTREAMCHUNK {
@@ -237,7 +253,6 @@ struct DATASTREAMCHUNK {
     uint bytesPerElement;
     uint reserved1;
     uint reserved2;
-    //ushort unknown;
     
     switch (datastreamType) {
         case VERTICES: {
@@ -316,7 +331,7 @@ struct CHUNK(CHUNKTABLEENTRY &chunkTableEntry) {
             local int numberOfBones, i;
             numberOfBones = (chunkTableEntry.size - 32)/584;
             for (i = 0; i < numberOfBones; i++) {
-                COMPILEDBONE_800 compiledBone <comment=PrintCompiledBoneInfo>;
+                COMPILEDBONE_800 compiledBone <comment=PrintCompiledBoneInfo, name=PrintCompiledBoneName_800>;
             }
             break;
         }
@@ -330,6 +345,10 @@ struct CHUNK(CHUNKTABLEENTRY &chunkTableEntry) {
         }
         case Mesh: {
             MESHCHUNK chunkMesh;
+            break;
+        }
+        case MeshSubsets: {
+            MESHSUBSETS meshSubSets;
             break;
         }
         case DataStream: {

@@ -20,7 +20,6 @@ struct UNKNOWN_4BYTE {
     byte w;
 };
 
-
 string PrintVector3 (VECTOR3 &vector) {
     string result;
     SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
@@ -33,6 +32,12 @@ struct QUATERION {
     float y;
     float z;
     float w;
+};
+
+string GetQuaterion(QUATERION &quat) {
+    string result;
+    SPrintf(result, "[%f, %f, %f, %f]", quat.x, quat.y, quat.z, quat.w);
+    return result;
 };
 
 struct COLOR {
@@ -51,12 +56,6 @@ string PrintColor(COLOR &color) {
 struct UV {
     hfloat u;
     hfloat v;
-};
-
-string GetQuaterion(QUATERION &quat) {
-    string result;
-    SPrintf(result, "[%f, %f, %f, %f]", quat.x, quat.y, quat.z, quat.w);
-    return result;
 };
 
 struct IVONORMAL {

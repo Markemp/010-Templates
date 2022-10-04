@@ -33,6 +33,7 @@ enum DATASTREAMTYPE {
 enum MtlNameTypeEnum {
         // It looks like there is a 0x04 type now as well, for mech parts.  Not sure what that is.
         // Also a 0x0B type now as well.
+        Basic = 0x00,
         Library = 0x01,
         Single = 0x10,
         Child = 0x12,
