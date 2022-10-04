@@ -24,7 +24,7 @@ string PrintVector3 (VECTOR3 &vector) {
     SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
     return result;
 };
-=======
+
 struct VECTOR4 {
     float x;
     float y;
