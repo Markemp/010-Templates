@@ -10,9 +10,19 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
+
+#ifndef STRUCTS_38_H
+#define STRUCTS_38_H
+
 #include "Cryengine3.8-Enums.bt"
-#ifndef STRUCTS_H
-    #define STRUCTS_H
+#include "Cryengine-Structs.bt"
+#include "Cryengine-Helpers.bt"
+
+struct HEADER {
+    char fileSig[8];
+    uint numChunks;
+    int fileOffset;  // location of header chunks
+};
 
 struct CHUNKTABLEENTRY {
     CHUNKTYPE chunkType;
@@ -22,97 +32,18 @@ struct CHUNKTABLEENTRY {
     uint offset <format=hex>;
 };
 
+string GetChunkTableType(CHUNKTABLEENTRY &entry) {
+    string result;
+    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
+    return result;
+};
+
 struct CHUNK {
     uint fOffset <format=hex>;
     uint chunkType <format=hex>;
     uint version <format=hex>;
     uint id <format=hex>;
     uint size <format=hex>;
-};
-
-struct UV {
-    hfloat u;
-    hfloat v;
-};
-
-struct IRGBA {
-    ubyte r;
-    ubyte g;
-    ubyte b;
-    ubyte a;
-};
-
-struct VECTOR3 {
-    float x;
-    float y;
-    float z;
-};
-
-struct VECTOR4 {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct VECTOR4SHORT {
-    hfloat x;
-    hfloat y;
-    hfloat z;
-    hfloat w;
-};
-
-struct QUATERNION {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-struct MATRIX3x4 {
-    float M11;
-    float M12;
-    float M13;
-    float M14;
-    float M21;
-    float M22;
-    float M23;
-    float M24;
-    float M31;
-    float M32;
-    float M33;
-    float M34;
-};
-
-struct MATRIX3x3 {
-    float M11;
-    float M12;
-    float M13;
-    float M21;
-    float M22;
-    float M23;
-    float M31;
-    float M32;
-    float M33;
-};
-
-struct MATRIX4x4 {
-    float M11;
-    float M12;
-    float M13;
-    float M14;
-    float M21;
-    float M22;
-    float M23;
-    float M24;
-    float M31;
-    float M32;
-    float M33;
-    float M34;
-    float M41;
-    float M42;
-    float M43;
-    float M44;
 };
 
 struct MESHSUBSET {
@@ -132,22 +63,6 @@ struct MESHSUBSETCHUNK {
     MESHSUBSET meshSubSet[numberOfMeshSubsets];
 };
 
-struct NODECHUNK {
-    char Name[64];
-    uint Mesh <format=hex>;
-    int Parent <format=hex>;
-    uint NumChildren;
-    uint MatID <format=hex>;
-    uint Filler;
-    MATRIX4x4 TranslationMatrix <comment=PrintMatrix4x4>;
-    VECTOR3 Transform <comment=PrintVector3>;
-    QUATERNION Quat <comment=PrintQuaternion>;
-    VECTOR3 Scale <comment=PrintVector3>;
-    int ControllerPos <format=hex>;
-    int RotationPos <format=hex>;
-    int ScalePos <format=hex>;
-};
-
 struct HELPER {
     uint type;  // Type of helper. 0=point,1=Dummy
     VECTOR3 Pos <comment=PrintVector3>;
@@ -160,22 +75,22 @@ struct MTLNAMECHUNK {
 };
 
 struct PHYSICSGEOMETRY {
-    uint physicGeom;
-    uint flags;
+    int physicGeom;
+    int flags;
     VECTOR3 minimum <comment=PrintVector3>;
     VECTOR3 maximum <comment=PrintVector3>;
     VECTOR3 spring_angle <comment=PrintVector3>;
     VECTOR3 spring_tension <comment=PrintVector3>;
-    VECTOR3 damping[3] <comment=PrintVector3>;
-    MATRIX3x3 framemtx;
+    VECTOR3 damping <comment=PrintVector3>;
+    MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
 };
 
 struct COMPILEDBONE {
     uint controllerID;
     PHYSICSGEOMETRY physicsGeo[2];
     float mass;
-    MATRIX3x4 worldToBone;    //initialpose matrix World2Bone
-    //BONETOWORLD boneToWorld <comment=GetB2W>;
+    MATRIX3x4 worldToBone <comment=PrintMatrix3x4>;    //initialpose matrix World2Bone
+    MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
     char boneName[256];
     int limbID;
     int offsetParent;       // this bone parent is this[m_nOffsetParent], 0 if the bone is root. Normally this is <= 0
@@ -187,12 +102,10 @@ struct COMPILEDBONE {
                             // this is 0 if there are no children
 };
 
-struct COMPILEDBONESCHUNK {
+struct COMPILEDBONESCHUNK(int numberOfBones) {
     char padding[32];
-    //VECTOR3 localTranslation <comment=PrintVector3>;
-    //MATRIX33 localRotation;
+    COMPILEDBONE bones(numberOfBones) <bgcolor=cDkRed>;
 };
-
 
 struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
     uint boneID;            // The number of the bone found.  Index in COMPILEDBONE
@@ -209,16 +122,8 @@ struct COMPILEDPHYSICALBONESCHUNK(int numberOfBones) {
 };
 
 struct COMPILEDBONES(int numberOfBones) {
+    char padding[32];
     COMPILEDBONE bones[numberOfBones];
-};
-
-struct DATASTREAMCHUNK {
-    uint Flags;
-    DATASTREAMTYPE DataStreamType;
-    uint NumElements;
-    uint ByesPerElement;
-    uint Reserved1;
-    uint Reserved2;
 };
 
 struct BONEMAPDATA {
@@ -263,20 +168,7 @@ struct BREAKABLEPHYSICSCHUNK {
     int reserved[10];
 };
 
-struct QTANGENT {
-    short x;
-    short y;
-    short z;
-    short w;
-};
-
-struct VertsUvs {
-    VECTOR3 vertices <comment=PrintVector3>;
-    IRGBA color <comment=PrintColor>;
-    UV uv <comment=PrintUV>;
-};
-
-struct DATASTREAM {
+struct DATASTREAMCHUNK {
     local int i;
     
     uint flags2;
@@ -338,6 +230,12 @@ struct DATASTREAM {
             break;
         }
     }
+};
+
+string GetDatastreamType(DATASTREAMCHUNK &datastream) {
+    string result;
+    SPrintf(result, "%s", EnumToString(datastream.datastreamType));
+    return result;
 };
 
 #endif

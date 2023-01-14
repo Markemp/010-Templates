@@ -10,12 +10,11 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-#ifndef ENUMS_COMMON_H
-    #include "Cryengine-Enums.bt"
-#endif
 
-#ifndef ENUMS_H
-#define ENUMS_H
+#ifndef ENUMS_34_H
+#define ENUMS_34_H
+
+#include "Cryengine-Enums.bt"
 
 enum CHUNKTYPE {
         Any = 0x0,
@@ -53,42 +52,11 @@ enum CHUNKTYPE {
         CompiledExt2IntMap = 0xACDC0006, //unknown chunk
         BreakablePhysics = 0xACDC0007, //unknown chunk
         FaceMap = 0xAAFC0000, //unknown chunk
-        SpeedInfo = 0xAAFC0002, //Speed and distnace info
+        SpeedInfo = 0xAAFC0002, //Speed and distance info
         FootPlantInfo = 0xAAFC0003, // Footplant info
         BonesBoxes = 0xAAFC0004, // unknown chunk
-        UnknownAAFC0005 = 0xAAFC0005 //unknown chunk
-};
-
-enum LightType {
-        OMNI,
-        SPOT,
-        DIRECT,
-        AMBIENT
-};
-
-enum CtrlType {
-        NONE,
-        CRYBONE,
-        LINEAR1,
-        LINEAR3,
-        LINEARQ,
-        BEZIER1,
-        BEZIER3,
-        BEZIERQ,
-        TBC1,
-        TBC3,
-        TBCQ,
-        BSPLINE2O,
-        BSPLINE1O,
-        BSPLINE2C,
-        BSPLINE1C,
-        CONST          // this was given a value of 11, which is the same as BSPLINE2o.
-};
-
-enum NodeType {
-    NODE_MESH,
-    NODE_LIGHT,
-    NODE_HELPER
+        UnknownAAFC0005 = 0xAAFC0005, //unknown chunk
+        GlobalAnimationHeaderCAF = 0xAAFC0007
 };
 
 #endif

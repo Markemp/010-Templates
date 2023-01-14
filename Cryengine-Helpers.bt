@@ -10,29 +10,12 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-#ifndef STRUCTS_H
-    #include "Cryengine3.4-Structs.bt"
-#endif
 
 #ifndef HELPERS_H
 #define HELPERS_H
 
-// custom read function
-string GetChunkTableType(CHUNKTABLEENTRY &chunk) {
-    string result;
-    SPrintf(result, "Type = %s, ID = %X", EnumToString(chunk.chunkType), chunk.id);
-    return result; 
-};
-
-string GetChunkType(CHUNK &chunk) {
-    string result;
-    if (chunk.chunkType == SourceInfo) {
-        SPrintf(result, "SourceInfo");
-    } else {
-        SPrintf(result, "Type = %s, ID = %X", EnumToString(chunk.chunkType), chunk.id);
-    }
-    return result;
-};
+#include "Cryengine-Structs.bt"
+#include "Cryengine-Enums.bt"
 
 string PrintMatrix4x4(MATRIX4x4 &m) {
     string result;
@@ -52,11 +35,11 @@ string PrintMatrix3x3(MATRIX3x3 &m) {
     return result;
 };
 
-//string PrintVector3(VECTOR3 &vertex) {
-//    string result;
-//    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
-//    return result;
-//};
+string PrintVector3(VECTOR3 &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
+    return result;
+};
 
 string PrintVector4(VECTOR4 &vertex) {
     string result;
@@ -82,22 +65,11 @@ string PrintColor(IRGBA &color) {
     return result;
 };
 
-string PrintCompiledBoneInfo(COMPILEDBONE_800 &bone) {
+string GetNodeName(NODECHUNK &chunk) {
     string result;
-    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.worldToBone.M14, bone.worldToBone.M24, bone.worldToBone.M34, bone.boneToWorld.M14, bone.boneToWorld.M24, bone.boneToWorld.M34);
+    SPrintf(result, "Name = %s", chunk.name);
     return result;
 };
 
-string PrintCompiledBoneName_800(COMPILEDBONE_800 &bone) {
-    string result;
-    SPrintf(result, "%s", bone.boneName);
-    return result;
-};
-
-string PrintCompiledBoneName_801(COMPILEDBONE_801 &bone) {
-    string result;
-    SPrintf(result, "Bone Name = %s", bone.name);
-    return result;
-};
 
 #endif

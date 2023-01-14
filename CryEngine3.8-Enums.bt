@@ -10,8 +10,11 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-#ifndef ENUMS_H
-    #define ENUMS_H
+
+#ifndef ENUMS_38_H
+#define ENUMS_38_H
+
+#include "Cryengine-Enums.bt"
 
 enum <ushort> CHUNKTYPE { 
         Any = 0x0,
@@ -48,65 +51,6 @@ enum <ushort> CHUNKTYPE {
         CompiledIntSkinVertices = 0x2005, 
         CompiledExt2IntMap = 0x2006,
         BoneBoxes = 0x3004
-} ;
-
-enum DATASTREAMTYPE {
-    VERTICES = 0x0,
-    NORMALS = 0x1,
-    UVS = 0x2,
-    COLORS = 0x3,
-    COLORS2 = 0x4,
-    INDICES = 0x5,
-    TANGENTS = 0x6,
-    SHCOEFFS = 0x7,
-    SHAPEDEFORMATION = 0x8,
-    BONEMAP = 0x9,
-    FACEMAP = 0xA,
-    VERTMATS = 0xB,
-    QTANGENTS = 0xC,      // Seen in Hunt models
-    VERTSUVS = 0xF
-} ;
-
-enum MtlNameTypeEnum {
-        // It looks like there is a 0x04 type now as well, for mech parts.  Not sure what that is.
-        // Also a 0x0B type now as well.
-        Library = 0x01,
-        Single = 0x10,
-        Child = 0x12,
-        Unknown1 = 0x0B,        // Collision materials?  In MWO, these are the torsos, arms, legs from body/<mech>.mtl
-        Unknown2 = 0x04
-} ;
-
-enum LightType {
-        OMNI,
-        SPOT,
-        DIRECT,
-        AMBIENT
-} ;
-
-enum CtrlType {
-        NONE,
-        CRYBONE,
-        LINEAR1,
-        LINEAR3,
-        LINEARQ,
-        BEZIER1,
-        BEZIER3,
-        BEZIERQ,
-        TBC1,
-        TBC3,
-        TBCQ,
-        BSPLINE2O,
-        BSPLINE1O,
-        BSPLINE2C,
-        BSPLINE1C,
-        CONST          // this was given a value of 11, which is the same as BSPLINE2o.
-};
-
-enum NodeType {
-    NODE_MESH,
-    NODE_LIGHT,
-    NODE_HELPER
 };
 
 enum <uint> MtlNamePhysicsType {

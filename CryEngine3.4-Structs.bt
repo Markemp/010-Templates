@@ -10,20 +10,21 @@
 //  ID Bytes: 
 //   History: 
 //------------------------------------------------
-#ifndef ENUMS_H
-    #include "Cryengine3.4-Enums.bt"
-#endif
-#ifndef STRUCTS_COMMON_H
-    #include "Cryengine-Structs.bt"
-#endif
-#ifndef HELPERS_H
-//    #include "Cryengine-Helpers.bt"
-#endif
+#ifndef STRUCTS_34_H
+#define STRUCTS_34_H
 
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#include "Cryengine3.4-Enums.bt"
+#include "Cryengine-Structs.bt"
+#include "Cryengine-Helpers.bt"
 
-// read the chunk header table
+struct HEADER {
+    char fileSig[8];
+    uint fileType <format=hex>;
+    uint chunkVersion;
+    int fileOffset;  // location of header chunks
+    uint numChunks;
+};
+
 struct CHUNKTABLEENTRY {
     CHUNKTYPE chunkType;
     uint version <format=hex>;  
@@ -32,9 +33,14 @@ struct CHUNKTABLEENTRY {
     uint size <format=hex>;
 };
 
-struct CHUNKTABLE {
-    int numChunks;
-    CHUNKTABLEENTRY chunks[numChunks] <comment=GetChunkTableType>;
+string GetChunkTableType(CHUNKTABLEENTRY &entry) {
+    string result;
+    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
+    return result;
+};
+
+struct CHUNKTABLE(int numberOfChunks) {
+    CHUNKTABLEENTRY chunk[numberOfChunks] <bgcolor=cDkBlue, comment=GetChunkTableType>;
 };
 
 struct SKINNINGINFO {
@@ -42,6 +48,7 @@ struct SKINNINGINFO {
 };
 
 struct MTLNAME {
+    CHUNKHEADER chunkHeader;
     MtlNameTypeEnum NFlags;
     int NFlags2;
     char Name[128];
@@ -53,11 +60,10 @@ struct MTLNAME {
     int reserved[32];
 };
 
-struct HEADER {
-    char fileSig[8];
-    uint fileType <format=hex>;
-    uint chunkVersion;
-    int fileOffset;  // location of header chunks
+string GetMaterialName(MTLNAME &chunk) {
+    string result;
+    SPrintf(result, "%s", chunk.Name);
+    return result;
 };
 
 struct CRYLINK {        // CryHeader.h
@@ -135,6 +141,12 @@ struct COMPILEDBONE_800 {
                             // this is 0 if there are no children
 };
 
+string GetBoneName_800(COMPILEDBONE_800 &bone) {
+    string result;
+    SPrintf(result, "Name = %s", bone.boneName);
+    return result;
+};
+
 struct BONENAMELIST {
     string boneName;
 };
@@ -143,11 +155,23 @@ struct COMPILEDBONE_801 {
     uint controllerId;
     uint mass;
     char unknown[208];
-    char name[48];
+    char boneName[48];
     int offsetParent;
     uint numChildren;
     uint offsetChild;
     MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+};
+
+string GetBoneName_801(COMPILEDBONE_801 &bone) {
+    string result;
+    SPrintf(result, "Name = %s", bone.boneName);
+    return result;
+};
+
+struct COMPILEDBONES(int numberOfBones) {
+    CHUNKHEADER headerInfo;
+    char padding[32];
+    COMPILEDBONE_800 compiledBone[numberOfBones] <comment=GetBoneName_800>;
 };
 
 struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
@@ -157,6 +181,12 @@ struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
     uint controllerID;      // controllerID for this bone.
     char prop[32];          // 32 byte char array
     PHYSICSGEOMETRY phys;   // physics.
+};
+
+struct COMPILEDPHYSICALBONES(int numberOfBones) {
+    CHUNKHEADER headerInfo;
+    char padding2[32];
+    COMPILEDPHYSICALBONE compiledPhysicalBone[numberOfBones];
 };
 
 struct COMPILEDPHYSICALPROXIES(uint version) {
@@ -170,13 +200,6 @@ struct COMPILEDPHYSICALPROXIES(uint version) {
     };
 };
 
-struct MATERIALCHUNK {
-    uint chunkType;
-    uint version;
-    uint offset;
-    uint id;
-};
-
 struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
     string sourceFile;
     string fileDate;
@@ -187,20 +210,8 @@ struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
     local uint size = tableEntry.size;
 };
 
-struct NODECHUNK {
-    char name[64];
-    uint objectNodeId <format=hex>; // Mesh chunk ID
-    uint parentNodeId <format=hex>; // Chunk ID of parent node
-    uint numberOfChildren;
-    uint materialId <format=hex>;
-    uint skipBytes;
-    MATRIX4x4 transform <comment=PrintMatrix4x4>;
-    VECTOR3 position <comment=PrintVector3>;
-    QUATERNION rotation <comment=PrintQuaternion>;
-    VECTOR3 scale <comment=PrintVector3>;
-};
-
 struct MESHCHUNK {
+    CHUNKHEADER chunkHeader;
     uint Flags1;
     uint Flags2;
     uint NumVertices;
@@ -229,6 +240,7 @@ struct MESHCHUNK {
 
 struct MESHSUBSETS {
     local int i;
+    CHUNKHEADER chunkHeader;
     uint flags;
     int numberOfMeshSubsets;
     uint unknown;  // skip bytes
@@ -246,7 +258,9 @@ struct MESHSUBSETS {
 
 struct DATASTREAMCHUNK {
     local int i;
-    
+
+    CHUNKHEADER headerInfo;
+
     uint flags2;
     DATASTREAMTYPE datastreamType;
     uint numberOfElements;
@@ -287,83 +301,16 @@ struct DATASTREAMCHUNK {
             VECTOR4 tangent[numberOfElements];
             break;   
         }
-        //case BONEMAP: {
-        //    uint flags[2];
-        //    BONEMAPDATA boneMap[numberOfElements];
-        //    break;
-        //}
-        //case QTANGENTS: {
-        //    uint flags[2];
-        //    QTANGENT qtangents[numberOfElements];
-        //}
         default: {
             break;
         }
     }
 };
 
-struct CHUNK(CHUNKTABLEENTRY &chunkTableEntry) {
-    if (chunkTableEntry.chunkType != SourceInfo) {
-        CHUNKTYPE chunkType;
-        uint version <format=hex>;
-        uint fOffset <format=hex>;
-        uint id <format=hex>;
-    } else {
-        local CHUNKTYPE chunkType = SourceInfo;
-    }
-
-    switch (chunkTableEntry.chunkType) {
-        case SourceInfo: {
-            SOURCEINFO sourceInfo(chunkTableEntry);
-            break;
-        }
-        case CompiledPhysicalBones: {
-            char padding[32];
-            local int numberOfBones, i;
-            numberOfBones = (chunkTableEntry.size - 32)/584;
-            for (i = 0; i < numberOfBones; i++) {
-                COMPILEDPHYSICALBONE compiledPhysicalBone;
-            }
-            break;
-        }
-        case CompiledBones: {
-            char padding[32];
-            local int numberOfBones, i;
-            numberOfBones = (chunkTableEntry.size - 32)/584;
-            for (i = 0; i < numberOfBones; i++) {
-                COMPILEDBONE_800 compiledBone <comment=PrintCompiledBoneInfo, name=PrintCompiledBoneName_800>;
-            }
-            break;
-        }
-        case MtlName: {
-            MTLNAME mtlName;
-            break;
-        }
-        case Node: {
-            NODECHUNK nodeChunk;
-            break;
-        }
-        case Mesh: {
-            MESHCHUNK chunkMesh;
-            break;
-        }
-        case MeshSubsets: {
-            MESHSUBSETS meshSubSets;
-            break;
-        }
-        case DataStream: {
-            DATASTREAMCHUNK chunkDatastream;
-            break;
-        }
-        case CompiledExt2IntMap: {
-            //BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
-            break;
-        }
-        case CompiledPhysicalProxies: {
-            //COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
-            break;
-        };
-    }
+string GetDatastreamType(DATASTREAMCHUNK &datastream) {
+    string result;
+    SPrintf(result, "%s", EnumToString(datastream.datastreamType));
+    return result;
 };
 
 #endif

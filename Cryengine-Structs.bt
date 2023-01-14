@@ -19,17 +19,18 @@ struct VECTOR3 {
     float z;
 };
 
-string PrintVector3 (VECTOR3 &vector) {
-    string result;
-    SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
-    return result;
-};
-
 struct VECTOR4 {
     float x;
     float y;
     float z;
     float w;
+};
+
+struct VECTOR4SHORT {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
 };
 
 struct QUATERNION {
@@ -97,10 +98,73 @@ struct UV {
     float v;
 };
 
+struct QTANGENT {
+    short x;
+    short y;
+    short z;
+    short w;
+};
+
+struct CHUNKHEADER {
+    CHUNKTYPE chunkType;
+    uint version <format=hex>;
+    uint offset <format=hex>;
+    uint id <format=hex>;
+};
+
+struct SPEEDINFO {
+    CHUNKHEADER chunkHeaderInfo;
+    float speed;
+    float distance;
+    float slope;
+    int animFlags;
+    VECTOR3 moveDir <comment=PrintVector3>;
+    QUATERNION startPosition;
+};
+
+struct CONTROLLER_829 {
+    uint controllerId;
+    uint16 numberOfRotationKeys;
+    uint16 numberOfPositionKeys;
+    ubyte rotationFormat;
+    ubyte rotationTimeFormat;
+    ubyte positionFormat;
+    ubyte positionKeyInfo;
+    ubyte positionTimeFormat;
+    ubyte tracksAligned;
+};
+
+struct CONTROLLER_905 {
+    uint32 numKeyPos;
+    uint32 numKeyRot;
+    uint32 numKeyTime;
+    uint32 numAnims;
+};
+
 struct VertsUvs {
     VECTOR3 vertices <comment=PrintVector3>;
     IRGBA color <comment=PrintColor>;
     UV uv <comment=PrintUV>;
+};
+
+struct NODECHUNK(int includeHeader) {
+    if (includeHeader) {
+        CHUNKHEADER nodeChunkHeaderInfo;
+    }
+    char name[64];
+    uint objectNodeId <format=hex>; // Mesh chunk ID
+    uint parentNodeId <format=hex>; // Chunk ID of parent node
+    uint numberOfChildren;
+    uint materialId <format=hex>;
+    uint skipBytes;                 // Obsolete info
+    MATRIX4x4 transform <comment=PrintMatrix4x4>;   
+    VECTOR3 position <comment=PrintVector3>;        // Obsolete
+    QUATERNION rotation <comment=PrintQuaternion>;  // Obsolete
+    VECTOR3 scale <comment=PrintVector3>;           // Obsolete
+    int controllerPos <format=hex>;
+    int rotationPos <format=hex>;
+    int scalePos <format=hex>;
+    int propertyStringLength <format=hex>;          // length of property string
 };
 
 #endif

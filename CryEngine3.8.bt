@@ -6,107 +6,29 @@
 // Revision:  1.0
 // Purpose:  3D animation
 //--------------------------------------
-//Cryengine3.8.bt
-#include "Cryengine3.8-Enums.bt"
-#include "Cryengine3.8-Structs.bt"
 
-struct HEADER {
-    char fileSig[8];
-    uint numChunks;
-    int fileOffset;  // location of header chunks
-} headerInfo <bgcolor=cLtBlue>;
+#include "Cryengine3.8-Enums.bt"
+#include "CryEngine3.8-Structs.bt"
+#include "Cryengine-Helpers.bt"
 
 local uint pos;
 local uint i;
 
-// custom read function
-
-string GetChunkType(CHUNK &chunk) {
-    string result;
-    SPrintf(result, "Type = %s, ID = %u", EnumToString(chunk.chunkType), chunk.id);
-    return result;
-};
-
-string GetNodeName(NODECHUNK &chunk) {
-    string result;
-    SPrintf(result, "Name = %s", chunk.Name);
-    return result;
-};
-
-string GetChunkTypeFromChunkTableEntry(CHUNKTABLEENTRY &entry) {
-    string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
-    return result;
-};
-
-string GetDatastreamType(DATASTREAM &datastream) {
-    string result;
-    SPrintf(result, "%s", EnumToString(datastream.datastreamType));
-    return result;
-};
-
-string PrintMatrix4x4(MATRIX4x4 &m) {
-    string result;
-    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44);
-    return result;
-};
-
-string PrintMatrix3x4(MATRIX3x4 &m) {
-    string result;
-    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34);
-    return result;
-};
-
-string PrintMatrix3x3(MATRIX3x3 &m) {
-    string result;
-    SPrintf(result, "[[%f, %f, %f] [%f, %f, %f] [%f, %f, %f]]", m.M11, m.M12, m.M13, m.M21, m.M22, m.M23, m.M31, m.M32, m.M33);
-    return result;
-};
-
-string PrintVector3(VECTOR3 &vertex) {
-    string result;
-    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
-    return result;
-};
-
-string PrintVector4(VECTOR4 &vertex) {
-    string result;
-    SPrintf(result, "%f, %f, %f, %f", vertex.x, vertex.y, vertex.z, vertex.w);
-    return result;
-};
-
-string PrintQuaternion(QUATERNION &quat) {
-    string result;
-    SPrintf(result, "%f, %f, %f, %f", quat.x, quat.y, quat.z, quat.w);
-    return result;
-};
-
-string PrintUV(UV &uv) {
-    string result;
-    SPrintf(result, "%f, %f", uv.u, uv.v);
-    return result;
-};
-
-string PrintColor(IRGBA &color) {
-    string result;
-    SPrintf(result, "%d, %d, %d, %d", color.r, color.g, color.b, color.a);
-    return result;
-};
+HEADER headerInfo <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
 FSeek(headerInfo.fileOffset);
 
-for (i = 0; i < headerInfo.numChunks; i++) {
-    CHUNKTABLEENTRY chunkTable <bgcolor=cDkBlue, comment=GetChunkTypeFromChunkTableEntry>;
-};
+CHUNKTABLEENTRY chunkTable[headerInfo.numChunks] <bgcolor=cDkBlue, comment=GetChunkTableType>;
 
 FSeek(pos);
 
-for (i=0; i < headerInfo.numChunks;i++) {
+for (i = 0; i < headerInfo.numChunks; i++) {
     FSeek(chunkTable[i].offset);
+    
     switch (chunkTable[i].chunkType) {
         case Node: {
-            NODECHUNK nodeChunk <comment=GetNodeName>;
+            NODECHUNK nodeChunk(false) <comment=GetNodeName>;
             break;
         }
         case Mesh: {
@@ -120,12 +42,11 @@ for (i=0; i < headerInfo.numChunks;i++) {
         case CompiledBones: {
             local int numberOfBones;
             numberOfBones = (chunkTable[i].size - 32)/584;
-            COMPILEDBONESCHUNK compiledBonedChunk;
             COMPILEDBONES bones(numberOfBones) <bgcolor=cDkRed>;
             break;
         }
         case DataStream: {
-            DATASTREAM datastream <comment=GetDatastreamType>;
+            DATASTREAMCHUNK datastream <comment=GetDatastreamType>;
             break;
         }
         case MeshSubsets: {

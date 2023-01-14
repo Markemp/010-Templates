@@ -13,6 +13,38 @@
 
 #include "Cryengine-Structs.bt"
 
+struct BONEMAPDATA {
+    ushort boneIndex[4];
+    byte weight[4];
+};
+
+struct BONEMAP(int numberOfVertices) {
+    uint bytesPerElement;
+    BONEMAPDATA bonemap[numberOfVertices] <comment=PrintBoneMapData>;
+};
+
+struct BONEMAPDATA32 {
+    uint boneIndex[4];
+    short weight[4];
+};
+
+struct BONEMAP32(int numberOfVertices) {
+    uint bytesPerElement;
+    BONEMAPDATA32 bonemap[numberOfVertices] <comment=PrintBoneMapData32>;
+};
+
+string PrintBoneMapData(BONEMAPDATA &data) {
+    string result;
+    SPrintf(result, "%d, %d, %d, %d", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3]);
+    return result;
+};
+
+string PrintBoneMapData32(BONEMAPDATA32 &data) {
+    string result;
+    SPrintf(result, "%d, %d, %d, %d", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3]);
+    return result;
+};
+
 struct UNKNOWN_4BYTE {
     byte x;
     byte y;
@@ -20,12 +52,27 @@ struct UNKNOWN_4BYTE {
     byte w;
 };
 
+string PrintUV(UV &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+struct UNKNOWN2 {
+    UNKNOWN_4BYTE dataBlock[6];
+};
+
+
+struct UNKNOWN(int numberOfVertices) {
+    uint bytesPerElement;
+    UNKNOWN2 unknown[numberOfVertices];
+};
+
 string PrintVector3 (VECTOR3 &vector) {
     string result;
     SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
     return result;
 };
-
 
 struct QUATERION {
     float x;
@@ -53,9 +100,15 @@ string PrintColor(COLOR &color) {
     return result;
 };
 
-struct UV {
+struct UVHalf {
     hfloat u;
     hfloat v;
+};
+
+string PrintUVHalf(UVHalf &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
 };
 
 struct IVONORMAL {
@@ -97,4 +150,67 @@ string PrintNormal(IVONORMAL &normal) {
     norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
     SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
     return result;
+};
+
+float CryHalfToFloat(ushort value) {
+    uint Mantissa;
+    uint Exponent;
+    uint Result;
+
+    Mantissa = (uint)(Value & 0x03FF);
+
+    if ((Value & 0x7C00) != 0)  // The value is normalized
+    {
+        Exponent = (uint)((Value >> 10) & 0x1F);
+    }
+    else if (Mantissa != 0)     // The value is denormalized
+    {
+        // Normalize the value in the resulting float
+        Exponent = 1;
+
+        do
+        {
+            Exponent--;
+            Mantissa <<= 1;
+        } while ((Mantissa & 0x0400) == 0);
+
+        Mantissa &= 0x03FF;
+    }
+    else                        // The value is zero
+    {
+        Exponent = (uint)-112;
+    }
+
+    Result = ((Value & 0x8000) << 16) | // Sign
+        ((Exponent + 112) << 23) | // Exponent
+        (Mantissa << 13);          // Mantissa
+
+    return (float)Result;
+};
+
+enum <uint> DatastreamType {
+    IvoNormals2 = 0x38A581FE,
+    IvoBoneMap = 0x677C7B23,
+    IvoBoneMap32 = 0x6ECA3708,
+    IvoVertsUvs = 0x91329AE9,
+    IvoNormals = 0x9CF3F615,
+    IvoTangents = 0xB95E9A1B,
+    IvoColors2 = 0xD9EED421,
+    IvoIndices = 0xEECDC168,
+};
+
+// Check if value is in a given enum. 
+int isInEnum(DatastreamType type) {
+    local int found = false;
+    switch(type){
+        case IvoNormals2: found = true; break;
+        case IvoBoneMap: found = true; break;
+        case IvoBoneMap32: found = true; break;
+        case IvoVertsUvs: found = true; break;
+        case IvoNormals: found = true; break;
+        case IvoColors2: found = true; break;
+        case IvoTangents: found = true; break;
+        case IvoIndices: found = true; break;
+       }
+    return found;
 };

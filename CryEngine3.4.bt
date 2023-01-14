@@ -6,6 +6,7 @@
 // Revision:
 // Purpose:
 //--------------------------------------
+
 #include "Cryengine3.4-Enums.bt"
 #include "Cryengine3.4-Structs.bt"
 #include "Cryengine-Helpers.bt"
@@ -16,13 +17,71 @@ local uint i;
 HEADER headerInfo <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
-FSeek(headerInfo.fileOffset);
 
-CHUNKTABLE chunkTable;
+FSeek(headerInfo.fileOffset + 4);  // Skip numChunks, which is in headerInfo
 
-FSeek(pos);
+CHUNKTABLEENTRY chunkTable[headerInfo.numChunks] <comment=GetChunkTableType>;
 
-for (i = 0; i < chunkTable.numChunks; i++) {
-    FSeek (chunkTable.chunks[i].offset);
-    CHUNK chunk(chunkTable.chunks[i]) <name=GetChunkType>;
+FSeek(pos + 4);
+
+for (i = 0; i < headerInfo.numChunks; i++) {
+    FSeek(chunkTable[i].offset);
+
+    switch (chunkTable[i].chunkType) {
+        case SourceInfo: {
+            SOURCEINFO sourceInfo(chunkTable[i]);
+            break;
+        }
+        case CompiledPhysicalBones: {
+            COMPILEDPHYSICALBONES compiledPhysicalBones((chunkTable[i].size - 32)/584)  <bgcolor=cLtGreen>;
+            break;
+        }
+        case CompiledBones: {
+            COMPILEDBONES compiledBones((chunkTable[i].size - 32)/584) <bgcolor=cDkRed>;
+            break;
+        }
+        case MtlName: {
+            MTLNAME mtlName <comment=GetMaterialName>;
+            break;
+        }
+        case Node: {
+            
+            NODECHUNK nodeChunk(true) <comment=GetNodeName>;
+            break;
+        }
+        case Mesh: {
+            MESHCHUNK chunkMesh;
+            break;
+        }
+        case MeshSubsets: {
+            MESHSUBSETS meshSubSets <bgcolor=cLtBlue>;
+            break;
+        }
+        case DataStream: {
+            DATASTREAMCHUNK chunkDatastream <comment=GetDatastreamType>;
+            break;
+        }
+        case CompiledExt2IntMap: {
+            //BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
+            break;
+        }
+        case CompiledPhysicalProxies: {
+            //COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
+            break;
+        };
+        case Controller: {
+            CHUNKHEADER chunkHeaderInfo;
+            if (chunkHeaderInfo.version == 0x0829) {
+                CONTROLLER_829 controller;
+            } 
+            else if (chunkHeaderInfo.version == 0x0905) {
+                CONTROLLER_905 controller;
+            };
+            break;
+        };
+        case SpeedInfo: {
+            SPEEDINFO speedInfo <bgcolor=cLtRed>;
+            break;
+        };
+    }
 };

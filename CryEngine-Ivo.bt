@@ -11,6 +11,7 @@
 //   History: 
 //------------------------------------------------
 
+// Ivo files
 #include "Cryengine-Common.bt"
 
 local uint pos;
@@ -26,35 +27,16 @@ struct HEADER {
 enum <uint> CHUNKTYPE {
     Skeleton1               = 0x0000300d,
     DBAData                 = 0x194fbc50,
-    DBA                     = 0xf7351608,
     Skeleton                = 0x1bbc4103,
     BShapes                 = 0xf5c6eb5b,
     BShapesGPU              = 0x57a3befd,
     MaterialName            = 0x8335674e,
     BShapes3                = 0x875ccb28,
+    CompiledPhysicalBones   = 0x90c687dc,
+    MeshChunk               = 0x9293b9d8,
     SkinMesh                = 0xb875b2d9,
     CompiledBones           = 0xc201973c,
-    CompiledPhysicalBones   = 0x90c687dc,
-    MeshChunk               = 0x9293b9d8
-};
-
-enum <uint> DATASTREAMTYPE {
-    VERTICES = 0x0,
-    NORMALS = 0x1,
-    UVS = 0x2,
-    COLORS2 = 0x4,
-    SHCOEFFS = 0x7,
-    SHAPEDEFORMATION = 0x8,
-    FACEMAP = 0xA,
-    VERTMATS = 0xB,
-    IvoNormals = 0x9CF3F615,
-    IvoNormals2 = 0x38A581FE,
-    IvoColors2 = 0xD9EED421,
-    IvoIndices = 0xEECDC168,
-    IvoTangents = 0xB95E9A1B,
-    IvoBoneMap = 0x677C7B23,
-    IvoVertsUvs = 0x91329AE9,
-    IvoUnknown2 = 0x6ECA3708
+    DBA                     = 0xf7351608
 };
 
 struct CHUNKTABLE {
@@ -76,11 +58,6 @@ struct MESHCHUNK {
     VECTOR3 minBound <comment=PrintVector3>;
     VECTOR3 maxBound <comment=PrintVector3>;
     uint unknown2;
-};
-
-struct BONEMAPDATA {
-    ushort boneIndex[4];
-    byte weight[4];
 };
 
 struct BONETOWORLD {
@@ -125,7 +102,6 @@ struct COMPILEDPHYSICALBONES {
 };
 
 struct IVOINDICES(int numberOfIndices) {
-    // DATASTREAMTYPE type;
     uint bytesPerElement;
     ushort indices[numberOfIndices];
     if (numberOfIndices % 2 == 1) {
@@ -139,22 +115,17 @@ struct IVOINDICES(int numberOfIndices) {
 };
 
 struct IVOVERTSUVS(int numberOfVertices) {
-    // DATASTREAMTYPE type = DATASTREAMTYPE.IvoVertsUvs;
     uint bytesPerElement;
 
     struct VERTUV {
         VECTOR3 vertex <comment=PrintVector3>;
         COLOR color <comment=PrintColor>;
-        UV uv <comment=PrintUV>;
+        UVHalf uv <comment=PrintUVHalf>;
     };
     VERTUV vertUvs[numberOfVertices];
-    if (numberOfVertices % 2 == 1) {
-        uint filler;
-    }
 };
 
 struct IVOCOLORS(int numberOfVertices) {
-    // DATASTREAMTYPE type;
     uint bytesPerElement;
     COLOR vertexColors[numberOfVertices] <comment=PrintColor>;
     if (numberOfVertices % 2 == 1) {
@@ -171,7 +142,6 @@ struct IVONORMALS(int numberOfVertices) {
 };
 
 struct TANGENTS(int numberOfVertices) {
-    // DATASTREAMTYPE type;
     uint bytesPerElement;
     for (i = 0; i < numberOfVertices; i++) {
         TANGENT_BYTE tangent <comment=PrintTangentByte>;
@@ -179,17 +149,6 @@ struct TANGENTS(int numberOfVertices) {
     for (i = 0; i < numberOfVertices; i++) {
         TANGENT_BYTE bitangent <comment=PrintTangentByte>;
     };
-};
-
-struct BONEMAP(int numberOfVertices) {
-    // DATASTREAMTYPE type;
-    uint bytesPerElement;
-    BONEMAPDATA bonemap[numberOfVertices];
-};
-
-struct UNKNOWN(int numberOfVertices) {
-    uint bytesPerElement;
-    UNKNOWN_4BYTE unknown[numberOfVertices];
 };
 
 struct MTLNAME {
@@ -213,10 +172,14 @@ struct SKINMESH {
     uint flags;
     MESHCHUNK meshChunk;
     char unknown2[116] <fgcolor=cAqua>;
-    // char unknown3[428];
     IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
     while (!FEof()) {
-        DATASTREAMTYPE type;
+        DatastreamType type;
+        while (!isInEnum(type)) {
+            if (!FEof()) {
+                DatastreamType type;
+            };
+        };
         switch (type) {
             case IvoVertsUvs: {
                 IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
@@ -246,8 +209,8 @@ struct SKINMESH {
                 BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
-            case IvoUnknown2: {
-                UNKNOWN unknown(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+            case IvoBoneMap32: {
+                BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
         }
@@ -275,12 +238,6 @@ string GetChunkTypeFromChunkTableEntry(CHUNKTABLE &entry) {
 string GetBoneName(BONENAME &boneName) {
     string result;
     SPrintf(result, "Bone Name: %s", boneName.boneName);
-    return result;
-};
-
-string PrintUV(UV &uv) {
-    string result;
-    SPrintf(result, "%f, %f", uv.u, uv.v);
     return result;
 };
 
