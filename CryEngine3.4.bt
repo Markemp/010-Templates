@@ -36,6 +36,10 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             COMPILEDPHYSICALBONES compiledPhysicalBones((chunkTable[i].size - 32)/584)  <bgcolor=cLtGreen>;
             break;
         }
+        case CompiledPhysicalProxies: {
+            COMPILEDPHYSICALPROXIES compiledPhysicalProxy;
+            break;
+        }
         case CompiledBones: {
             COMPILEDBONES compiledBones((chunkTable[i].size - 32)/584) <bgcolor=cDkRed>;
             break;

@@ -189,16 +189,40 @@ struct COMPILEDPHYSICALBONES(int numberOfBones) {
     COMPILEDPHYSICALBONE compiledPhysicalBone[numberOfBones];
 };
 
-struct COMPILEDPHYSICALPROXIES(uint version) {
-    uint numberOfProxies, i;
-    for (i = 0; i < numberOfProxies; i++) {
-        uint id;
-        uint numberOfVertices;
-        uint numberOfIndices;
-        uint material;              // Size of weird null bytes at end of structure
-        VECTOR3 v;
-    };
+struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 numberOfMaterials)
+{
+    uint32 chunkID;
+    VECTOR3 vertex[numberOfVertices];
+    uint16 index[numberOfIndices];
+    char m_arrMaterials[numberOfMaterials];
 };
+
+struct COMPILEDPHYSICALPROXIES {
+    CHUNKHEADER chunkHeaderInfo;
+    if (chunkHeaderInfo.version == 0x0800) {
+        uint numberOfProxies;
+        local uint i;
+        for (i = 0; i < numberOfProxies; i++) {
+            uint id;
+            uint numberOfVertices;
+            uint numberOfIndices;
+            uint material;              // Size of weird null bytes at end of structure
+            VECTOR3 v;
+        };
+    }
+    else if (chunkHeaderInfo.version == 0x0801) {
+        uint numberOfProxies;
+        local uint i;
+        for (i = 0; i < numberOfProxies; i++) {
+            uint id;
+            uint numberOfVertices;
+            uint numberOfIndices;
+            uint material;              // Size of weird null bytes at end of structure
+            VECTOR3 v;
+        };
+    }
+};
+
 
 struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
     string sourceFile;
