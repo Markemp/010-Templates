@@ -12,6 +12,7 @@
 //------------------------------------------------
 
 // Ivo files
+#include "CryengineIvo-Structs.bt"
 #include "Cryengine-Common.bt"
 
 local uint pos;
@@ -24,29 +25,10 @@ struct HEADER {
     int chunkHeaderTableOffset;  // location of header chunks
 } headerInfo <bgcolor=cLtBlue>;
 
-enum <uint> CHUNKTYPE {
-    Skeleton1               = 0x0000300d,
-    DBAData                 = 0x194fbc50,
-    Skeleton                = 0x1bbc4103,
-    BShapes                 = 0xf5c6eb5b,
-    BShapesGPU              = 0x57a3befd,
-    MaterialName            = 0x8335674e,
-    BShapes3                = 0x875ccb28,
-    CompiledPhysicalBones   = 0x90c687dc,
-    MeshChunk               = 0x9293b9d8,
-    SkinMesh                = 0xb875b2d9,
-    CompiledBones           = 0xc201973c,
-    DBA                     = 0xf7351608
-};
-
 struct CHUNKTABLE {
     CHUNKTYPE chunkType <format=hex>;
     uint version <format=hex>;  
     uint64 offset <format=hex>;
-};
-
-struct NODECHUNK {
-    char nodeName[128];
 };
 
 struct MESHCHUNK {
@@ -156,14 +138,14 @@ struct MTLNAME {
 };
 
 struct IVOMESHSUBSET {
-    uint materialId;
+    uint matId;
     uint firstIndex;
     uint numIndices;
     uint firstVertex;
     uint numVertices;
     float radius;
     VECTOR3 center <comment=PrintVector3>;
-    uint matId <format=hex>;
+    uint unknown0 <format=hex>;
     uint unknown1;
     uint unknown2;
 };
@@ -255,10 +237,12 @@ FSeek(pos);
 for (i = 0; i < headerInfo.numChunks; i++) {
     FSeek(chunkTable[i].offset);
     switch (chunkTable[i].chunkType) {
+        case MeshChunk320:
         case MeshChunk: {
             MESHCHUNK meshChunk;
             break;
         }
+        case CompiledBones320:
         case CompiledBones: {
             local int64 chunkSize = chunkTable[i+1].offset - chunkTable[i].offset;
             COMPILEDBONES compiledBones  <bgcolor=cDkRed>;
@@ -268,10 +252,12 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             COMPILEDPHYSICALBONES compiledPhysicalBones <bgcolor=cLtGreen>;
             break;
         }
+        case SkinMesh2:
         case SkinMesh: {
             SKINMESH skinMesh;
             break;
         }
+        case MaterialName320:
         case MaterialName: {
             MTLNAME materialName <bgcolor=cDkGreen>;
             break;

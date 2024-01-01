@@ -29,7 +29,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
 
     switch (chunkTable[i].chunkType) {
         case SourceInfo: {
-            SOURCEINFO sourceInfo(chunkTable[i]);
+            SOURCEINFO sourceInfo(chunkTable[i]) <comment=PrintSourceInfo>;
             break;
         }
         case CompiledPhysicalBones: {
@@ -41,7 +41,11 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case CompiledBones: {
-            COMPILEDBONES compiledBones((chunkTable[i].size - 32)/584) <bgcolor=cDkRed>;
+            local int compiledBoneSize = 584;
+            if (chunkTable[i].version == 0X0801) {
+                compiledBoneSize = 324;
+            };
+            COMPILEDBONES compiledBones((chunkTable[i].size - 32)/compiledBoneSize) <bgcolor=cDkRed>;
             break;
         }
         case MtlName: {
@@ -85,6 +89,14 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         };
         case SpeedInfo: {
             SPEEDINFO speedInfo <bgcolor=cLtRed>;
+            break;
+        };
+        case ExportFlags: {
+            EXPORTFLAGS exportFlags <comment=PrintExportFlags>;
+            break;
+        };
+        case TimingInfo: {
+            TIMINGINFO timingInfo <comment=PrintTimingInfo>;
             break;
         };
     }

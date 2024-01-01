@@ -32,7 +32,7 @@ enum CHUNKTYPE {
         Node = 0xCCCC000B,
         Mtl = 0xCCCC000C,
         Controller = 0xCCCC000D,
-        Timing = 0xCCCC000E,
+        TimingInfo = 0xCCCC000E,
         BoneMesh = 0xCCCC000F,
         BoneLightBinding = 0xCCCC0010,
         MeshMorphTarget = 0xCCCC0011,

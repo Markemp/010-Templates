@@ -30,7 +30,12 @@ struct CHUNKTABLEENTRY {
     uint version <format=hex>;  
     uint offset <format=hex>;
     uint id <format=hex>;
-    uint size <format=hex>;
+    if (version == 0x0744) {
+        uint size <format=hex>;
+    }
+    else {
+        local uint size = 0;
+    };
 };
 
 string GetChunkTableType(CHUNKTABLEENTRY &entry) {
@@ -147,6 +152,7 @@ string GetBoneName_800(COMPILEDBONE_800 &bone) {
     return result;
 };
 
+
 struct BONENAMELIST {
     string boneName;
 };
@@ -171,7 +177,13 @@ string GetBoneName_801(COMPILEDBONE_801 &bone) {
 struct COMPILEDBONES(int numberOfBones) {
     CHUNKHEADER headerInfo;
     char padding[32];
-    COMPILEDBONE_800 compiledBone[numberOfBones] <comment=GetBoneName_800>;
+    if (headerInfo.version == 0x0800) {
+        COMPILEDBONE_800 compiledBone[numberOfBones] <comment=GetBoneName_800>;
+    }
+    else {
+        COMPILEDBONE_801 compileBone[numberOfBones] <comment=GetBoneName_801>;
+    };
+    
 };
 
 struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
@@ -223,8 +235,24 @@ struct COMPILEDPHYSICALPROXIES {
     }
 };
 
+struct EXPORTFLAGS {
+    CHUNKHEADER header;
+    uint skipBytes;
+    uint major;
+    uint minor;
+    uint build;
+    uint revision;
+    string rcVersionString;
+};
+
+string PrintExportFlags(EXPORTFLAGS &flags) {
+    string result;
+    SPrintf(result, "%s", flags.rcVersionString);
+    return result;
+};
 
 struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
+    CHUNKHEADER headerInfo;
     string sourceFile;
     string fileDate;
     string author;
@@ -232,6 +260,27 @@ struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
     local uint version = tableEntry.version;
     local uint offset = tableEntry.offset;
     local uint size = tableEntry.size;
+};
+
+string PrintSourceInfo(SOURCEINFO &info) {
+    string result;
+    SPrintf(result, "%s", info.sourceFile);
+    return result;
+};
+
+struct TIMINGINFO {
+    CHUNKHEADER headerinfo;
+    float secondsPerTick;
+    int ticksPerFrame;
+    char globalName[32];
+    int globalRangeStart;
+    int globalRangeEnd;
+};
+
+string PrintTimingInfo(TIMINGINFO &info) {
+    string result;
+    SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
+    return result;
 };
 
 struct MESHCHUNK {
@@ -261,6 +310,8 @@ struct MESHCHUNK {
     VECTOR3 MinBound <comment=PrintVector3>;
     VECTOR3 MaxBound <comment=PrintVector3>;
 };
+
+
 
 struct MESHSUBSETS {
     local int i;

@@ -1,0 +1,30 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+enum <uint> CHUNKTYPE {
+    Skeleton1               = 0x0000300d,
+    DBAData                 = 0x194fbc50,
+    Skeleton                = 0x1bbc4103,
+    BShapes                 = 0xf5c6eb5b,
+    BShapesGPU              = 0x57a3befd,
+    MaterialName            = 0x8335674e,
+    MaterialName320         = 0x83353333,
+    BShapes3                = 0x875ccb28,
+    CompiledPhysicalBones   = 0x90c687dc,
+    MeshChunk320            = 0x92914444,
+    MeshChunk               = 0x9293b9d8,
+    SkinMesh                = 0xb875b2d9,
+    SkinMesh2               = 0xb8757777,
+    CompiledBones           = 0xc201973c,
+    CompiledBones320        = 0xc2011111,
+    DBA                     = 0xf7351608
+};

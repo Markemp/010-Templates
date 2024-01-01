@@ -139,6 +139,19 @@ struct CONTROLLER_905 {
     uint32 numKeyRot;
     uint32 numKeyTime;
     uint32 numAnims;
+
+    local uint i;
+    // Key time lengths
+    uint16 keyTime[numKeyTime];
+    uint keyTimeFormat[7];
+    uint16 keyPositionLength[numKeyPos];
+    uint keyPositionFormat[9];
+    uint16 keyRotationLength[numKeyRot];
+    uint keyRotationFormat[9];
+    uint keyTimeOffset[numKeyTime];
+    uint keyPositionOffset[numKeyPos];
+    uint keyRotationOffset[numKeyRot];
+    uint trackLength;
 };
 
 struct VertsUvs {
