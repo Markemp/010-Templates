@@ -20,20 +20,20 @@ pos = FTell(); // save read position
 
 FSeek(headerInfo.fileOffset + 4);  // Skip numChunks, which is in headerInfo
 
-CHUNKTABLEENTRY chunkTable[headerInfo.numChunks] <comment=GetChunkTableType>;
+CHUNKTABLE chunkTable(headerInfo.version, headerInfo.numChunks);
 
 FSeek(pos + 4);
 
 for (i = 0; i < headerInfo.numChunks; i++) {
-    FSeek(chunkTable[i].offset);
+    FSeek(chunkTable.tableEntry[i].offset);
 
-    switch (chunkTable[i].chunkType) {
+    switch (chunkTable.tableEntry[i].chunkType) {
         case SourceInfo: {
-            SOURCEINFO sourceInfo(chunkTable[i]) <comment=PrintSourceInfo>;
+            SOURCEINFO sourceInfo(chunkTable.tableEntry[i]) <comment=PrintSourceInfo>;
             break;
         }
         case CompiledPhysicalBones: {
-            COMPILEDPHYSICALBONES compiledPhysicalBones((chunkTable[i].size - 32)/584)  <bgcolor=cLtGreen>;
+            COMPILEDPHYSICALBONES compiledPhysicalBones((chunkTable.tableEntry[i].size - 32)/584)  <bgcolor=cLtGreen>;
             break;
         }
         case CompiledPhysicalProxies: {
@@ -42,10 +42,10 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case CompiledBones: {
             local int compiledBoneSize = 584;
-            if (chunkTable[i].version == 0X0801) {
+            if (chunkTable.tableEntry[i].version == 0X0801) {
                 compiledBoneSize = 324;
-            };
-            COMPILEDBONES compiledBones((chunkTable[i].size - 32)/compiledBoneSize) <bgcolor=cDkRed>;
+            }
+            COMPILEDBONES compiledBones((chunkTable.tableEntry[i].size - 32)/compiledBoneSize) <bgcolor=cDkRed>;
             break;
         }
         case MtlName: {

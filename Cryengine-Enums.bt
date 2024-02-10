@@ -35,6 +35,8 @@ enum MtlNameTypeEnum {
     // Also a 0x0B type now as well.
     Basic = 0x00,
     Library = 0x01,
+    MwoChild = 0x02,
+    Unknown = 0x04,
     Single = 0x10,
     Child = 0x12,
     Unknown1 = 0x0B,   // Collision materials?  In MWO, these are the torsos, arms, legs from body/<mech>.mtl

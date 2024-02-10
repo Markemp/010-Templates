@@ -20,17 +20,17 @@
 struct HEADER {
     char fileSig[8];
     uint fileType <format=hex>;
-    uint chunkVersion;
+    uint version;
     int fileOffset;  // location of header chunks
     uint numChunks;
 };
 
-struct CHUNKTABLEENTRY {
+struct CHUNKTABLEENTRY(uint ver) {
     CHUNKTYPE chunkType;
     uint version <format=hex>;  
     uint offset <format=hex>;
     uint id <format=hex>;
-    if (version == 0x0744) {
+    if (ver == 0x0745) {
         uint size <format=hex>;
     }
     else {
@@ -38,14 +38,17 @@ struct CHUNKTABLEENTRY {
     };
 };
 
-string GetChunkTableType(CHUNKTABLEENTRY &entry) {
+string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
     string result;
     SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
     return result;
 };
 
-struct CHUNKTABLE(int numberOfChunks) {
-    CHUNKTABLEENTRY chunk[numberOfChunks] <bgcolor=cDkBlue, comment=GetChunkTableType>;
+struct CHUNKTABLE(uint ver, int numChunks) {
+    local uint i;
+    for (i = 0; i < numChunks; i++) {
+        CHUNKTABLEENTRY tableEntry(ver) <comment=PrintChunkTableType>;
+    };
 };
 
 struct SKINNINGINFO {
@@ -54,7 +57,7 @@ struct SKINNINGINFO {
 
 struct MTLNAME {
     CHUNKHEADER chunkHeader;
-    MtlNameTypeEnum NFlags;
+    MtlNameTypeEnum mtlType;
     int NFlags2;
     char Name[128];
     int PhysicalizeType;
@@ -67,7 +70,7 @@ struct MTLNAME {
 
 string GetMaterialName(MTLNAME &chunk) {
     string result;
-    SPrintf(result, "%s", chunk.Name);
+    SPrintf(result, "Name: %s, Type: %s", chunk.Name, EnumToString(chunk.mtlType));
     return result;
 };
 
