@@ -131,6 +131,11 @@ struct BONEMAPDATA {
     byte weight[4];
 };
 
+struct BONEMAPDATA_8 {
+    byte boneIndex[4];
+    byte weight[4];
+};
+
 struct MESHCHUNK {
     uint Flags1;
     uint Flags2;
@@ -219,7 +224,12 @@ struct DATASTREAMCHUNK {
         }
         case BONEMAP: {
             uint flags[2];
-            BONEMAPDATA boneMap[numberOfElements];
+            if (bytesPerElement == 8) {
+                BONEMAPDATA_8 boneMap[numberOfElements];
+            }
+            else if (bytesPerElement == 12) {
+                BONEMAPDATA boneMap[numberOfElements];
+            };
             break;
         }
         case QTANGENTS: {

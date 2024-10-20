@@ -151,17 +151,26 @@ struct IVOMESHSUBSET {
 };
 
 struct SKINMESH {
+    local ulong position;
+
     uint flags;
     MESHCHUNK meshChunk;
     char unknown2[116] <fgcolor=cAqua>;
     IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
     while (!FEof()) {
+        position = FTell();
         DatastreamType type;
         while (!isInEnum(type)) {
-            if (!FEof()) {
-                DatastreamType type;
-            };
-        };
+            if (FEof()) {
+                break; // Exit if we reached the end of the file
+            }
+            DatastreamType type;
+        }
+        
+        // Ensure no further processing if we break due to EOF
+        if (FEof()) {
+            break; // Stop processing if we've reached the end
+        }
         switch (type) {
             case IvoVertsUvs: {
                 IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
