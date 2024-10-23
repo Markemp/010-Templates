@@ -16,7 +16,7 @@
 
 #include "Cryengine-Enums.bt"
 
-enum CHUNKTYPE {
+enum <uint> CHUNKTYPE {
         Any = 0x0,
         Mesh = 0xCCCC0000,
         Helper = 0xCCCC0001,

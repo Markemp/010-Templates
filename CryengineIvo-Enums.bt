@@ -1,0 +1,54 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#ifndef ENUMS_IVO_H
+#define ENUMS_IVO_H
+
+#include "Cryengine-Enums.bt"
+
+enum <uint> DatastreamType {
+    IvoNormals2 = 0x38A581FE, // [6], size 04h
+    IvoBoneMap = 0x677C7B23, // [4], size 0ch
+    IvoBoneMap32 = 0x6ECA3708, // [5], size 18h
+    IvoVertsUvs = 0x91329AE9, // [0], size 14h
+    IvoNormals = 0x9CF3F615, // [1], size 04h
+    IvoTangents = 0xB95E9A1B, // [3], size 08h
+    IvoColors2 = 0xD9EED421, // [2], size 04h
+    IvoIndices = 0xEECDC168, // Does exist, oddly is inlined
+    IvoVertsUvsCGF = 0xB3A70D5E, // [7], size 0ch
+    IvoUnknown2 = 0xEE057252, // [8], size 08h
+    IvoUnknown3 = 0x9D51C5EE, // [9], size 02h
+    IvoUnknown4 = 0xA596C0E6, // [10], size 0ch
+    IvoUnknown5 = 0x7E216CAB, // [11], size 0ch
+    IvoUnknown6 = 0x69655CD8, // [12], size 04h
+    IvoUnknown7 = 0xDA86BE9C, // [13], size 10h
+};
+
+// Check if value is in a given enum. 
+int isInEnum(DatastreamType type) {
+    local int found = false;
+    switch(type){
+        case IvoNormals2: found = true; break;
+        case IvoBoneMap: found = true; break;
+        case IvoBoneMap32: found = true; break;
+        case IvoVertsUvs: found = true; break;
+        case IvoNormals: found = true; break;
+        case IvoColors2: found = true; break;
+        case IvoTangents: found = true; break;
+        case IvoIndices: found = true; break;
+       }
+    return found;
+};
+
+
+#endif

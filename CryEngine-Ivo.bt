@@ -13,6 +13,7 @@
 
 // Ivo files
 #include "CryengineIvo-Structs.bt"
+#include "CryengineIvo-Enums.bt"
 #include "Cryengine-Common.bt"
 
 local uint pos;
