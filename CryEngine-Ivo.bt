@@ -26,22 +26,9 @@ struct HEADER {
     int chunkHeaderTableOffset;  // location of header chunks
 } headerInfo <bgcolor=cLtBlue>;
 
-struct CHUNKTABLE {
-    CHUNKTYPE chunkType <format=hex>;
-    uint version <format=hex>;  
-    uint64 offset <format=hex>;
-};
 
-struct MESHCHUNK {
-    uint flags2;  // 4 = no normals datastream, 5 has normals datastream
-    uint numberOfVertices;
-    uint numberOfIndices;
-    uint numberOfSubmeshes;
-    uint unknown;
-    VECTOR3 minBound <comment=PrintVector3>;
-    VECTOR3 maxBound <comment=PrintVector3>;
-    uint unknown2;
-};
+
+
 
 struct BONETOWORLD {
     float row1[4];
@@ -138,18 +125,7 @@ struct MTLNAME {
     char Name[128];
 };
 
-struct IVOMESHSUBSET {
-    uint matId;
-    uint firstIndex;
-    uint numIndices;
-    uint firstVertex;
-    uint numVertices;
-    float radius;
-    VECTOR3 center <comment=PrintVector3>;
-    uint unknown0 <format=hex>;
-    uint unknown1;
-    uint unknown2;
-};
+
 
 struct SKINMESH {
     local ulong position;

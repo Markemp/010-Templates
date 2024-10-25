@@ -105,22 +105,12 @@ struct QTANGENT {
     short w;
 };
 
-struct CHUNKHEADER {
-    CHUNKTYPE chunkType;
-    uint version <format=hex>;
-    uint offset <format=hex>;
-    uint id <format=hex>;
-};
-
-struct SPEEDINFO {
-    CHUNKHEADER chunkHeaderInfo;
-    float speed;
-    float distance;
-    float slope;
-    int animFlags;
-    VECTOR3 moveDir <comment=PrintVector3>;
-    QUATERNION startPosition;
-};
+//struct CHUNKHEADER {
+//    CHUNKTYPE chunkType;
+//    uint version <format=hex>;
+//    uint offset <format=hex>;
+//    uint id <format=hex>;
+//};
 
 struct CONTROLLER_829 {
     uint controllerId;
@@ -160,24 +150,5 @@ struct VertsUvs {
     UV uv <comment=PrintUV>;
 };
 
-struct NODECHUNK(int includeHeader) {
-    if (includeHeader) {
-        CHUNKHEADER nodeChunkHeaderInfo;
-    }
-    char name[64];
-    uint objectNodeId <format=hex>; // Mesh chunk ID
-    uint parentNodeId <format=hex>; // Chunk ID of parent node
-    uint numberOfChildren;
-    uint materialId <format=hex>;
-    uint skipBytes;                 // Obsolete info
-    MATRIX4x4 transform <comment=PrintMatrix4x4>;   
-    VECTOR3 position <comment=PrintVector3>;        // Obsolete
-    QUATERNION rotation <comment=PrintQuaternion>;  // Obsolete
-    VECTOR3 scale <comment=PrintVector3>;           // Obsolete
-    int controllerPos <format=hex>;
-    int rotationPos <format=hex>;
-    int scalePos <format=hex>;
-    int propertyStringLength <format=hex>;          // length of property string
-};
 
 #endif

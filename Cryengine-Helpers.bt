@@ -65,11 +65,4 @@ string PrintColor(IRGBA &color) {
     return result;
 };
 
-string GetNodeName(NODECHUNK &chunk) {
-    string result;
-    SPrintf(result, "Name = %s", chunk.name);
-    return result;
-};
-
-
 #endif

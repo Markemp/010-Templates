@@ -15,6 +15,26 @@
 #define ENUMS_IVO_H
 
 #include "Cryengine-Enums.bt"
+#include "Cryengine-Structs.bt"
+
+enum <uint> CHUNKTYPE {
+    Skeleton1               = 0x0000300d,
+    DBAData                 = 0x194fbc50,
+    Skeleton                = 0x1bbc4103,
+    BShapes                 = 0xf5c6eb5b,
+    BShapesGPU              = 0x57a3befd,
+    MaterialName            = 0x8335674e,
+    MaterialName320         = 0x83353333,
+    BShapes3                = 0x875ccb28,
+    CompiledPhysicalBones   = 0x90c687dc,
+    MeshChunk320            = 0x92914444,
+    MeshChunk               = 0x9293b9d8,
+    SkinMesh                = 0xb875b2d9,
+    SkinMesh2               = 0xb8757777,
+    CompiledBones           = 0xc201973c,
+    CompiledBones320        = 0xc2011111,
+    DBA                     = 0xf7351608
+};
 
 enum <uint> DatastreamType {
     IvoNormals2 = 0x38A581FE, // [6], size 04h
@@ -50,5 +70,17 @@ int isInEnum(DatastreamType type) {
     return found;
 };
 
+struct IVOMESHSUBSET {
+    uint matId;
+    uint firstIndex;
+    uint numIndices;
+    uint firstVertex;
+    uint unknown;
+    uint numVertices;
+    VECTOR3 center <comment=PrintVector3>;
+    uint unknown0 <format=hex>;
+    uint unknown1;
+    uint unknown2;
+};
 
 #endif
