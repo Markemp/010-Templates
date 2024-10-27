@@ -70,17 +70,4 @@ int isInEnum(DatastreamType type) {
     return found;
 };
 
-struct IVOMESHSUBSET {
-    uint matId;
-    uint firstIndex;
-    uint numIndices;
-    uint firstVertex;
-    uint unknown;
-    uint numVertices;
-    VECTOR3 center <comment=PrintVector3>;
-    uint unknown0 <format=hex>;
-    uint unknown1;
-    uint unknown2;
-};
-
 #endif

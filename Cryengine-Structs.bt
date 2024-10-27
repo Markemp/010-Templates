@@ -105,13 +105,6 @@ struct QTANGENT {
     short w;
 };
 
-//struct CHUNKHEADER {
-//    CHUNKTYPE chunkType;
-//    uint version <format=hex>;
-//    uint offset <format=hex>;
-//    uint id <format=hex>;
-//};
-
 struct CONTROLLER_829 {
     uint controllerId;
     uint16 numberOfRotationKeys;
@@ -150,5 +143,10 @@ struct VertsUvs {
     UV uv <comment=PrintUV>;
 };
 
+struct BONETOWORLD {
+    float row1[4];
+    float row2[4];
+    float row3[4];
+};
 
 #endif

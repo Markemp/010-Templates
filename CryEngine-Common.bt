@@ -11,7 +11,28 @@
 //   History: 
 //------------------------------------------------
 
+#ifndef COMMON_H
+#define COMMON_H
+
 #include "Cryengine-Structs.bt"
+#include "Cryengine-Enums.bt"
+
+typedef short snorm <read=Read_SNORM>;
+typedef ushort unorm <read=Read_UNORM>;
+
+string Read_SNORM( short s ) {
+    string t;
+    float f = Max(s/32767.0, -1.0);
+    SPrintf( t, "%g", f );
+    return t;
+};
+
+string Read_UNORM( ushort s ) {
+    string t;
+    float f = s/65535.0;
+    SPrintf( t, "%g", f );
+    return t;
+};
 
 struct BONEMAPDATA {
     ushort boneIndex[4];
@@ -111,13 +132,6 @@ string PrintUVHalf(UVHalf &uv) {
     return result;
 };
 
-struct IVONORMAL {
-    byte x;
-    byte y;
-    byte z;
-    byte w;
-};
-
 struct TANGENT_BYTE {
     byte x;
     byte y;
@@ -138,17 +152,6 @@ string PrintTangent(TANGENT_BYTE &tan) {
     tangent.y = (2 * (tan.y/127.0 * tan.z/127.0 - tan.x/127.0 * tan.w/127.0));
     tangent.z = (2 * (tan.z/127.0 * tan.z/127.0 + tan.w/127.0 * tan.w/127.0)) - 1;
     SPrintf(result, "%f, %f, %f", tangent.x, tangent.y, tangent.z);
-    return result;
-};
-
-
-string PrintNormal(IVONORMAL &normal) {
-    string result;
-    local VECTOR3 norm;
-    norm.x = (2 * (normal.x/127.0 * normal.z/127.0 + normal.y/127.0 * normal.w/127.0));
-    norm.y = (2 * (normal.y/127.0 * normal.z/127.0 - normal.x/127.0 * normal.w/127.0));
-    norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
-    SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
     return result;
 };
 
@@ -188,3 +191,4 @@ float CryHalfToFloat(ushort value) {
     return (float)Result;
 };
 
+#endif

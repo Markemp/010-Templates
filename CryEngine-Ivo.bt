@@ -14,7 +14,7 @@
 // Ivo files
 #include "CryengineIvo-Structs.bt"
 #include "CryengineIvo-Enums.bt"
-#include "Cryengine-Common.bt"
+//#include "Cryengine-Common.bt"
 
 local uint pos;
 local int64 fileSize = FileSize() ;
@@ -25,107 +25,6 @@ struct HEADER {
     uint numChunks;
     int chunkHeaderTableOffset;  // location of header chunks
 } headerInfo <bgcolor=cLtBlue>;
-
-
-
-
-
-struct BONETOWORLD {
-    float row1[4];
-    float row2[4];
-    float row3[4];
-};
-
-struct BONE {
-    uint controllerId;
-    uint limbId;
-    int parentIndex;
-    QUATERION relativeQuat <comment=GetQuaterion>;
-    VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
-    QUATERION worldQuat <comment=GetQuaterion>;
-    VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
-};
-
-string PrintBoneInfo(BONE &bone) {
-    string result;
-    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
-    return result;
-}
-
-struct BONENAME {
-    string boneName ;
-};
-
-struct COMPILEDBONES {
-    uint numberOfBones;
-    local int i;
-    for (i = 0; i < numberOfBones; i++) {
-        BONE bone <comment=PrintBoneInfo>;
-    };
-    for (i = 0; i < numberOfBones; i++) {
-        BONENAME boneName <comment=GetBoneName>;
-    };
-};
-
-struct COMPILEDPHYSICALBONES {
-    char physics[100];
-};
-
-struct IVOINDICES(int numberOfIndices) {
-    uint bytesPerElement;
-    ushort indices[numberOfIndices];
-    if (numberOfIndices % 2 == 1) {
-        ushort filler;
-    } else {
-        uint filler;
-        if (filler != 0) {
-            FSeek(FTell() - 4);
-        }
-    }
-};
-
-struct IVOVERTSUVS(int numberOfVertices) {
-    uint bytesPerElement;
-
-    struct VERTUV {
-        VECTOR3 vertex <comment=PrintVector3>;
-        COLOR color <comment=PrintColor>;
-        UVHalf uv <comment=PrintUVHalf>;
-    };
-    VERTUV vertUvs[numberOfVertices];
-};
-
-struct IVOCOLORS(int numberOfVertices) {
-    uint bytesPerElement;
-    COLOR vertexColors[numberOfVertices] <comment=PrintColor>;
-    if (numberOfVertices % 2 == 1) {
-        uint filler;
-    }
-};
-
-struct IVONORMALS(int numberOfVertices) {
-    uint bytesPerElement;
-    IVONORMAL normals[numberOfVertices] <comment=PrintNormal>;
-    if (numberOfVertices % 2 == 1) {
-        uint filler;
-    }
-};
-
-struct TANGENTS(int numberOfVertices) {
-    uint bytesPerElement;
-    for (i = 0; i < numberOfVertices; i++) {
-        TANGENT_BYTE tangent <comment=PrintTangentByte>;
-    };
-    for (i = 0; i < numberOfVertices; i++) {
-        TANGENT_BYTE bitangent <comment=PrintTangentByte>;
-    };
-};
-
-struct MTLNAME {
-    char Name[128];
-};
-
-
 
 struct SKINMESH {
     local ulong position;
