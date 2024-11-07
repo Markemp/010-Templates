@@ -58,6 +58,23 @@ struct IVOVERTSUVS(int numberOfVertices) {
     VERTUV vertUvs[numberOfVertices];
 };
 
+struct IVOVERTSUVS_CGF(int numberOfVertices) {
+	uint bytesPerElement;
+
+	struct IVOVertsUvs_CGF {
+		VECTOR3SHORT vertices <comment=PrintVector3Short>;
+		COLOR color <comment=PrintColor>;
+		short unknown;
+		UVHalf uv <comment=PrintUVHalf>;
+	};
+
+	IVOVertsUvs_CGF vertUvs[numberOfVertices];
+	
+	if(numberOfVertices % 2 == 1) {
+		uint filler;
+	}
+};
+
 struct IVOCOLORS(int numberOfVertices) {
     uint bytesPerElement;
     COLOR vertexColors[numberOfVertices] <comment=PrintColor>;
@@ -130,6 +147,22 @@ struct BONE {
     VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
     QUATERION worldQuat <comment=GetQuaterion>;
     VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
+};
+
+struct BONEIDS_x901 {
+	uint controllerId;
+	uint uVal1; // I haven't a damn clue what this is, it may be a uint id, it may be some kind of referencing with two shorts. 
+	short uParentIndex;
+	short uVal3;
+	short numberOfVertices; // Seems to be two shorts that are always -1 in the files I've seen
+	short uBoneIndex; // Seems to be an indicator of location within a larger set of bones? Ordered by parent, then iterative by this value
+};
+
+struct BONETRANSFORMS_x901 {
+	QUATERION relativeQuat <comment=GetQuaterion>;
+	VECTOR3 relativeTransform <comment=PrintVector3>; // relative x,y,z from parent
+	QUATERION worldQuat <comment=GetQuaterion>;
+	VECTOR3 worldTransform <comment=PrintVector3>; // absolute x,y,z from origin
 };
 
 struct COMPILEDBONES {

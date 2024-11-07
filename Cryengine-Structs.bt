@@ -19,6 +19,18 @@ struct VECTOR3 {
     float z;
 };
 
+struct VECTOR3SHORT {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+};
+
+struct VECTOR3CRYHALF {
+    ushort x;
+    ushort y;
+    ushort z;
+};
+
 struct VECTOR4 {
     float x;
     float y;
@@ -98,6 +110,11 @@ struct UV {
     float v;
 };
 
+struct UVHALF {
+    hfloat u;
+    hfloat v;
+};
+
 struct QTANGENT {
     short x;
     short y;
@@ -137,16 +154,30 @@ struct CONTROLLER_905 {
     uint trackLength;
 };
 
-struct VertsUvs {
-    VECTOR3 vertices <comment=PrintVector3>;
-    IRGBA color <comment=PrintColor>;
-    UV uv <comment=PrintUV>;
+struct VERTSUV(int bytesPerElement) {
+    if (bytesPerElement == 16) {
+        VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
+        byte skip[2];
+        IRGBA color <comment=PrintColor>;
+        UVHALF uv <comment=PrintUVHalf>;
+    }
+    else if (bytesPerElement == 20) {
+        VECTOR3 vertices <comment=PrintVector3>;
+        IRGBA color <comment=PrintColor>;
+        UV uv <comment=PrintUV>;
+    };
 };
 
 struct BONETOWORLD {
     float row1[4];
     float row2[4];
     float row3[4];
+};
+
+string PrintVertsUvs(VERTSUV &m) {
+    string result;
+    SPrintf(result, "Verts: [%f, %f, %f], UVs: [%f, %f]", m.vertices.x, m.vertices.y, m.vertices.z, m.uv.u, m.uv.v);
+    return result;
 };
 
 #endif

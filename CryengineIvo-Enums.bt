@@ -58,15 +58,24 @@ enum <uint> DatastreamType {
 int isInEnum(DatastreamType type) {
     local int found = false;
     switch(type){
-        case IvoNormals2: found = true; break;
-        case IvoBoneMap: found = true; break;
-        case IvoBoneMap32: found = true; break;
-        case IvoVertsUvs: found = true; break;
-        case IvoNormals: found = true; break;
-        case IvoColors2: found = true; break;
-        case IvoTangents: found = true; break;
-        case IvoIndices: found = true; break;
-       }
+        case IvoNormals2: 
+        case IvoBoneMap: 
+        case IvoBoneMap32: 
+        case IvoVertsUvs: 
+        case IvoNormals: 
+        case IvoTangents: 
+        case IvoColors2: 
+        case IvoIndices: 
+        case IvoVertsUvsCGF: 
+        case IvoUnknown2:
+        case IvoUnknown3:
+        case IvoUnknown4:
+        case IvoUnknown5:
+        case IvoUnknown6:
+        case IvoUnknown7:
+            found = true; 
+            break;
+    }
     return found;
 };
 

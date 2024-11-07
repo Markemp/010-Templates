@@ -351,8 +351,6 @@ struct MESHCHUNK {
     VECTOR3 MaxBound <comment=PrintVector3>;
 };
 
-
-
 struct MESHSUBSETS {
     local int i;
     CHUNKHEADER chunkHeader;

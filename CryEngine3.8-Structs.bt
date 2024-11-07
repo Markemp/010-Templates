@@ -80,7 +80,7 @@ struct MESHSUBSET {
     uint numVertices;
     uint matId;
     float radius;
-    VECTOR3 center;
+    VECTOR3 center <comment=PrintVector3>;
 };
 
 struct MESHSUBSETCHUNK {
@@ -163,10 +163,10 @@ struct COMPILEDBONES(int numberOfBones) {
     COMPILEDBONE bones[numberOfBones];
 };
 
-struct BONEMAPDATA {
-    ushort boneIndex[4];
-    byte weight[4];
-};
+//struct BONEMAPDATA {
+//    ushort boneIndex[4];
+//    byte weight[4];
+//};
 
 struct BONEMAPDATA_8 {
     byte boneIndex[4];
@@ -230,7 +230,7 @@ struct DATASTREAMCHUNK {
         case VERTSUVS: {
             uint flags[2];
             for (i = 0; i < numberOfElements; i++) {
-                VertsUvs vertsUvs;
+                VERTSUV vertsUvs(bytesPerElement) <comment=PrintVertsUvs>;
             }
             break;
         }
@@ -261,12 +261,7 @@ struct DATASTREAMCHUNK {
         }
         case BONEMAP: {
             uint flags[2];
-            if (bytesPerElement == 8) {
-                BONEMAPDATA_8 boneMap[numberOfElements];
-            }
-            else if (bytesPerElement == 12) {
-                BONEMAPDATA boneMap[numberOfElements];
-            };
+            BONEMAPDATA boneMap[numberOfElements](bytesPerElement);
             break;
         }
         case QTANGENTS: {
@@ -290,7 +285,5 @@ string GetNodeName(NODECHUNK &chunk) {
     SPrintf(result, "Name = %s", chunk.name);
     return result;
 };
-
-
 
 #endif

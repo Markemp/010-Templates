@@ -16,6 +16,7 @@
 
 #include "Cryengine-Structs.bt"
 #include "Cryengine-Enums.bt"
+#include "Cryengine-Common.bt"
 
 string PrintMatrix4x4(MATRIX4x4 &m) {
     string result;
@@ -41,6 +42,18 @@ string PrintVector3(VECTOR3 &vertex) {
     return result;
 };
 
+string PrintVector3Short(VECTOR3SHORT &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
+    return result;
+};
+
+string PrintVector3CryHalf(VECTOR3CRYHALF &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", CryHalfToFloat(vertex.x), CryHalfToFloat(vertex.y), CryHalfToFloat(vertex.z));
+    return result;
+};
+
 string PrintVector4(VECTOR4 &vertex) {
     string result;
     SPrintf(result, "%f, %f, %f, %f", vertex.x, vertex.y, vertex.z, vertex.w);
@@ -53,7 +66,19 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+string PrintBoneMapData(BONEMAPDATA &data) {
+    string result;
+    SPrintf(result, "%d, %d, %d, %d", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3]);
+    return result;
+};
+
 string PrintUV(UV &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+string PrintUVHalf(UVHALF &uv) {
     string result;
     SPrintf(result, "%f, %f", uv.u, uv.v);
     return result;

@@ -20,50 +20,38 @@
 typedef short snorm <read=Read_SNORM>;
 typedef ushort unorm <read=Read_UNORM>;
 
-string Read_SNORM( short s ) {
+string Read_SNORM(short s) {
     string t;
     float f = Max(s/32767.0, -1.0);
     SPrintf( t, "%g", f );
     return t;
 };
 
-string Read_UNORM( ushort s ) {
+string Read_UNORM(ushort s) {
     string t;
     float f = s/65535.0;
     SPrintf( t, "%g", f );
     return t;
 };
 
-struct BONEMAPDATA {
-    ushort boneIndex[4];
-    byte weight[4];
-};
-
-struct BONEMAPDATA32 {
-    uint boneIndex[4];
-    short weight[4];
+struct BONEMAPDATA(int bytesPerElement) {
+    if (bytesPerElement == 8) {
+        byte boneIndex[4];
+        byte weight[4];
+    }
+    else if (bytesPerElement == 12) {
+        ushort boneIndex[4];
+        byte weight[4];
+    }
+    else if (bytesPerElement == 24) {
+        uint boneIndex[4];
+        short weight[4];
+    };
 };
 
 struct BONEMAP(int numberOfVertices) {
     uint bytesPerElement;
-    BONEMAPDATA bonemap[numberOfVertices] <comment=PrintBoneMapData>;
-};
-
-struct BONEMAP32(int numberOfVertices) {
-    uint bytesPerElement;
-    BONEMAPDATA32 bonemap[numberOfVertices] <comment=PrintBoneMapData32>;
-};
-
-string PrintBoneMapData(BONEMAPDATA &data) {
-    string result;
-    SPrintf(result, "%d, %d, %d, %d", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3]);
-    return result;
-};
-
-string PrintBoneMapData32(BONEMAPDATA32 &data) {
-    string result;
-    SPrintf(result, "%d, %d, %d, %d", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3]);
-    return result;
+    BONEMAPDATA bonemap(bytesPerElement)[numberOfVertices] <comment=PrintBoneMapData>;
 };
 
 struct UNKNOWN_4BYTE {
@@ -73,26 +61,13 @@ struct UNKNOWN_4BYTE {
     byte w;
 };
 
-string PrintUV(UV &uv) {
-    string result;
-    SPrintf(result, "%f, %f", uv.u, uv.v);
-    return result;
-};
-
 struct UNKNOWN2 {
     UNKNOWN_4BYTE dataBlock[6];
 };
 
-
 struct UNKNOWN(int numberOfVertices) {
     uint bytesPerElement;
     UNKNOWN2 unknown[numberOfVertices];
-};
-
-string PrintVector3 (VECTOR3 &vector) {
-    string result;
-    SPrintf(result, "[%f, %f, %f]", vector.x, vector.y, vector.z);
-    return result;
 };
 
 struct QUATERION {
@@ -115,21 +90,9 @@ struct COLOR {
     ubyte alpha;
 };
 
-string PrintColor(COLOR &color) {
-    string result;
-    SPrintf(result, "damage: %d, glow: %d, AO: %d, wear: %d", color.red, color.green, color.blue, color.alpha);
-    return result;
-};
-
 struct UVHalf {
     hfloat u;
     hfloat v;
-};
-
-string PrintUVHalf(UVHalf &uv) {
-    string result;
-    SPrintf(result, "%f, %f", uv.u, uv.v);
-    return result;
 };
 
 struct TANGENT_BYTE {

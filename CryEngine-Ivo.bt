@@ -52,6 +52,10 @@ struct SKINMESH {
                 IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
+            case IvoVertsUvsCGF: {
+                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                break;
+            }
             case IvoIndices: {
                 IVOINDICES indices(meshChunk.numberOfIndices) <bgcolor=cDkBlue>;
                 break;
