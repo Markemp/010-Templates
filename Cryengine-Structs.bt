@@ -201,6 +201,47 @@ struct BONETOWORLD {
     float row3[4];
 };
 
+struct MTLNAME(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    MtlNameTypeEnum mtlType;
+    int NFlags2;
+    char Name[128];
+    int PhysicalizeType;
+    int NumberOfSubmaterials;
+    int SubMaterialChunkID[32];
+    int AdvancedDataChunkID;
+    float Opacity;
+    int reserved[32];
+};
+
+struct MESHCHUNK(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    uint Flags1;
+    uint Flags2;
+    uint NumVertices;
+    uint NumIndices;
+    //uint NumVertSubsets; // 801 format
+    uint MeshSubsets;
+    uint VerticesData <format=hex>;
+    uint NumBuffs <format=hex>;
+    uint NormalsData <format=hex>;
+    uint UVsData <format=hex>;
+    uint ColorsData <format=hex>;
+    uint Colors2Data <format=hex>;
+    uint IndicesData <format=hex>;
+    uint TangentsData <format=hex>;
+    uint ShCoeffsData <format=hex>;
+    uint ShapeDeformationData <format=hex>;
+    uint BoneMapData <format=hex>;
+    uint FaceMapData <format=hex>;
+    uint VertMatsData <format=hex>;
+    //uint MeshPhysicsData <format=hex>; // 801 format
+    uint VertsUVData <format=hex>;
+    uint PhysicsData[4] <format=hex>;
+    VECTOR3 MinBound <comment=PrintVector3>;
+    VECTOR3 MaxBound <comment=PrintVector3>;
+};
+
 struct MESHSUBSET {
     uint firstVertex;
     uint numberOfVertices;

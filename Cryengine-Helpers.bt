@@ -102,6 +102,12 @@ string PrintUVHalf(UVHALF &uv) {
     return result;
 };
 
+string GetMaterialName(MTLNAME &chunk) {
+    string result;
+    SPrintf(result, "Name: %s, Type: %s", chunk.Name, EnumToString(chunk.mtlType));
+    return result;
+};
+
 string PrintColor(IRGBA &color) {
     string result;
     SPrintf(result, "%d, %d, %d, %d", color.r, color.g, color.b, color.a);
@@ -123,6 +129,18 @@ string GetNodeName(NODECHUNK &chunk) {
 string PrintDatastreamType(DATASTREAMCHUNK &datastream) {
     string result;
     SPrintf(result, "%s", EnumToString(datastream.datastreamType));
+    return result;
+};
+
+string PrintExportFlags(EXPORTFLAGS &flags) {
+    string result;
+    SPrintf(result, "%s", flags.rcVersionString);
+    return result;
+};
+
+string PrintTimingInfo(TIMINGINFO &info) {
+    string result;
+    SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
     return result;
 };
 

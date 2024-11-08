@@ -56,25 +56,6 @@ struct SKINNINGINFO {
     
 };
 
-struct MTLNAME(int fileVersion) {
-    CHUNKHEADER chunkHeader(fileVersion);
-    MtlNameTypeEnum mtlType;
-    int NFlags2;
-    char Name[128];
-    int PhysicalizeType;
-    int NumberOfSubmaterials;
-    int SubMaterialChunkID[32];
-    int AdvancedDataChunkID;
-    float Opacity;
-    int reserved[32];
-};
-
-string GetMaterialName(MTLNAME &chunk) {
-    string result;
-    SPrintf(result, "Name: %s, Type: %s", chunk.Name, EnumToString(chunk.mtlType));
-    return result;
-};
-
 struct CRYLINK {        // CryHeader.h
     int boneID;
     VECTOR3 offset;
@@ -156,7 +137,6 @@ string GetBoneName_800(COMPILEDBONE_800 &bone) {
     return result;
 };
 
-
 struct BONENAMELIST {
     string boneName;
 };
@@ -237,46 +217,6 @@ struct COMPILEDPHYSICALPROXIES {
             VECTOR3 v;
         };
     }
-};
-
-string PrintExportFlags(EXPORTFLAGS &flags) {
-    string result;
-    SPrintf(result, "%s", flags.rcVersionString);
-    return result;
-};
-
-string PrintTimingInfo(TIMINGINFO &info) {
-    string result;
-    SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
-    return result;
-};
-
-struct MESHCHUNK(int fileVersion) {
-    CHUNKHEADER chunkHeader(fileVersion);
-    uint Flags1;
-    uint Flags2;
-    uint NumVertices;
-    uint NumIndices;
-    //uint NumVertSubsets; // 801 format
-    uint MeshSubsets;
-    uint VerticesData <format=hex>;
-    uint NumBuffs <format=hex>;
-    uint NormalsData <format=hex>;
-    uint UVsData <format=hex>;
-    uint ColorsData <format=hex>;
-    uint Colors2Data <format=hex>;
-    uint IndicesData <format=hex>;
-    uint TangentsData <format=hex>;
-    uint ShCoeffsData <format=hex>;
-    uint ShapeDeformationData <format=hex>;
-    uint BoneMapData <format=hex>;
-    uint FaceMapData <format=hex>;
-    uint VertMatsData <format=hex>;
-    //uint MeshPhysicsData <format=hex>; // 801 format
-    uint VertsUVData <format=hex>;
-    uint PhysicsData[4] <format=hex>;
-    VECTOR3 MinBound <comment=PrintVector3>;
-    VECTOR3 MaxBound <comment=PrintVector3>;
 };
 
 struct MESHSUBSETS(int fileVersion) {
