@@ -25,28 +25,12 @@ struct HEADER {
     uint numChunks;
 };
 
-struct CHUNKTABLEENTRY(uint ver) {
-    CHUNKTYPE chunkType;
-    uint version <format=hex>;  
-    uint offset <format=hex>;
-    uint id <format=hex>;
-    if (ver == 0x0745) {
-        uint size <format=hex>;
-    }
-    else {
-        local uint size = 0;
-    };
-};
-
-struct CHUNKHEADER {
-    CHUNKTYPE chunkType;
-    uint version <format=hex>;
-    uint offset <format=hex>;
-    uint id <format=hex>;
-};
-
 struct SPEEDINFO {
-    CHUNKHEADER chunkHeaderInfo;
+    if (fileVersion == 0x0745) {
+        CHUNKHEADER chunkHeader;
+    }
+    else if (fileVersion == 0x0746) {
+    }; // no headers on these chunks
     float speed;
     float distance;
     float slope;
@@ -68,32 +52,12 @@ struct CHUNKTABLE(uint ver, int numChunks) {
     };
 };
 
-struct NODECHUNK(int includeHeader) {
-    if (includeHeader) {
-        CHUNKHEADER nodeChunkHeaderInfo;
-    }
-    char name[64];
-    uint objectNodeId <format=hex>; // Mesh chunk ID
-    uint parentNodeId <format=hex>; // Chunk ID of parent node
-    uint numberOfChildren;
-    uint materialId <format=hex>;
-    uint skipBytes;                 // Obsolete info
-    MATRIX4x4 transform <comment=PrintMatrix4x4>;   
-    VECTOR3 position <comment=PrintVector3>;        // Obsolete
-    QUATERNION rotation <comment=PrintQuaternion>;  // Obsolete
-    VECTOR3 scale <comment=PrintVector3>;           // Obsolete
-    int controllerPos <format=hex>;
-    int rotationPos <format=hex>;
-    int scalePos <format=hex>;
-    int propertyStringLength <format=hex>;          // length of property string
-};
-
 struct SKINNINGINFO {
     
 };
 
-struct MTLNAME {
-    CHUNKHEADER chunkHeader;
+struct MTLNAME(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
     MtlNameTypeEnum mtlType;
     int NFlags2;
     char Name[128];
@@ -275,46 +239,10 @@ struct COMPILEDPHYSICALPROXIES {
     }
 };
 
-struct EXPORTFLAGS {
-    CHUNKHEADER header;
-    uint skipBytes;
-    uint major;
-    uint minor;
-    uint build;
-    uint revision;
-    string rcVersionString;
-};
-
 string PrintExportFlags(EXPORTFLAGS &flags) {
     string result;
     SPrintf(result, "%s", flags.rcVersionString);
     return result;
-};
-
-struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry) {
-    CHUNKHEADER headerInfo;
-    string sourceFile;
-    string fileDate;
-    string author;
-    local CHUNKTYPE chunkType = tableEntry.chunkType;
-    local uint version = tableEntry.version;
-    local uint offset = tableEntry.offset;
-    local uint size = tableEntry.size;
-};
-
-string PrintSourceInfo(SOURCEINFO &info) {
-    string result;
-    SPrintf(result, "%s", info.sourceFile);
-    return result;
-};
-
-struct TIMINGINFO {
-    CHUNKHEADER headerinfo;
-    float secondsPerTick;
-    int ticksPerFrame;
-    char globalName[32];
-    int globalRangeStart;
-    int globalRangeEnd;
 };
 
 string PrintTimingInfo(TIMINGINFO &info) {
@@ -323,8 +251,8 @@ string PrintTimingInfo(TIMINGINFO &info) {
     return result;
 };
 
-struct MESHCHUNK {
-    CHUNKHEADER chunkHeader;
+struct MESHCHUNK(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
     uint Flags1;
     uint Flags2;
     uint NumVertices;
@@ -351,87 +279,31 @@ struct MESHCHUNK {
     VECTOR3 MaxBound <comment=PrintVector3>;
 };
 
-struct MESHSUBSETS {
+struct MESHSUBSETS(int fileVersion) {
     local int i;
-    CHUNKHEADER chunkHeader;
-    uint flags;
-    int numberOfMeshSubsets;
-    uint unknown;  // skip bytes
-    uint unknown2;  // skip bytes
-    for (i = 0; i < numberOfMeshSubsets; i++) {
-        uint firstVertex;
-        uint numberOfVertices;
-        uint firstIndex;
-        uint numberOfIndices;
-        uint material;
-        float radius;
-        VECTOR3 center <comment=PrintVector3>;
-    };
-};
-
-struct DATASTREAMCHUNK {
-    local int i;
-
-    CHUNKHEADER headerInfo;
-
-    uint flags2;
-    DATASTREAMTYPE datastreamType;
-    uint numberOfElements;
-    uint bytesPerElement;
-    uint reserved1;
-    uint reserved2;
-    
-    switch (datastreamType) {
-        case VERTICES: {
-            for (i = 0; i < numberOfElements; i++) {
-                VECTOR3 vertices <comment=PrintVector3>;
-            }   
-            break;
-        }
-        case VERTSUVS: {
-            for (i = 0; i < numberOfElements; i++) {
-                VertsUvs vertsUvs;
-            }
-            break;
-        }
-        case NORMALS: {
-            VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
-            break;
-        }
-        case UVS: {
-            UV uv[numberOfElements] <comment=PrintUV>;
-            break;   
-        }
-        case COLORS: {
-            IRGBA colors[numberOfElements] <comment=PrintColor>;
-            break;   
-        }
-        case INDICES: {
-            uint16 indices[numberOfElements];
-            break;   
-        }
-        case TANGENTS: {
-            VECTOR4 tangent[numberOfElements];
-            break;   
-        }
-        default: {
-            break;
-        }
+    CHUNKHEADER chunkHeader(fileVersion);
+    if (chunkHeader.version == 0x0800) {
+        uint flags;
+        int numberOfMeshSubsets;
+        uint unknown;  // skip bytes
+        uint unknown2;  // skip bytes
+        for (i = 0; i < numberOfMeshSubsets; i++) {
+            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+        };
     }
+    else if (chunkHeader.version == 0x80000800) {
+        BigEndian();
+        uint flags;
+        int numberOfMeshSubsets;
+        uint unknown;  // skip bytes
+        uint unknown2;  // skip bytes
+        for (i = 0; i < numberOfMeshSubsets; i++) {
+            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+        };
+        LittleEndian();
+    };
+    
 };
 
-// Helpers
-
-string GetDatastreamType(DATASTREAMCHUNK &datastream) {
-    string result;
-    SPrintf(result, "%s", EnumToString(datastream.datastreamType));
-    return result;
-};
-
-string GetNodeName(NODECHUNK &chunk) {
-    string result;
-    SPrintf(result, "Name = %s", chunk.name);
-    return result;
-};
 
 #endif

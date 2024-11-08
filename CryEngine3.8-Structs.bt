@@ -38,13 +38,6 @@ string GetChunkTableType(CHUNKTABLEENTRY &entry) {
     return result;
 };
 
-struct CHUNKHEADER {
-    CHUNKTYPE chunkType;
-    uint version <format=hex>;
-    uint offset <format=hex>;
-    uint id <format=hex>;
-};
-
 struct CHUNK {
     uint fOffset <format=hex>;
     uint chunkType <format=hex>;
@@ -53,42 +46,25 @@ struct CHUNK {
     uint size <format=hex>;
 };
 
-struct NODECHUNK(int includeHeader) {
-    if (includeHeader) {
-        CHUNKHEADER nodeChunkHeaderInfo;
-    }
-    char name[64];
-    uint objectNodeId <format=hex>; // Mesh chunk ID
-    uint parentNodeId <format=hex>; // Chunk ID of parent node
-    uint numberOfChildren;
-    uint materialId <format=hex>;
-    uint skipBytes;                 // Obsolete info
-    MATRIX4x4 transform <comment=PrintMatrix4x4>;   
-    VECTOR3 position <comment=PrintVector3>;        // Obsolete
-    QUATERNION rotation <comment=PrintQuaternion>;  // Obsolete
-    VECTOR3 scale <comment=PrintVector3>;           // Obsolete
-    int controllerPos <format=hex>;
-    int rotationPos <format=hex>;
-    int scalePos <format=hex>;
-    int propertyStringLength <format=hex>;          // length of property string
-};
-
-struct MESHSUBSET {
-    uint firstIndex;
-    uint numIndices;
-    uint firstVertex;
-    uint numVertices;
-    uint matId;
-    float radius;
-    VECTOR3 center <comment=PrintVector3>;
-};
-
-struct MESHSUBSETCHUNK {
-    uint flags;
-    uint numberOfMeshSubsets;
-    byte skip[8];
-    MESHSUBSET meshSubSet[numberOfMeshSubsets];
-};
+//struct NODECHUNK(int includeHeader) {
+//    if (includeHeader) {
+//        CHUNKHEADER nodeChunkHeaderInfo;
+//    }
+//    char name[64];
+//    uint objectNodeId <format=hex>; // Mesh chunk ID
+//    uint parentNodeId <format=hex>; // Chunk ID of parent node
+//    uint numberOfChildren;
+//    uint materialId <format=hex>;
+//    uint skipBytes;                 // Obsolete info
+//    MATRIX4x4 transform <comment=PrintMatrix4x4>;   
+//    VECTOR3 position <comment=PrintVector3>;        // Obsolete
+//    QUATERNION rotation <comment=PrintQuaternion>;  // Obsolete
+//    VECTOR3 scale <comment=PrintVector3>;           // Obsolete
+//    int controllerPos <format=hex>;
+//    int rotationPos <format=hex>;
+//    int scalePos <format=hex>;
+//    int propertyStringLength <format=hex>;          // length of property string
+//};
 
 struct HELPER {
     uint type;  // Type of helper. 0=point,1=Dummy
@@ -161,16 +137,6 @@ struct COMPILEDPHYSICALBONESCHUNK(int numberOfBones) {
 struct COMPILEDBONES(int numberOfBones) {
     char padding[32];
     COMPILEDBONE bones[numberOfBones];
-};
-
-//struct BONEMAPDATA {
-//    ushort boneIndex[4];
-//    byte weight[4];
-//};
-
-struct BONEMAPDATA_8 {
-    byte boneIndex[4];
-    byte weight[4];
 };
 
 struct MESHCHUNK {
@@ -259,9 +225,9 @@ struct DATASTREAMCHUNK {
             VECTOR4SHORT tangent[numberOfElements];
             break;   
         }
-        case BONEMAP: {
+        case BONEMAPS: {
             uint flags[2];
-            BONEMAPDATA boneMap[numberOfElements](bytesPerElement);
+            BONEMAPDATA boneMap(bytesPerElement)[numberOfElements];
             break;
         }
         case QTANGENTS: {

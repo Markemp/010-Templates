@@ -29,7 +29,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
 
     switch (chunkTable.tableEntry[i].chunkType) {
         case SourceInfo: {
-            SOURCEINFO sourceInfo(chunkTable.tableEntry[i]) <comment=PrintSourceInfo>;
+            SOURCEINFO sourceInfo(chunkTable.tableEntry[i], headerInfo.version) <comment=PrintSourceInfo>;
             break;
         }
         case CompiledPhysicalBones: {
@@ -49,24 +49,23 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case MtlName: {
-            MTLNAME mtlName <comment=GetMaterialName>;
+            MTLNAME mtlName(headerInfo.version) <comment=GetMaterialName>;
             break;
         }
         case Node: {
-            
             NODECHUNK nodeChunk(true) <comment=GetNodeName>;
             break;
         }
         case Mesh: {
-            MESHCHUNK chunkMesh;
+            MESHCHUNK chunkMesh(headerInfo.version);
             break;
         }
         case MeshSubsets: {
-            MESHSUBSETS meshSubSets <bgcolor=cLtBlue>;
+            MESHSUBSETS meshSubSets(headerInfo.version) <bgcolor=cLtBlue>;
             break;
         }
         case DataStream: {
-            DATASTREAMCHUNK chunkDatastream <comment=GetDatastreamType>;
+            DATASTREAMCHUNK chunkDatastream(headerInfo.version) <comment=PrintDatastreamType>;
             break;
         }
         case CompiledExt2IntMap: {
@@ -92,11 +91,11 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         };
         case ExportFlags: {
-            EXPORTFLAGS exportFlags <comment=PrintExportFlags>;
+            EXPORTFLAGS exportFlags(headerInfo.version) <comment=PrintExportFlags>;
             break;
         };
         case TimingInfo: {
-            TIMINGINFO timingInfo <comment=PrintTimingInfo>;
+            TIMINGINFO timingInfo(headerInfo.version) <comment=PrintTimingInfo>;
             break;
         };
     }

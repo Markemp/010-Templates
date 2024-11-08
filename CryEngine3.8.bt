@@ -50,7 +50,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case MeshSubsets: {
-            MESHSUBSETCHUNK meshSubsetChunk <bgcolor=cLtBlue>;
+            MESHSUBSETCHUNK meshSubsetChunk <bgcolor=cLtBlue, comment=PrintMeshSubsetChunk>;
             break;
         }
         case CompiledPhysicalBones: {

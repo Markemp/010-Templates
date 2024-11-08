@@ -66,9 +66,27 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+string PrintMeshSubset(MESHSUBSET &meshSubset) {
+    string result;
+    SPrintf(result, "first vert: %d, num verts: %d, mat: %d", meshSubset.firstVertex, meshSubset.numberOfVertices, meshSubset.material);
+    return result;
+};
+
+string PrintMeshSubsetChunk(MESHSUBSETCHUNK &chunk) {
+    string result;
+    SPrintf(result, "number of subsets: %d", chunk.numberOfMeshSubsets);
+    return result;
+};
+
 string PrintBoneMapData(BONEMAPDATA &data) {
     string result;
-    SPrintf(result, "%d, %d, %d, %d", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3]);
+    SPrintF(result, "Bone Index: [%d, %d, %d, %d], Weight: [%f, %f, %f, %f]", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3], data.weight[0], data.weight[1], data.weight[2], data.weight[3]);
+    return result;
+};
+
+string PrintVertsUvs(VERTSUV &m) {
+    string result;
+    SPrintf(result, "Verts: [%f, %f, %f], UVs: [%f, %f]", m.vertices.x, m.vertices.y, m.vertices.z, m.uv.u, m.uv.v);
     return result;
 };
 
@@ -87,6 +105,24 @@ string PrintUVHalf(UVHALF &uv) {
 string PrintColor(IRGBA &color) {
     string result;
     SPrintf(result, "%d, %d, %d, %d", color.r, color.g, color.b, color.a);
+    return result;
+};
+
+string PrintSourceInfo(SOURCEINFO &info) {
+    string result;
+    SPrintf(result, "%s", info.sourceFile);
+    return result;
+};
+
+string GetNodeName(NODECHUNK &chunk) {
+    string result;
+    SPrintf(result, "Name = %s", chunk.name);
+    return result;
+};
+
+string PrintDatastreamType(DATASTREAMCHUNK &datastream) {
+    string result;
+    SPrintf(result, "%s", EnumToString(datastream.datastreamType));
     return result;
 };
 

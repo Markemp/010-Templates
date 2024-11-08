@@ -23,8 +23,8 @@ enum DATASTREAMTYPE {
     TANGENTS = 0x6,
     SHCOEFFS = 0x7,
     SHAPEDEFORMATION = 0x8,
-    BONEMAP = 0x9,
-    FACEMAP = 0xA,
+    BONEMAPS = 0x9,
+    FACEMAPS = 0xA,
     VERTMATS = 0xB,
     QTANGENTS = 0xC,      // Seen in Hunt models
     VERTSUVS = 0xF

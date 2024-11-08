@@ -34,21 +34,6 @@ string Read_UNORM(ushort s) {
     return t;
 };
 
-struct BONEMAPDATA(int bytesPerElement) {
-    if (bytesPerElement == 8) {
-        byte boneIndex[4];
-        byte weight[4];
-    }
-    else if (bytesPerElement == 12) {
-        ushort boneIndex[4];
-        byte weight[4];
-    }
-    else if (bytesPerElement == 24) {
-        uint boneIndex[4];
-        short weight[4];
-    };
-};
-
 struct BONEMAP(int numberOfVertices) {
     uint bytesPerElement;
     BONEMAPDATA bonemap(bytesPerElement)[numberOfVertices] <comment=PrintBoneMapData>;
