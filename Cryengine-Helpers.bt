@@ -150,4 +150,10 @@ string PrintTimingInfo(TIMINGINFO &info) {
     return result;
 };
 
+string PrintTangentByte(TANGENT_BYTE &tan) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", tan.x/127.0, tan.y/127.0, tan.z/127.0, tan.w/127.0);
+    return result;
+}
+
 #endif

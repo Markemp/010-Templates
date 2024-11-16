@@ -206,31 +206,31 @@ struct COMPILEDPHYSICALPROXIES {
     }
 };
 
-struct MESHSUBSETS(int fileVersion) {
-    local int i;
-    CHUNKHEADER chunkHeader(fileVersion);
-    if (chunkHeader.version == 0x0800) {
-        uint flags;
-        int numberOfMeshSubsets;
-        uint unknown;  // skip bytes
-        uint unknown2;  // skip bytes
-        for (i = 0; i < numberOfMeshSubsets; i++) {
-            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
-        };
-    }
-    else if (chunkHeader.version == 0x80000800) {
-        BigEndian();
-        uint flags;
-        int numberOfMeshSubsets;
-        uint unknown;  // skip bytes
-        uint unknown2;  // skip bytes
-        for (i = 0; i < numberOfMeshSubsets; i++) {
-            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
-        };
-        LittleEndian();
-    };
-    
-};
+//struct MESHSUBSETS(int fileVersion) {
+//    local int i;
+//    CHUNKHEADER chunkHeader(fileVersion);
+//    if (chunkHeader.version == 0x0800) {
+//        uint flags;
+//        int numberOfMeshSubsets;
+//        uint unknown;  // skip bytes
+//        uint unknown2;  // skip bytes
+//        for (i = 0; i < numberOfMeshSubsets; i++) {
+//            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+//        };
+//    }
+//    else if (chunkHeader.version == 0x80000800) {
+//        BigEndian();
+//        uint flags;
+//        int numberOfMeshSubsets;
+//        uint unknown;  // skip bytes
+//        uint unknown2;  // skip bytes
+//        for (i = 0; i < numberOfMeshSubsets; i++) {
+//            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+//        };
+//        LittleEndian();
+//    };
+//    
+//};
 
 
 #endif

@@ -59,6 +59,53 @@ struct CONTROLLER_905 {
     uint trackLength;
 };
 
+struct MESHSUBSET {
+    uint firstVertex;
+    uint numberOfVertices;
+    uint firstIndex;
+    uint numberOfIndices;
+    uint material;
+    float radius;
+    VECTOR3 center <comment=PrintVector3>;
+};
+
+struct MESHSUBSETS(int fileVersion) {
+    local int i;
+    CHUNKHEADER chunkHeader(fileVersion);
+
+    if (fileVersion == 0x0746) {
+        uint flags;
+        int numberOfMeshSubsets;
+        uint unknown;  // skip bytes
+        uint unknown2;  // skip bytes
+        for (i = 0; i < numberOfMeshSubsets; i++) {
+            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+        };
+    }
+    else {
+        if (chunkHeader.version == 0x0800) {
+            uint flags;
+            int numberOfMeshSubsets;
+            uint unknown;  // skip bytes
+            uint unknown2;  // skip bytes
+            for (i = 0; i < numberOfMeshSubsets; i++) {
+                MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+            };
+        }
+        else if (chunkHeader.version == 0x80000800) {
+            BigEndian();
+            uint flags;
+            int numberOfMeshSubsets;
+            uint unknown;  // skip bytes
+            uint unknown2;  // skip bytes
+            for (i = 0; i < numberOfMeshSubsets; i++) {
+                MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+            };
+            LittleEndian();
+        };
+    };
+};
+
 struct VERTSUV(int bytesPerElement) {
     if (bytesPerElement == 16) {
         VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
@@ -109,6 +156,9 @@ struct MTLNAME(int fileVersion) {
 
 struct MESHCHUNK(int fileVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
+    if (chunkHeader.version == 0x80000800) {
+        BigEndian();
+    };
     uint Flags1;
     uint Flags2;
     uint NumVertices;
@@ -133,17 +183,12 @@ struct MESHCHUNK(int fileVersion) {
     uint PhysicsData[4] <format=hex>;
     VECTOR3 MinBound <comment=PrintVector3>;
     VECTOR3 MaxBound <comment=PrintVector3>;
+    if (chunkHeader.version == 0x80000800) {
+        LittleEndian();
+    };
 };
 
-struct MESHSUBSET {
-    uint firstVertex;
-    uint numberOfVertices;
-    uint firstIndex;
-    uint numberOfIndices;
-    uint material;
-    float radius;
-    VECTOR3 center <comment=PrintVector3>;
-};
+
 
 struct MESHSUBSETCHUNK {
     uint flags;

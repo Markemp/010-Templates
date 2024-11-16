@@ -122,4 +122,18 @@ struct QTANGENT {
     short w;
 };
 
+struct COLOR {
+    ubyte red;
+    ubyte blue;
+    ubyte green;
+    ubyte alpha;
+};
+
+struct TANGENT_BYTE {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
 #endif

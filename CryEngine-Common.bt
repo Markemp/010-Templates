@@ -55,44 +55,6 @@ struct UNKNOWN(int numberOfVertices) {
     UNKNOWN2 unknown[numberOfVertices];
 };
 
-struct QUATERION {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
-string GetQuaterion(QUATERION &quat) {
-    string result;
-    SPrintf(result, "[%f, %f, %f, %f]", quat.x, quat.y, quat.z, quat.w);
-    return result;
-};
-
-struct COLOR {
-    ubyte red;
-    ubyte blue;
-    ubyte green;
-    ubyte alpha;
-};
-
-struct UVHalf {
-    hfloat u;
-    hfloat v;
-};
-
-struct TANGENT_BYTE {
-    byte x;
-    byte y;
-    byte z;
-    byte w;
-};
-
-string PrintTangentByte(TANGENT_BYTE &tan) {
-    string result;
-    SPrintf(result, "%f, %f, %f, %f", tan.x/127.0, tan.y/127.0, tan.z/127.0, tan.w/127.0);
-    return result;
-}
-
 string PrintTangent(TANGENT_BYTE &tan) {
     string result;
     local VECTOR3 tangent;
