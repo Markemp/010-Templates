@@ -19,14 +19,15 @@ HEADER headerInfo <bgcolor=cLtBlue>;
 pos = FTell(); // save read position
 FSeek(headerInfo.fileOffset);
 
-CHUNKTABLEENTRY chunkTable[headerInfo.numChunks] <bgcolor=cDkBlue, comment=GetChunkTableType>;
+//CHUNKTABLEENTRY chunkTable[headerInfo.numChunks] <bgcolor=cDkBlue, comment=GetChunkTableType>;
+CHUNKTABLE chunkTable(headerInfo.version, headerInfo.numChunks) <bgcolor=cDkBlue, comment=GetChunkTableType>;
 
 FSeek(pos);
 
 for (i = 0; i < headerInfo.numChunks; i++) {
-    FSeek(chunkTable[i].offset);
+    FSeek(chunkTable.tableEntry[i].offset);
     
-    switch (chunkTable[i].chunkType) {
+    switch (chunkTable.tableEntry[i].chunkType) {
         case Node: {
             NODECHUNK nodeChunk(false) <comment=GetNodeName>;
             break;

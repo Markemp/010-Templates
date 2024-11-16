@@ -102,6 +102,12 @@ string PrintUVHalf(UVHALF &uv) {
     return result;
 };
 
+string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
+    string result;
+    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
+    return result;
+};
+
 string GetMaterialName(MTLNAME &chunk) {
     string result;
     SPrintf(result, "Name: %s, Type: %s", chunk.Name, EnumToString(chunk.mtlType));

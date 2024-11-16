@@ -19,17 +19,10 @@
 #include "Cryengine-Helpers.bt"
 
 struct HEADER {
-    char fileSig[8];
+    char fileSig[4];
+    uint version <format=hex>;
     uint numChunks;
     int fileOffset;  // location of header chunks
-};
-
-struct CHUNKTABLEENTRY {
-    CHUNKTYPE chunkType;
-    short version <format=hex>;  
-    uint id <format=hex>;
-    uint size <format=hex>;
-    uint offset <format=hex>;
 };
 
 string GetChunkTableType(CHUNKTABLEENTRY &entry) {
@@ -139,34 +132,34 @@ struct COMPILEDBONES(int numberOfBones) {
     COMPILEDBONE bones[numberOfBones];
 };
 
-struct MESHCHUNK {
-    uint Flags1;
-    uint Flags2;
-    uint NumVertices;
-    uint NumIndices;
-    uint NumVertSubsets; // 801 format
-    uint MeshSubsets;
-    uint VerticesData <format=hex>;
-    uint Unknown <format=hex>;
-    uint NormalsData <format=hex>;
-    uint UVsData <format=hex>;
-    uint ColorsData <format=hex>;
-    uint Colors2Data <format=hex>;
-    uint IndicesData <format=hex>;
-    uint TangentsData <format=hex>;
-    uint ShCoeffsData <format=hex>;
-    uint ShapeDeformationData <format=hex>;
-    uint BoneMapData <format=hex>;
-    uint FaceMapData <format=hex>;
-    uint VertMatsData <format=hex>;
-    uint QTangentsData <format=hex>; // 801 format
-    uint SkinData;
-    uint Dummy2;                    // Old console data
-    uint VertsUVData <format=hex>;
-    uint PhysicsData[4] <format=hex>;
-    VECTOR3 MinBound;
-    VECTOR3 MaxBound;
-};
+//struct MESHCHUNK {
+//    uint Flags1;
+//    uint Flags2;
+//    uint NumVertices;
+//    uint NumIndices;
+//    uint NumVertSubsets; // 801 format
+//    uint MeshSubsets;
+//    uint VerticesData <format=hex>;
+//    uint Unknown <format=hex>;
+//    uint NormalsData <format=hex>;
+//    uint UVsData <format=hex>;
+//    uint ColorsData <format=hex>;
+//    uint Colors2Data <format=hex>;
+//    uint IndicesData <format=hex>;
+//    uint TangentsData <format=hex>;
+//    uint ShCoeffsData <format=hex>;
+//    uint ShapeDeformationData <format=hex>;
+//    uint BoneMapData <format=hex>;
+//    uint FaceMapData <format=hex>;
+//    uint VertMatsData <format=hex>;
+//    uint QTangentsData <format=hex>; // 801 format
+//    uint SkinData;
+//    uint Dummy2;                    // Old console data
+//    uint VertsUVData <format=hex>;
+//    uint PhysicsData[4] <format=hex>;
+//    VECTOR3 MinBound;
+//    VECTOR3 MaxBound;
+//};
 
 struct BREAKABLEPHYSICSCHUNK {
     uint granularity;
@@ -176,79 +169,73 @@ struct BREAKABLEPHYSICSCHUNK {
     int reserved[10];
 };
 
-struct DATASTREAMCHUNK {
-    local int i;
-    
-    uint flags2;
-    DATASTREAMTYPE datastreamType;
-    uint numberOfElements;
-    ushort bytesPerElement;
-    ushort unknown;
-    
-    switch (datastreamType) {
-        case VERTICES: {
-            uint flags[2];
-            for (i = 0; i < numberOfElements; i++) {
-                VECTOR3 vertices <comment=PrintVector3>;
-            }   
-            break;
-        }
-        case VERTSUVS: {
-            uint flags[2];
-            for (i = 0; i < numberOfElements; i++) {
-                VERTSUV vertsUvs(bytesPerElement) <comment=PrintVertsUvs>;
-            }
-            break;
-        }
-        case NORMALS: {
-            uint flags[2];
-            VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
-            break;
-        }
-        case UVS: {
-            uint flags[2];
-            UV uv[numberOfElements] <comment=PrintUV>;
-            break;   
-        }
-        case COLORS: {
-            uint flags[2];
-            IRGBA colors[numberOfElements] <comment=PrintColor>;
-            break;   
-        }
-        case INDICES: {
-            uint flags[2];
-            uint16 indices[numberOfElements];
-            break;   
-        }
-        case TANGENTS: {
-            uint flags[2];
-            VECTOR4SHORT tangent[numberOfElements];
-            break;   
-        }
-        case BONEMAPS: {
-            uint flags[2];
-            BONEMAPDATA boneMap(bytesPerElement)[numberOfElements];
-            break;
-        }
-        case QTANGENTS: {
-            uint flags[2];
-            QTANGENT qtangents[numberOfElements];
-        }
-        default: {
-            break;
-        }
-    }
-};
+//struct DATASTREAMCHUNK {
+//    local int i;
+//    
+//    uint flags2;
+//    DATASTREAMTYPE datastreamType;
+//    uint numberOfElements;
+//    ushort bytesPerElement;
+//    ushort unknown;
+//    
+//    switch (datastreamType) {
+//        case VERTICES: {
+//            uint flags[2];
+//            for (i = 0; i < numberOfElements; i++) {
+//                VECTOR3 vertices <comment=PrintVector3>;
+//            }   
+//            break;
+//        }
+//        case VERTSUVS: {
+//            uint flags[2];
+//            for (i = 0; i < numberOfElements; i++) {
+//                VERTSUV vertsUvs(bytesPerElement) <comment=PrintVertsUvs>;
+//            }
+//            break;
+//        }
+//        case NORMALS: {
+//            uint flags[2];
+//            VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+//            break;
+//        }
+//        case UVS: {
+//            uint flags[2];
+//            UV uv[numberOfElements] <comment=PrintUV>;
+//            break;   
+//        }
+//        case COLORS: {
+//            uint flags[2];
+//            IRGBA colors[numberOfElements] <comment=PrintColor>;
+//            break;   
+//        }
+//        case INDICES: {
+//            uint flags[2];
+//            uint16 indices[numberOfElements];
+//            break;   
+//        }
+//        case TANGENTS: {
+//            uint flags[2];
+//            VECTOR4SHORT tangent[numberOfElements];
+//            break;   
+//        }
+//        case BONEMAPS: {
+//            uint flags[2];
+//            BONEMAPDATA boneMap(bytesPerElement)[numberOfElements];
+//            break;
+//        }
+//        case QTANGENTS: {
+//            uint flags[2];
+//            QTANGENT qtangents[numberOfElements];
+//        }
+//        default: {
+//            break;
+//        }
+//    }
+//};
 
 string GetDatastreamType(DATASTREAMCHUNK &datastream) {
     string result;
     SPrintf(result, "%s", EnumToString(datastream.datastreamType));
-    return result;
-};
-
-string GetNodeName(NODECHUNK &chunk) {
-    string result;
-    SPrintf(result, "Name = %s", chunk.name);
     return result;
 };
 

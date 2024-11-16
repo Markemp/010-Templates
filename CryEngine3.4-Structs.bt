@@ -39,19 +39,6 @@ struct SPEEDINFO {
     QUATERNION startPosition;
 };
 
-string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
-    string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
-    return result;
-};
-
-struct CHUNKTABLE(uint ver, int numChunks) {
-    local uint i;
-    for (i = 0; i < numChunks; i++) {
-        CHUNKTABLEENTRY tableEntry(ver) <comment=PrintChunkTableType>;
-    };
-};
-
 struct SKINNINGINFO {
     
 };

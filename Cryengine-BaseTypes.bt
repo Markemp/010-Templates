@@ -1,0 +1,125 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+#ifndef BASETYPES_H
+#define BASETYPES_H
+
+struct VECTOR3 {
+    float x;
+    float y;
+    float z;
+};
+
+struct VECTOR3SHORT {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+};
+
+struct VECTOR3CRYHALF {
+    ushort x;
+    ushort y;
+    ushort z;
+};
+
+struct VECTOR4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct VECTOR4SHORT {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
+};
+
+struct QUATERNION {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct MATRIX3x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+};
+
+struct MATRIX3x3 {
+    float M11;
+    float M12;
+    float M13;
+    float M21;
+    float M22;
+    float M23;
+    float M31;
+    float M32;
+    float M33;
+};
+
+struct MATRIX4x4 {
+    float M11;
+    float M12;
+    float M13;
+    float M14;
+    float M21;
+    float M22;
+    float M23;
+    float M24;
+    float M31;
+    float M32;
+    float M33;
+    float M34;
+    float M41;
+    float M42;
+    float M43;
+    float M44;
+};
+
+struct IRGBA {
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+};
+
+struct UV {
+    float u;
+    float v;
+};
+
+struct UVHALF {
+    hfloat u;
+    hfloat v;
+};
+
+struct QTANGENT {
+    short x;
+    short y;
+    short z;
+    short w;
+};
+
+#endif
