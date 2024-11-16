@@ -19,8 +19,7 @@ HEADER headerInfo <bgcolor=cLtBlue>;
 pos = FTell(); // save read position
 FSeek(headerInfo.fileOffset);
 
-//CHUNKTABLEENTRY chunkTable[headerInfo.numChunks] <bgcolor=cDkBlue, comment=GetChunkTableType>;
-CHUNKTABLE chunkTable(headerInfo.version, headerInfo.numChunks) <bgcolor=cDkBlue, comment=GetChunkTableType>;
+CHUNKTABLE chunkTable(headerInfo.version, headerInfo.numChunks) <bgcolor=cDkBlue>;
 
 FSeek(pos);
 
@@ -33,7 +32,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case Mesh: {
-            MESHCHUNK meshChunk;
+            MESHCHUNK meshChunk(headerInfo.version);
             break;
         }
         case Helper: {
