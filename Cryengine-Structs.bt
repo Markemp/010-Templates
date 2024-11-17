@@ -23,6 +23,7 @@ struct CHUNKHEADER(int fileVersion) {
         uint id <format=hex>;
     }
     else if (fileVersion == 0x0746) {
+       const uint version = 0x0800;
         // No chunk header in these.
     };
 };
@@ -142,21 +143,34 @@ struct BONETOWORLD {
 };
 
 struct MTLNAME(int fileVersion) {
-    CHUNKHEADER chunkHeader(fileVersion);
-    MtlNameTypeEnum mtlType;
-    int NFlags2;
-    char Name[128];
-    int PhysicalizeType;
-    int NumberOfSubmaterials;
-    int SubMaterialChunkID[32];
-    int AdvancedDataChunkID;
-    float Opacity;
-    int reserved[32];
+    if (fileVersion == 0x0745) {
+        CHUNKHEADER chunkHeader(fileVersion);
+        if (chunkHeader.version == 0x80000800) {
+            BigEndian();
+        };
+        MtlNameTypeEnum mtlType;
+        int NFlags2;
+        char Name[128];
+        int PhysicalizeType;
+        int NumberOfSubmaterials;
+        int SubMaterialChunkID[32];
+        int AdvancedDataChunkID;
+        float Opacity;
+        int reserved[32];
+        if (chunkHeader.version == 0x80000800) {
+            LittleEndian();
+        };
+    }
+    else if (fileVersion == 0x0746) {
+        char Name[128];
+        int NumberOfSubmaterials;
+        MtlNamePhysicsType SubMaterialChunkID[NumberOfSubmaterials];
+    };
 };
 
 struct MESHCHUNK(int fileVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
-    if (chunkHeader.version == 0x80000800) {
+    if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
         BigEndian();
     };
     uint Flags1;
@@ -183,19 +197,11 @@ struct MESHCHUNK(int fileVersion) {
     uint PhysicsData[4] <format=hex>;
     VECTOR3 MinBound <comment=PrintVector3>;
     VECTOR3 MaxBound <comment=PrintVector3>;
-    if (chunkHeader.version == 0x80000800) {
+    if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
         LittleEndian();
     };
 };
 
-
-
-struct MESHSUBSETCHUNK {
-    uint flags;
-    uint numberOfMeshSubsets;
-    byte skip[8];
-    MESHSUBSET meshSubSet[numberOfMeshSubsets];
-};
 
 struct NODECHUNK(int fileVersion) {
     if (fileVersion == 0x0745) {
@@ -248,6 +254,32 @@ struct CHUNKTABLE(uint ver, int numChunks) {
     for (i = 0; i < numChunks; i++) {
         CHUNKTABLEENTRY tableEntry(ver) <comment=PrintChunkTableType>;
     };
+};
+
+struct COMPILEDPHYSICALPROXIES(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    if (chunkHeader.version == 0x0800) {
+        uint numberOfProxies;
+        local uint i;
+        for (i = 0; i < numberOfProxies; i++) {
+            uint id;
+            uint numberOfVertices;
+            uint numberOfIndices;
+            uint material;              // Size of weird null bytes at end of structure
+            VECTOR3 v;
+        };
+    }
+    else if (chunkHeader.version == 0x0801) {
+        uint numberOfProxies;
+        local uint i;
+        for (i = 0; i < numberOfProxies; i++) {
+            uint id;
+            uint numberOfVertices;
+            uint numberOfIndices;
+            uint material;              // Size of weird null bytes at end of structure
+            VECTOR3 v;
+        };
+    }
 };
 
 struct TIMINGINFO(int fileVersion) {
@@ -306,7 +338,7 @@ struct DATASTREAMCHUNK(int fileVersion) {
             case VERTSUVS: {
                 uint flags[2];
                 for (i = 0; i < numberOfElements; i++) {
-                    VERTSUV vertsUvs(bytesPerElement) <comment=PrintVertsUvs>;
+                    VERTSUV vertsUvs(bytesPerElement) <comment=PrintVertsUvs,name="VertsUVs">;
                 }
                 break;
             }
@@ -446,6 +478,5 @@ struct DATASTREAMCHUNK(int fileVersion) {
         };
     };
 };
-
 
 #endif

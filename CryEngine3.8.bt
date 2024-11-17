@@ -46,7 +46,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case DataStream: {
-            DATASTREAMCHUNK datastream <comment=GetDatastreamType>;
+            DATASTREAMCHUNK datastream(headerInfo.version) <comment=GetDatastreamType>;
             break;
         }
         case MeshSubsets: {
@@ -58,7 +58,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case MtlName: {
-            MTLNAMECHUNK mtlName <bgcolor=cDkGreen>;
+            MTLNAME mtlName(headerInfo.version) <bgcolor=cDkGreen,name=mtlName.Name,comment=PrintMatDetails>;
         }
         default: {
             break;

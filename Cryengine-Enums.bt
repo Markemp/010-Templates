@@ -43,6 +43,15 @@ enum MtlNameTypeEnum {
     Unknown2 = 0x04
 };
 
+enum <uint> MtlNamePhysicsType {
+    NOMTLTYPE = 0xFFFFFFFF,     // Should be NONE, but meh
+    DEFAULT = 0x00000000,
+    NOCOLLIDE = 0x00000001,
+    OBSTRUCT = 0x00000002,
+    DEFAULTPROXY = 0x000000FF,  // this needs to be checked.  cgf.xml says 256; not sure if hex or dec
+    UNKNOWN = 0x00001100,       // collision mesh?
+};
+
 enum LightType {
     OMNI,
     SPOT,

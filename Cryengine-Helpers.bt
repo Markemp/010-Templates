@@ -72,11 +72,11 @@ string PrintMeshSubset(MESHSUBSET &meshSubset) {
     return result;
 };
 
-string PrintMeshSubsetChunk(MESHSUBSETCHUNK &chunk) {
-    string result;
-    SPrintf(result, "number of subsets: %d", chunk.numberOfMeshSubsets);
-    return result;
-};
+//string PrintMeshSubsetChunk(MESHSUBSETCHUNK &chunk) {
+//    string result;
+//    SPrintf(result, "number of subsets: %d", chunk.numberOfMeshSubsets);
+//    return result;
+//};
 
 string PrintBoneMapData(BONEMAPDATA &data) {
     string result;
@@ -111,6 +111,19 @@ string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
 string GetMaterialName(MTLNAME &chunk) {
     string result;
     SPrintf(result, "Name: %s, Type: %s", chunk.Name, EnumToString(chunk.mtlType));
+    return result;
+};
+
+string PrintMatDetails(MTLNAME &mat) {
+    string result;
+    if (exists(mat.mtlType)) {
+        local string matType = EnumToString(mat.mtlType);
+        SPrintf(result, "Name: %s, Type: %s", mat.Name, matType);
+    }
+    else {
+        SPrintf(result, "Name: %s", mat.Name);
+    };
+    
     return result;
 };
 
@@ -155,5 +168,9 @@ string PrintTangentByte(TANGENT_BYTE &tan) {
     SPrintf(result, "%f, %f, %f, %f", tan.x/127.0, tan.y/127.0, tan.z/127.0, tan.w/127.0);
     return result;
 }
+
+uint SetDefaultVersion() {
+    return 0x0800;
+};
 
 #endif

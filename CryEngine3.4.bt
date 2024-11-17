@@ -14,10 +14,20 @@
 local uint pos;
 local uint i;
 
+//if (magic == "CryT") {
+//    #include "Cryengine3.4-Enums.bt"
+//    #include "Cryengine3.4-Structs.bt"
+//} else if (magic == "CrCh") {
+//    #include "Cryengine3.8-Enums.bt"
+//    #include "CryEngine3.8-Structs.bt"
+//} else {
+//    printf("File type not recognized");
+//    return;
+//};
+
 HEADER headerInfo <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
-
 FSeek(headerInfo.fileOffset + 4);  // Skip numChunks, which is in headerInfo
 
 CHUNKTABLE chunkTable(headerInfo.version, headerInfo.numChunks);
