@@ -12,8 +12,10 @@
 //------------------------------------------------
 
 // Ivo files
-#include "CryengineIvo-Structs.bt"
+#include "Cryengine-BaseTypes.bt"
 #include "CryengineIvo-Enums.bt"
+#include "CryengineIvo-Structs.bt"
+
 //#include "Cryengine-Common.bt"
 
 local uint pos;
@@ -77,11 +79,11 @@ struct SKINMESH {
                 break;
             }
             case IvoBoneMap: {
-                BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                //BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
             case IvoBoneMap32: {
-                BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
         }

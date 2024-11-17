@@ -14,8 +14,8 @@
 #ifndef ENUMS_IVO_H
 #define ENUMS_IVO_H
 
-#include "Cryengine-Enums.bt"
-#include "Cryengine-Structs.bt"
+//#include "Cryengine-Enums.bt"
+//#include "Cryengine-Structs.bt"
 
 enum <uint> CHUNKTYPE {
     Skeleton1               = 0x0000300d,

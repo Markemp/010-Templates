@@ -14,8 +14,9 @@
 #ifndef STRUCTS_IVO_H
 #define STRUCTS_IVO_H
 
-#include "Cryengine-Common.bt"
-#include "CryengineIvo-Enums.bt"
+//#include "Cryengine-Common.bt"
+//#include "CryengineIvo-Enums.bt"
+#include "Cryengine-BaseTypes.bt"
 
 struct CHUNKTABLE {
     CHUNKTYPE chunkType <format=hex>;
@@ -53,7 +54,7 @@ struct IVOVERTSUVS(int numberOfVertices) {
     struct VERTUV {
         VECTOR3 vertex <comment=PrintVector3>;
         COLOR color <comment=PrintColor>;
-        UVHalf uv <comment=PrintUVHalf>;
+        UVHALF uv <comment=PrintUVHalf>;
     };
     VERTUV vertUvs[numberOfVertices];
 };
@@ -65,7 +66,7 @@ struct IVOVERTSUVS_CGF(int numberOfVertices) {
 		VECTOR3SHORT vertices <comment=PrintVector3Short>;
 		COLOR color <comment=PrintColor>;
 		short unknown;
-		UVHalf uv <comment=PrintUVHalf>;
+		UVHALF uv <comment=PrintUVHalf>;
 	};
 
 	IVOVertsUvs_CGF vertUvs[numberOfVertices];
@@ -129,6 +130,12 @@ struct MTLNAME {
     char Name[128];
 };
 
+struct BONETOWORLD {
+    float row1[4];
+    float row2[4];
+    float row3[4];
+};
+
 string PrintNormal(IVONORMAL &normal) {
     string result;
     local VECTOR3 norm;
@@ -143,9 +150,9 @@ struct BONE {
     uint controllerId;
     uint limbId;
     int parentIndex;
-    QUATERION relativeQuat <comment=GetQuaterion>;
+    QUATERNION relativeQuat <comment=GetQuaterion>;
     VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
-    QUATERION worldQuat <comment=GetQuaterion>;
+    QUATERNION worldQuat <comment=GetQuaterion>;
     VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
 };
 
@@ -159,9 +166,9 @@ struct BONEIDS_x901 {
 };
 
 struct BONETRANSFORMS_x901 {
-	QUATERION relativeQuat <comment=GetQuaterion>;
+	QUATERNION relativeQuat <comment=GetQuaterion>;
 	VECTOR3 relativeTransform <comment=PrintVector3>; // relative x,y,z from parent
-	QUATERION worldQuat <comment=GetQuaterion>;
+	QUATERNION worldQuat <comment=GetQuaterion>;
 	VECTOR3 worldTransform <comment=PrintVector3>; // absolute x,y,z from origin
 };
 
