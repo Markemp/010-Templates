@@ -50,7 +50,9 @@ enum <ushort> CHUNKTYPE {
         CompiledIntFaces = 0x2004,
         CompiledIntSkinVertices = 0x2005, 
         CompiledExt2IntMap = 0x2006,
-        BoneBoxes = 0x3004
+        BoneBoxes = 0x3004,
+        Unknown11 = 0x300a,
+        Unknown21_Anim = 0x4007
 };
 
 #endif

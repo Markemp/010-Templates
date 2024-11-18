@@ -313,7 +313,7 @@ struct EXPORTFLAGS(int fileVersion) {
     uint minor;
     uint build;
     uint revision;
-    string rcVersionString;
+    char rcVersionString[0x90];
 };
 
 struct DATASTREAMCHUNK(int fileVersion) {

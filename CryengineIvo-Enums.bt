@@ -31,6 +31,7 @@ enum <uint> CHUNKTYPE {
     MeshChunk               = 0x9293b9d8,
     SkinMesh                = 0xb875b2d9,
     SkinMesh2               = 0xb8757777,
+    UnknownIvo              = 0xbe5e493e, // 4 words, 0x0, 0x1, 0x2, 0x0
     CompiledBones           = 0xc201973c,
     CompiledBones320        = 0xc2011111,
     DBA                     = 0xf7351608

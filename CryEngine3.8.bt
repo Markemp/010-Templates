@@ -59,7 +59,20 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case MtlName: {
             MTLNAME mtlName(headerInfo.version) <bgcolor=cDkGreen,name=mtlName.Name,comment=PrintMatDetails>;
+            break;
         }
+        case ExportFlags: {
+            EXPORTFLAGS exportFlags(headerInfo.version) <name="Export Flags">;
+            break;
+        }
+        case Unknown11: {
+            char unknown1[chunkTable.tableEntry[i].size] <bgcolor=cDkBlue>;
+            break;
+        }
+        case Unknown21_Anim: {
+            UNKNOWN21 unknown21(chunkTable.tableEntry[i].size) <bgcolor=cDkGreen>;
+            break;
+        }          
         default: {
             break;
         }

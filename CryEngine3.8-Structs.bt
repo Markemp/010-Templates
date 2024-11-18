@@ -25,12 +25,6 @@ struct HEADER {
     int fileOffset;  // location of header chunks
 };
 
-string GetChunkTableType(CHUNKTABLEENTRY &entry) {
-    string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
-    return result;
-};
-
 struct CHUNK {
     uint fOffset <format=hex>;
     uint chunkType <format=hex>;
@@ -118,6 +112,10 @@ string GetDatastreamType(DATASTREAMCHUNK &datastream) {
     string result;
     SPrintf(result, "%s", EnumToString(datastream.datastreamType));
     return result;
+};
+
+struct UNKNOWN21(int size) {
+    char unknown[size];
 };
 
 #endif
