@@ -17,17 +17,9 @@
 #include "Cryengine-Structs.bt"
 #include "Cryengine-Helpers.bt"
 
-struct HEADER {
-    char fileSig[8];
-    uint fileType <format=hex>;
-    uint version;
-    int fileOffset;  // location of header chunks
-    uint numChunks;
-};
-
 struct SPEEDINFO {
     if (fileVersion == 0x0745) {
-        CHUNKHEADER chunkHeader;
+        CHUNKHEADER chunkHeader(fileVersion);
     }
     else if (fileVersion == 0x0746) {
     }; // no headers on these chunks

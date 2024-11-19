@@ -17,8 +17,6 @@
 #include "CryengineIvo-Structs.bt"
 #include "CryengineIvo-Helpers.bt"
 
-//#include "Cryengine-Common.bt"
-
 local uint pos;
 local int64 fileSize = FileSize() ;
 

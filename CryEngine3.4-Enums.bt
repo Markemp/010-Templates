@@ -14,8 +14,6 @@
 #ifndef ENUMS_34_H
 #define ENUMS_34_H
 
-#include "Cryengine-Enums.bt"
-
 enum <uint> CHUNKTYPE {
         Any = 0x0,
         Mesh = 0xCCCC0000,

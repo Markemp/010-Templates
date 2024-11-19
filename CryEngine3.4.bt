@@ -7,25 +7,35 @@
 // Purpose:
 //--------------------------------------
 
-#include "Cryengine3.4-Enums.bt"
+#include "Cryengine3.4-Enums.bt"  // chunk type
+#include "Cryengine-Enums.bt"
 #include "Cryengine3.4-Structs.bt"
 #include "Cryengine-Helpers.bt"
 
 local uint pos;
 local uint i;
 
-//if (magic == "CryT") {
-//    #include "Cryengine3.4-Enums.bt"
-//    #include "Cryengine3.4-Structs.bt"
-//} else if (magic == "CrCh") {
-//    #include "Cryengine3.8-Enums.bt"
-//    #include "CryEngine3.8-Structs.bt"
-//} else {
-//    printf("File type not recognized");
-//    return;
-//};
+local FILETYPE fileType;
 
-HEADER headerInfo <bgcolor=cLtBlue>;
+char magic[4] <hidden=true>;
+
+switch (magic) {
+    case "#ivo":
+        fileType = CRYENGINE_IVO;
+        break;
+    case "CryT":
+        fileType = CRYENGINE_3_4;
+        break;
+    case "CrCh":
+        fileType = CRYENGINE_3_8;
+        break;
+    default:
+        break;
+};
+
+FSeek(0);
+
+HEADER headerInfo(fileType) <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
 FSeek(headerInfo.fileOffset + 4);  // Skip numChunks, which is in headerInfo
@@ -63,7 +73,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         }
         case Node: {
-            NODECHUNK nodeChunk(true) <comment=GetNodeName>;
+            NODECHUNK nodeChunk(headerInfo.version) <comment=GetNodeName>;
             break;
         }
         case Mesh: {
@@ -87,7 +97,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         };
         case Controller: {
-            CHUNKHEADER chunkHeaderInfo;
+            CHUNKHEADER chunkHeaderInfo(headerInfo.version);
             if (chunkHeaderInfo.version == 0x0829) {
                 CONTROLLER_829 controller;
             } 

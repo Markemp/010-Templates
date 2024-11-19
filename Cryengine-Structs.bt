@@ -15,6 +15,21 @@
 
 #include "Cryengine-BaseTypes.bt"
 
+struct HEADER(FILETYPE fileType) {
+    if (fileType == CRYENGINE_3_4) {
+        char fileSig[8];
+        uint fileType <format=hex>;
+        uint version <format=hex>;
+        int fileOffset <format=hex>;  // location of header chunks
+        uint numChunks;
+    } else if (fileType == CRYENGINE_3_8) {
+        char fileSig[4];
+        uint version <format=hex>;
+        uint numChunks;
+        int fileOffset;  // location of header chunks
+    };
+};
+
 struct CHUNKHEADER(int fileVersion) {
     if (fileVersion == 0x0745) {
         CHUNKTYPE chunkType;
@@ -204,11 +219,7 @@ struct MESHCHUNK(int fileVersion) {
 
 
 struct NODECHUNK(int fileVersion) {
-    if (fileVersion == 0x0745) {
-        CHUNKHEADER chunkHeader(fileVersion);
-    }
-    else if (fileVersion == 0x0746) {
-    }; // no headers on these chunks
+    CHUNKHEADER chunkHeader(fileVersion);
     char name[64];
     uint objectNodeId <format=hex>; // Mesh chunk ID
     uint parentNodeId <format=hex>; // Chunk ID of parent node
