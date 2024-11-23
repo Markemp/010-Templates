@@ -89,7 +89,7 @@ enum <ushort> CHUNKTYPE_US {
         Node_us                             = 0x100B,
         Mtl_us                              = 0x100C,
         Controller_us                       = 0x100D,
-        Timing_us                           = 0x100E,
+        TimingInfo_us                       = 0x100E,
         BoneMesh_us                         = 0x100F,
         BoneLightBinding_us                 = 0x1010,
         MeshMorphTarget_us                  = 0x1011,
@@ -109,7 +109,8 @@ enum <ushort> CHUNKTYPE_US {
         CompiledExt2IntMap_us               = 0x2006,
         BoneBoxes_us                        = 0x3004,
         Unknown11_us                        = 0x300a,
-        Unknown21_Anim_us                   = 0x4007
+        Unknown21_Anim_us                   = 0x4007,
+        SpeedInfo_us                        = 0x0002
 };
 
 enum <string> FILETYPE { 

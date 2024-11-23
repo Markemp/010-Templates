@@ -7,7 +7,7 @@
 // Purpose:
 //--------------------------------------
 
-#include "Cryengine3.4-Enums.bt"  // chunk type
+//#include "Cryengine3.4-Enums.bt"  // chunk type
 #include "Cryengine-Enums.bt"
 #include "Cryengine3.4-Structs.bt"
 #include "Cryengine-Helpers.bt"
@@ -16,6 +16,7 @@ local uint pos;
 local uint i;
 
 local FILETYPE fileType;
+local int isBigEndian;
 
 char magic[4] <hidden=true>;
 
@@ -38,29 +39,30 @@ FSeek(0);
 HEADER headerInfo(fileType) <bgcolor=cLtBlue>;
 
 pos = FTell(); // save read position
-FSeek(headerInfo.fileOffset + 4);  // Skip numChunks, which is in headerInfo
 
-CHUNKTABLE chunkTable(headerInfo.version, headerInfo.numChunks);
-
-FSeek(pos + 4);
+CHUNKTABLE chunkTable(fileType, headerInfo.numChunks);
 
 for (i = 0; i < headerInfo.numChunks; i++) {
     FSeek(chunkTable.tableEntry[i].offset);
 
-    switch (chunkTable.tableEntry[i].chunkType) {
-        case SourceInfo: {
+    switch (chunkTable.tableEntry[i].chunkType.chunkType) {
+        case SourceInfo_us:
+        case SourceInfo_ui: {
             SOURCEINFO sourceInfo(chunkTable.tableEntry[i], headerInfo.version) <comment=PrintSourceInfo>;
             break;
         }
-        case CompiledPhysicalBones: {
+        case CompiledPhysicalBones_us: 
+        case CompiledPhysicalBones_ui: {
             COMPILEDPHYSICALBONES compiledPhysicalBones((chunkTable.tableEntry[i].size - 32)/584)  <bgcolor=cLtGreen>;
             break;
         }
-        case CompiledPhysicalProxies: {
+        case CompiledPhysicalProxies_us: 
+        case CompiledPhysicalProxies_ui: {
             COMPILEDPHYSICALPROXIES compiledPhysicalProxy;
             break;
         }
-        case CompiledBones: {
+        case CompiledBones_us: 
+        case CompiledBones_ui: {
             local int compiledBoneSize = 584;
             if (chunkTable.tableEntry[i].version == 0X0801) {
                 compiledBoneSize = 324;
@@ -68,35 +70,41 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             COMPILEDBONES compiledBones((chunkTable.tableEntry[i].size - 32)/compiledBoneSize) <bgcolor=cDkRed>;
             break;
         }
-        case MtlName: {
-            MTLNAME mtlName(headerInfo.version) <comment=GetMaterialName>;
+        case MtlName_us: 
+        case MtlName_ui: {
+            MTLNAME mtlName(fileType) <comment=GetMaterialName>;
             break;
         }
-        case Node: {
-            NODECHUNK nodeChunk(headerInfo.version) <comment=GetNodeName>;
+        case Node_us: 
+        case Node_ui: {
+            NODECHUNK nodeChunk(fileType) <comment=GetNodeName>;
             break;
         }
-        case Mesh: {
-            MESHCHUNK chunkMesh(headerInfo.version);
+        case Mesh_us: 
+        case Mesh_ui: {
+            MESHCHUNK chunkMesh(fileType);
             break;
         }
-        case MeshSubsets: {
-            MESHSUBSETS meshSubSets(headerInfo.version) <bgcolor=cLtBlue>;
+        case MeshSubsets_us: 
+        case MeshSubsets_ui: {
+            MESHSUBSETS meshSubSets(fileType) <bgcolor=cLtBlue>;
             break;
         }
-        case DataStream: {
-            DATASTREAMCHUNK chunkDatastream(headerInfo.version) <comment=PrintDatastreamType>;
+        case DataStream_us: 
+        case DataStream_ui: {
+            DATASTREAMCHUNK chunkDatastream(fileType) <comment=PrintDatastreamType>;
             break;
         }
-        case CompiledExt2IntMap: {
+        case CompiledExt2IntMap_ui: {
             //BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
             break;
         }
-        case CompiledPhysicalProxies: {
+        case CompiledPhysicalProxies_ui: {
             //COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
             break;
         };
-        case Controller: {
+        case Controller_us: 
+        case Controller_ui: {
             CHUNKHEADER chunkHeaderInfo(headerInfo.version);
             if (chunkHeaderInfo.version == 0x0829) {
                 CONTROLLER_829 controller;
@@ -106,16 +114,19 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             };
             break;
         };
-        case SpeedInfo: {
+        case SpeedInfo_us: 
+        case SpeedInfo_ui: {
             SPEEDINFO speedInfo <bgcolor=cLtRed>;
             break;
         };
-        case ExportFlags: {
-            EXPORTFLAGS exportFlags(headerInfo.version) <comment=PrintExportFlags>;
+        case ExportFlags_us: 
+        case ExportFlags_ui: {
+            EXPORTFLAGS exportFlags(fileType) <comment=PrintExportFlags>;
             break;
         };
-        case TimingInfo: {
-            TIMINGINFO timingInfo(headerInfo.version) <comment=PrintTimingInfo>;
+        case TimingInfo_us: 
+        case TimingInfo_ui: {
+            TIMINGINFO timingInfo(fileType) <comment=PrintTimingInfo>;
             break;
         };
     }

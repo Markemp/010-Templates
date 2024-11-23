@@ -18,28 +18,60 @@
 struct HEADER(FILETYPE fileType) {
     if (fileType == CRYENGINE_3_4) {
         char fileSig[8];
-        uint fileType <format=hex>;
-        uint version <format=hex>;
-        int fileOffset <format=hex>;  // location of header chunks
-        uint numChunks;
+        int fileType <format=hex>;
+        int version <format=hex>;
+        int offset <format=hex>;  // location of header chunks
+        int numChunks;
     } else if (fileType == CRYENGINE_3_8) {
         char fileSig[4];
-        uint version <format=hex>;
-        uint numChunks;
-        int fileOffset;  // location of header chunks
+        int version <format=hex>;
+        int numChunks;
+        int offset <format=hex>;  // location of header chunks
     };
 };
 
-struct CHUNKHEADER(int fileVersion) {
-    if (fileVersion == 0x0745) {
-        CHUNKTYPE chunkType;
+struct CHUNKTYPE(FILETYPE fileType) {
+    if (fileType == CRYENGINE_3_4) {
+        CHUNKTYPE_UI chunkType;
+    } else if (fileType == CRYENGINE_3_8) {
+        CHUNKTYPE_US chunkType;
+    };
+};
+
+struct CHUNKHEADER(FILETYPE fileVersion) {
+    if (fileVersion == CRYENGINE_3_4) {
+        CHUNKTYPE chunkType(fileVersion);
         uint version <format=hex>;
         uint offset <format=hex>;
         uint id <format=hex>;
     }
-    else if (fileVersion == 0x0746) {
+    else if (fileVersion == CRYENGINE_3_8) {
        const uint version = 0x0800;
         // No chunk header in these.
+    };
+};
+
+struct CHUNKTABLEENTRY(FILETYPE ver) {
+    if (ver == CRYENGINE_3_4 || ver == CRYENGINE_3_4) {
+        CHUNKTYPE chunkType(ver);
+        uint version <format=hex>;  
+        uint offset <format=hex>;
+        uint id <format=hex>;
+        uint size <format=hex>;
+    }
+    else if (ver == CRYENGINE_3_8) {
+        CHUNKTYPE chunkType(ver);
+        ushort version <format=hex>;
+        uint id <format=hex>;
+        uint size <format=hex>;
+        uint offset <format=hex>;
+    };
+};
+
+struct CHUNKTABLE(FILETYPE fileVersion, int numChunks) {
+    local uint i;
+    for (i = 0; i < numChunks; i++) {
+        CHUNKTABLEENTRY tableEntry(fileVersion) <comment=PrintChunkTableType>;
     };
 };
 
@@ -85,11 +117,11 @@ struct MESHSUBSET {
     VECTOR3 center <comment=PrintVector3>;
 };
 
-struct MESHSUBSETS(int fileVersion) {
+struct MESHSUBSETS(FILETYPE fileVersion) {
     local int i;
     CHUNKHEADER chunkHeader(fileVersion);
 
-    if (fileVersion == 0x0746) {
+    if (fileVersion == CRYENGINE_3_8) {
         uint flags;
         int numberOfMeshSubsets;
         uint unknown;  // skip bytes
@@ -99,7 +131,7 @@ struct MESHSUBSETS(int fileVersion) {
         };
     }
     else {
-        if (chunkHeader.version == 0x0800) {
+        if (chunkHeader.version == CRYENGINE_3_4) {
             uint flags;
             int numberOfMeshSubsets;
             uint unknown;  // skip bytes
@@ -157,8 +189,8 @@ struct BONETOWORLD {
     float row3[4];
 };
 
-struct MTLNAME(int fileVersion) {
-    if (fileVersion == 0x0745) {
+struct MTLNAME(FILETYPE fileVersion) {
+    if (fileVersion == CRYENGINE_3_4) {
         CHUNKHEADER chunkHeader(fileVersion);
         if (chunkHeader.version == 0x80000800) {
             BigEndian();
@@ -176,7 +208,7 @@ struct MTLNAME(int fileVersion) {
             LittleEndian();
         };
     }
-    else if (fileVersion == 0x0746) {
+    else if (fileVersion == CRYENGINE_3_8) {
         char Name[128];
         int NumberOfSubmaterials;
         MtlNamePhysicsType SubMaterialChunkID[NumberOfSubmaterials];
@@ -218,7 +250,7 @@ struct MESHCHUNK(int fileVersion) {
 };
 
 
-struct NODECHUNK(int fileVersion) {
+struct NODECHUNK(FILETYPE fileVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
     char name[64];
     uint objectNodeId <format=hex>; // Mesh chunk ID
@@ -236,38 +268,10 @@ struct NODECHUNK(int fileVersion) {
     int propertyStringLength <format=hex>;          // length of property string
 };
 
-struct CHUNKTABLEENTRY(uint ver) {
-    if (ver == 0x0745) {
-        CHUNKTYPE chunkType;
-        uint version <format=hex>;  
-        uint offset <format=hex>;
-        uint id <format=hex>;
-        uint size <format=hex>;
-    }
-    else if (ver == 0x0746) {
-        CHUNKTYPE chunkType;
-        ushort version <format=hex>;
-        uint id <format=hex>;
-        uint size <format=hex>;
-        uint offset <format=hex>;
-    }
-    else if (ver == 0x0744) {
-        CHUNKTYPE chunkType;
-        uint version <format=hex>;  
-        uint offset <format=hex>;
-        uint id <format=hex>;
-        uint size <format=hex> = 0;
-    }
-};
 
-struct CHUNKTABLE(uint ver, int numChunks) {
-    local uint i;
-    for (i = 0; i < numChunks; i++) {
-        CHUNKTABLEENTRY tableEntry(ver) <comment=PrintChunkTableType>;
-    };
-};
 
-struct COMPILEDPHYSICALPROXIES(int fileVersion) {
+
+struct COMPILEDPHYSICALPROXIES(FILETYPE fileVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
     if (chunkHeader.version == 0x0800) {
         uint numberOfProxies;
@@ -293,11 +297,11 @@ struct COMPILEDPHYSICALPROXIES(int fileVersion) {
     }
 };
 
-struct TIMINGINFO(int fileVersion) {
-    if (fileVersion == 0x0745) {
-        CHUNKHEADER chunkHeader (fileVersion);
+struct TIMINGINFO(FILETYPE fileType) {
+    if (fileType == CRYENGINE_3_4) {
+        CHUNKHEADER chunkHeader (fileType);
     }
-    else if (fileVersion == 0x0746) {
+    else if (fileType == CRYENGINE_3_4) {
     }; // no headers on these chunks
     float secondsPerTick;
     int ticksPerFrame;
@@ -306,12 +310,12 @@ struct TIMINGINFO(int fileVersion) {
     int globalRangeEnd;
 };
 
-struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry, int fileVersion) {
-    CHUNKHEADER chunkHeader (fileVersion);
+struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry, FILETYPE fileType) {
+    CHUNKHEADER chunkHeader (fileType);
     string sourceFile;
     string fileDate;
     string author;
-    local CHUNKTYPE chunkType = tableEntry.chunkType;
+    // local CHUNKTYPE chunkType = tableEntry.chunkType;
     local uint version = tableEntry.version;
     local uint offset = tableEntry.offset;
     local uint size = tableEntry.size;
@@ -327,11 +331,11 @@ struct EXPORTFLAGS(int fileVersion) {
     char rcVersionString[0x90];
 };
 
-struct DATASTREAMCHUNK(int fileVersion) {
+struct DATASTREAMCHUNK(FILETYPE fileType) {
     local int i;
 
-    CHUNKHEADER headerInfo(fileVersion);
-    if (fileVersion = 0x0746) {  // Cryengine 3.8
+    CHUNKHEADER headerInfo(fileType);
+    if (fileType == CRYENGINE_3_8) {  // Cryengine 3.8
         uint flags2;
         DATASTREAMTYPE datastreamType;
         uint numberOfElements;
@@ -393,100 +397,101 @@ struct DATASTREAMCHUNK(int fileVersion) {
         }
     }
     else {
+        if (fileType == CRYENGINE_3_4) {
+            if (headerInfo.version == 0x80000800) {
+                BigEndian();
+                uint flags2;
+                DATASTREAMTYPE datastreamType;
+                uint numberOfElements;
+                uint bytesPerElement;
+                uint reserved1;
+                uint reserved2;
+                switch (datastreamType) {
+                    case VERTICES: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VECTOR3 vertices <comment=PrintVector3>;
+                        }   
+                        break;
+                    }
+                    case VERTSUVS: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VERTSUV vertsUvs(bytesPerElement);
+                        }
+                        break;
+                    }
+                    case NORMALS: {
+                        VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                        break;
+                    }
+                    case UVS: {
+                        UV uv[numberOfElements] <comment=PrintUV>;
+                        break;   
+                    }
+                    case COLORS: {
+                        IRGBA colors[numberOfElements] <comment=PrintColor>;
+                        break;   
+                    }
+                    case INDICES: {
+                        uint16 indices[numberOfElements];
+                        break;   
+                    }
+                    case TANGENTS: {
+                        VECTOR4 tangent[numberOfElements];
+                        break;   
+                    }
+                    default: {
+                        break;
+                    }
+                }
+                LittleEndian();
+            } else {
 
-        if (headerInfo.version == 0x0800) {
-            uint flags2;
-            DATASTREAMTYPE datastreamType;
-            uint numberOfElements;
-            uint bytesPerElement;
-            uint reserved1;
-            uint reserved2;
-            
-            switch (datastreamType) {
-                case VERTICES: {
-                    for (i = 0; i < numberOfElements; i++) {
-                        VECTOR3 vertices <comment=PrintVector3>;
-                    }   
-                    break;
-                }
-                case VERTSUVS: {
-                    for (i = 0; i < numberOfElements; i++) {
-                        VERTSUV vertsUvs(bytesPerElement);
+                uint flags2;
+                DATASTREAMTYPE datastreamType;
+                uint numberOfElements;
+                uint bytesPerElement;
+                uint reserved1;
+                uint reserved2;
+                
+                switch (datastreamType) {
+                    case VERTICES: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VECTOR3 vertices <comment=PrintVector3>;
+                        }   
+                        break;
                     }
-                    break;
+                    case VERTSUVS: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VERTSUV vertsUvs(bytesPerElement);
+                        }
+                        break;
+                    }
+                    case NORMALS: {
+                        VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                        break;
+                    }
+                    case UVS: {
+                        UV uv[numberOfElements] <comment=PrintUV>;
+                        break;   
+                    }
+                    case COLORS: {
+                        IRGBA colors[numberOfElements] <comment=PrintColor>;
+                        break;   
+                    }
+                    case INDICES: {
+                        uint16 indices[numberOfElements];
+                        break;   
+                    }
+                    case TANGENTS: {
+                        VECTOR4 tangent[numberOfElements];
+                        break;   
+                    }
+                    default: {
+                        break;
+                    }
                 }
-                case NORMALS: {
-                    VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
-                    break;
-                }
-                case UVS: {
-                    UV uv[numberOfElements] <comment=PrintUV>;
-                    break;   
-                }
-                case COLORS: {
-                    IRGBA colors[numberOfElements] <comment=PrintColor>;
-                    break;   
-                }
-                case INDICES: {
-                    uint16 indices[numberOfElements];
-                    break;   
-                }
-                case TANGENTS: {
-                    VECTOR4 tangent[numberOfElements];
-                    break;   
-                }
-                default: {
-                    break;
-                }
-            }
+            };
         }
-        else if (headerInfo.version == 0x80000800) {
-            BigEndian();
-            uint flags2;
-            DATASTREAMTYPE datastreamType;
-            uint numberOfElements;
-            uint bytesPerElement;
-            uint reserved1;
-            uint reserved2;
-            switch (datastreamType) {
-                case VERTICES: {
-                    for (i = 0; i < numberOfElements; i++) {
-                        VECTOR3 vertices <comment=PrintVector3>;
-                    }   
-                    break;
-                }
-                case VERTSUVS: {
-                    for (i = 0; i < numberOfElements; i++) {
-                        VERTSUV vertsUvs(bytesPerElement);
-                    }
-                    break;
-                }
-                case NORMALS: {
-                    VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
-                    break;
-                }
-                case UVS: {
-                    UV uv[numberOfElements] <comment=PrintUV>;
-                    break;   
-                }
-                case COLORS: {
-                    IRGBA colors[numberOfElements] <comment=PrintColor>;
-                    break;   
-                }
-                case INDICES: {
-                    uint16 indices[numberOfElements];
-                    break;   
-                }
-                case TANGENTS: {
-                    VECTOR4 tangent[numberOfElements];
-                    break;   
-                }
-                default: {
-                    break;
-                }
-            }
-            LittleEndian();
-        };
     };
 };
 

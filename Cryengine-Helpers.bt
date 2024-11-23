@@ -98,7 +98,8 @@ string PrintUVHalf(UVHALF &uv) {
 
 string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
     string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
+    
+    SPrintf(result, "Type = %s", EnumToString(entry.chunkType.chunkType));
     return result;
 };
 
