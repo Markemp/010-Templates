@@ -13,7 +13,6 @@
 #ifndef STRUCTS_34_H
 #define STRUCTS_34_H
 
-#include "Cryengine3.4-Enums.bt"
 #include "Cryengine-Structs.bt"
 #include "Cryengine-Helpers.bt"
 
@@ -39,13 +38,6 @@ struct CRYLINK {        // CryHeader.h
     int boneID;
     VECTOR3 offset;
     float blending;
-};
-
-struct COLORB {
-    float red;
-    float blue;
-    float green;
-    int flag;
 };
 
 struct STOREDSKINNINGINFO {
@@ -80,96 +72,6 @@ struct BREAKABLEPHYSICSCHUNK {
     int nRetVtx;
     int nRetTets;
     int reserved[10];
-};
-
-struct PHYSICSGEOMETRY {
-    int physicGeom;
-    int flags;
-    VECTOR3 min <comment=PrintVector3>;
-    VECTOR3 max <comment=PrintVector3>;
-    VECTOR3 spring_angle <comment=PrintVector3>;
-    VECTOR3 spring_tension <comment=PrintVector3>;
-    VECTOR3 damping <comment=PrintVector3>;
-    MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
-};
-
-struct COMPILEDBONE_800 {
-    uint controllerID;
-    PHYSICSGEOMETRY physicsGeo[2];
-    float mass;
-    MATRIX3x4 worldToBone <comment=PrintMatrix3x4>;    //initialpose matrix World2Bone
-    MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
-    char boneName[256];
-    int limbID;
-    int offsetParent;       // this bone parent is this[m_nOffsetParent], 0 if the bone is root. Normally this is <= 0
-    uint numChildren;       // The whole hierarchy of bones is kept in one big array that belongs to the ModelState
-                            // Each bone that has children has its own range of bone objects in that array,
-                            // and this points to the beginning of that range and defines the number of bones.
-
-    int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
-                            // this is 0 if there are no children
-};
-
-string GetBoneName_800(COMPILEDBONE_800 &bone) {
-    string result;
-    SPrintf(result, "Name = %s", bone.boneName);
-    return result;
-};
-
-struct BONENAMELIST {
-    string boneName;
-};
-
-struct COMPILEDBONE_801 {
-    uint controllerId;
-    uint mass;
-    char unknown[208];
-    char boneName[48];
-    int offsetParent;
-    uint numChildren;
-    uint offsetChild;
-    MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
-};
-
-string GetBoneName_801(COMPILEDBONE_801 &bone) {
-    string result;
-    SPrintf(result, "Name = %s", bone.boneName);
-    return result;
-};
-
-struct COMPILEDBONES(int numberOfBones) {
-    CHUNKHEADER headerInfo;
-    char padding[32];
-    if (headerInfo.version == 0x0800) {
-        COMPILEDBONE_800 compiledBone[numberOfBones] <comment=GetBoneName_800>;
-    }
-    else {
-        COMPILEDBONE_801 compileBone[numberOfBones] <comment=GetBoneName_801>;
-    };
-    
-};
-
-struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
-    uint boneIndex;            // The number of the bone found.  Index in COMPILEDBONE
-    uint parentIndex;          // Index of the parent bone
-    uint numChildren;       // Number of child bones
-    uint controllerID;      // controllerID for this bone.
-    char prop[32];          // 32 byte char array
-    PHYSICSGEOMETRY phys;   // physics.
-};
-
-struct COMPILEDPHYSICALBONES(int numberOfBones) {
-    CHUNKHEADER headerInfo;
-    char padding2[32];
-    COMPILEDPHYSICALBONE compiledPhysicalBone[numberOfBones];
-};
-
-struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 numberOfMaterials)
-{
-    uint32 chunkID;
-    VECTOR3 vertex[numberOfVertices];
-    uint16 index[numberOfIndices];
-    char m_arrMaterials[numberOfMaterials];
 };
 
 #endif

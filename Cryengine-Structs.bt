@@ -189,6 +189,79 @@ struct BONETOWORLD {
     float row3[4];
 };
 
+struct BONENAMELIST {
+    string boneName;
+};
+
+struct PHYSICSGEOMETRY {
+    int physicGeom;
+    int flags;
+    VECTOR3 min <comment=PrintVector3>;
+    VECTOR3 max <comment=PrintVector3>;
+    VECTOR3 spring_angle <comment=PrintVector3>;
+    VECTOR3 spring_tension <comment=PrintVector3>;
+    VECTOR3 damping <comment=PrintVector3>;
+    MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
+};
+
+struct COMPILEDBONE(int chunkVersion) {
+    if (chunkVersion == 0x0800) {
+        uint controllerID;
+        PHYSICSGEOMETRY physicsGeo[2];
+        float mass;
+        MATRIX3x4 worldToBone <comment=PrintMatrix3x4>;    //initialpose matrix World2Bone
+        MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+        char boneName[256];
+        int limbID;
+        int offsetParent;       // this bone parent is this[m_nOffsetParent], 0 if the bone is root. Normally this is <= 0
+        uint numChildren;       // The whole hierarchy of bones is kept in one big array that belongs to the ModelState
+                                // Each bone that has children has its own range of bone objects in that array,
+                                // and this points to the beginning of that range and defines the number of bones.
+    
+        int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
+                                // this is 0 if there are no children
+    } else if (chunkVersion == 0x0801) {
+        uint controllerId;
+        uint mass;
+        char unknown[208];
+        char boneName[48];
+        int offsetParent;
+        uint numChildren;
+        uint offsetChild;
+        MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+    };
+};
+
+struct COMPILEDBONES(int numberOfBones, int chunkVersion, FILETYPE fileType) {
+    CHUNKHEADER headerInfo(fileType);
+    char padding[32];
+    COMPILEDBONE compiledbone(chunkVersion)[numberOfBones] <comment=PrintBoneName>;
+};
+
+struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
+    uint boneIndex;            // The number of the bone found.  Index in COMPILEDBONE
+    uint parentIndex;          // Index of the parent bone
+    uint numChildren;       // Number of child bones
+    uint controllerID;      // controllerID for this bone.
+    char prop[32];          // 32 byte char array
+    PHYSICSGEOMETRY phys;   // physics.
+};
+
+struct COMPILEDPHYSICALBONES(int numberOfBones, FILETYPE fileType) {
+    CHUNKHEADER headerInfo(fileType);
+    char padding2[32];
+    COMPILEDPHYSICALBONE compiledPhysicalBone[numberOfBones];
+};
+
+struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 numberOfMaterials)
+{
+    uint32 chunkID;
+    VECTOR3 vertex[numberOfVertices];
+    uint16 index[numberOfIndices];
+    char m_arrMaterials[numberOfMaterials];
+};
+
+
 struct MTLNAME(FILETYPE fileVersion) {
     if (fileVersion == CRYENGINE_3_4) {
         CHUNKHEADER chunkHeader(fileVersion);

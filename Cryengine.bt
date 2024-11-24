@@ -1,66 +1,132 @@
-//------------------------------------------------
-//--- 010 Editor v11.0.1 Binary Template
+//--------------------------------------
+//--- 010 Editor v6.0.3 Binary Template
 //
-//      File: Cryengine
-//   Authors: Geoff Gerber
-//   Version: 0.1
-//   Purpose: 
-//  Category: 
-// File Mask: 
-//  ID Bytes: 
-//   History: 
-//------------------------------------------------
-//
-//#include "CryEngine-Common.bt"
-//
-//local uint pos;
-//local uint i;
-//
-//enum <string> FILETYPE { CRYENGINE_3_4, CRYENGINE_3_8, CRYENGINE_IVO, O3DE };
-//local FILETYPE filetype;
-//
-//char magic[4];
-//
-//switch (magic) {
-//    case "#ivo":
-//        filetype = CRYENGINE_IVO;
-//        break;
-//    case "CryT":
-//        filetype = CRYENGINE_3_4;
-//        break;
-//    case "CrCh":
-//        filetype = CRYENGINE_3_8;
-//        break;
-//    default:
-//        break;
-//};
-//
-//pos = FTell(); // save read position
-//FSeek(0);
-//
-//struct Header {
-//    FILETYPE filetype;
-//    uint version;
-//    uint numChunks;
-//    int chuckHeaderTableOffset;
-//};
-//
-//// Read header
-//switch (filetype) {
-//    case CRYENGINE_3_4:
-//        Header header;
-//        header.filetype = CRYENGINE_3_4
-//        
-//};
-//
-//
-//
-//// Read chunk table
-//
-//
-//struct HEADER(FILETYPE filetype) {
-//    char fileSig[4];
-//    uint version;
-//    uint numChunks;
-//    int chunkHeaderTableOffset;  // location of header chunks
-//} headerInfo <bgcolor=cLtBlue>;
+// File: Cryengine 3.4
+// Author: Geoff Gerber
+// Revision:
+// Purpose:
+//--------------------------------------
+
+#include "Cryengine-Enums.bt"
+#include "Cryengine3.4-Structs.bt"
+#include "Cryengine-Helpers.bt"
+
+local uint pos;
+local uint i;
+
+local FILETYPE fileType;
+local int isBigEndian;
+
+char magic[4] <hidden=true>;
+
+switch (magic) {
+    case "#ivo":
+        fileType = CRYENGINE_IVO;
+        break;
+    case "CryT":
+        fileType = CRYENGINE_3_4;
+        break;
+    case "CrCh":
+        fileType = CRYENGINE_3_8;
+        break;
+    default:
+        break;
+};
+
+FSeek(0);
+
+HEADER headerInfo(fileType) <bgcolor=cLtBlue>;
+
+pos = FTell(); // save read position
+
+CHUNKTABLE chunkTable(fileType, headerInfo.numChunks);
+
+for (i = 0; i < headerInfo.numChunks; i++) {
+    FSeek(chunkTable.tableEntry[i].offset);
+
+    switch (chunkTable.tableEntry[i].chunkType.chunkType) {
+        case SourceInfo_us:
+        case SourceInfo_ui: {
+            SOURCEINFO sourceInfo(chunkTable.tableEntry[i], headerInfo.version) <comment=PrintSourceInfo>;
+            break;
+        }
+        case CompiledPhysicalBones_us: 
+        case CompiledPhysicalBones_ui: {
+            COMPILEDPHYSICALBONES compiledPhysicalBones((chunkTable.tableEntry[i].size - 32)/584, fileType)  <bgcolor=cLtGreen>;
+            break;
+        }
+        case CompiledPhysicalProxies_us: 
+        case CompiledPhysicalProxies_ui: {
+            COMPILEDPHYSICALPROXIES compiledPhysicalProxy(fileType);
+            break;
+        }
+        case CompiledBones_us: 
+        case CompiledBones_ui: {
+            local int compiledBoneSize = 584;
+            if (chunkTable.tableEntry[i].version == 0X0801) {
+                compiledBoneSize = 324;
+            }
+            COMPILEDBONES compiledBones((chunkTable.tableEntry[i].size - 32)/compiledBoneSize, chunkTable.tableEntry[i].version, fileType) <bgcolor=cDkRed>;
+            break;
+        }
+        case MtlName_us: 
+        case MtlName_ui: {
+            MTLNAME mtlName(fileType) <comment=GetMaterialName>;
+            break;
+        }
+        case Node_us: 
+        case Node_ui: {
+            NODECHUNK nodeChunk(fileType) <comment=GetNodeName>;
+            break;
+        }
+        case Mesh_us: 
+        case Mesh_ui: {
+            MESHCHUNK chunkMesh(fileType);
+            break;
+        }
+        case MeshSubsets_us: 
+        case MeshSubsets_ui: {
+            MESHSUBSETS meshSubSets(fileType) <bgcolor=cLtBlue>;
+            break;
+        }
+        case DataStream_us: 
+        case DataStream_ui: {
+            DATASTREAMCHUNK chunkDatastream(fileType) <comment=PrintDatastreamType>;
+            break;
+        }
+        case CompiledExt2IntMap_ui: {
+            //BREAKABLEPHYSICSCHUNK breakablePhysicsChunk;
+            break;
+        }
+        case CompiledPhysicalProxies_ui: {
+            //COMPILEDPHYSICALPROXIES compiledPhysicalProxies(version);
+            break;
+        };
+        case Controller_us: 
+        case Controller_ui: {
+            CHUNKHEADER chunkHeaderInfo(headerInfo.version);
+            if (chunkHeaderInfo.version == 0x0829) {
+                CONTROLLER_829 controller;
+            } 
+            else if (chunkHeaderInfo.version == 0x0905) {
+                CONTROLLER_905 controller;
+            };
+            break;
+        };
+        case SpeedInfo_us: 
+        case SpeedInfo_ui: {
+            SPEEDINFO speedInfo <bgcolor=cLtRed>;
+            break;
+        };
+        case ExportFlags_us: 
+        case ExportFlags_ui: {
+            EXPORTFLAGS exportFlags(fileType) <comment=PrintExportFlags>;
+            break;
+        };
+        case TimingInfo_us: 
+        case TimingInfo_ui: {
+            TIMINGINFO timingInfo(fileType) <comment=PrintTimingInfo>;
+            break;
+        };
+    }
+};

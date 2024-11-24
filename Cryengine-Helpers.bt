@@ -78,6 +78,24 @@ string PrintBoneMapData(BONEMAPDATA &data) {
     return result;
 };
 
+string PrintBoneName(COMPILEDBONE &bone) {
+    string result;
+    SPrintf(result, "Name = %s", bone.boneName);
+    return result;
+};
+
+//string GetBoneName_800(COMPILEDBONE_800 &bone) {
+//    string result;
+//    SPrintf(result, "Name = %s", bone.boneName);
+//    return result;
+//};
+//
+//string GetBoneName_801(COMPILEDBONE_801 &bone) {
+//    string result;
+//    SPrintf(result, "Name = %s", bone.boneName);
+//    return result;
+//};
+
 string PrintVertsUvs(VERTSUV &m) {
     string result;
     SPrintf(result, "Verts: [%f, %f, %f], UVs: [%f, %f]", m.vertices.x, m.vertices.y, m.vertices.z, m.uv.u, m.uv.v);

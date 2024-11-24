@@ -129,6 +129,13 @@ struct COLOR {
     ubyte alpha;
 };
 
+struct COLORB {
+    float red;
+    float blue;
+    float green;
+    int flag;
+};
+
 struct TANGENT_BYTE {
     byte x;
     byte y;
