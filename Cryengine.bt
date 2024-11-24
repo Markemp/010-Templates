@@ -8,7 +8,7 @@
 //--------------------------------------
 
 #include "Cryengine-Enums.bt"
-#include "Cryengine3.4-Structs.bt"
+#include "Cryengine-Structs.bt"
 #include "Cryengine-Helpers.bt"
 
 local uint pos;
@@ -104,18 +104,23 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         };
         case Controller_us: 
         case Controller_ui: {
-            CHUNKHEADER chunkHeaderInfo(headerInfo.version);
-            if (chunkHeaderInfo.version == 0x0829) {
-                CONTROLLER_829 controller;
+            if (chunkTable.tableEntry[i].version == 0x0829) {
+                CONTROLLER_829 controller(fileType);
             } 
-            else if (chunkHeaderInfo.version == 0x0905) {
-                CONTROLLER_905 controller;
+            else if (chunkTable.tableEntry[i].version == 0x0905) {
+                CONTROLLER_905 controller(fileTYpe);
             };
             break;
         };
+
+        case Helper_us: 
+        case Helper_ui:{
+            HELPER helper(fileType);
+            break;
+        }
         case SpeedInfo_us: 
         case SpeedInfo_ui: {
-            SPEEDINFO speedInfo <bgcolor=cLtRed>;
+            SPEEDINFO speedInfo(fileType) <bgcolor=cLtRed>;
             break;
         };
         case ExportFlags_us: 
@@ -128,5 +133,13 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             TIMINGINFO timingInfo(fileType) <comment=PrintTimingInfo>;
             break;
         };
+        case Unknown11_us: {
+            char unknown1[chunkTable.tableEntry[i].size] <bgcolor=cDkBlue>;
+            break;
+        }
+        case Unknown21_Anim_us: {
+            UNKNOWN21 unknown21(chunkTable.tableEntry[i].size) <bgcolor=cDkGreen>;
+            break;
+        } 
     }
 };

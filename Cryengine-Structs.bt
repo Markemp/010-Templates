@@ -75,7 +75,8 @@ struct CHUNKTABLE(FILETYPE fileVersion, int numChunks) {
     };
 };
 
-struct CONTROLLER_829 {
+struct CONTROLLER_829(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileVersion);
     uint controllerId;
     uint16 numberOfRotationKeys;
     uint16 numberOfPositionKeys;
@@ -87,7 +88,8 @@ struct CONTROLLER_829 {
     ubyte tracksAligned;
 };
 
-struct CONTROLLER_905 {
+struct CONTROLLER_905(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileVersion);
     uint32 numKeyPos;
     uint32 numKeyRot;
     uint32 numKeyTime;
@@ -253,6 +255,43 @@ struct COMPILEDPHYSICALBONES(int numberOfBones, FILETYPE fileType) {
     COMPILEDPHYSICALBONE compiledPhysicalBone[numberOfBones];
 };
 
+struct BREAKABLEPHYSICSCHUNK {
+    uint granularity;
+    int nMode;
+    int nRetVtx;
+    int nRetTets;
+    int reserved[10];
+};
+
+struct INTSKINVERTEX {
+    VECTOR3 obsolete;
+    VECTOR3 position;
+    VECTOR3 obsolete2;
+    uint16 boneIDs[4];
+    float weights[4];
+    COLORB color;
+};
+
+struct UNKNOWN21(int size) {
+    char unknown[size];
+};
+
+struct STOREDSKINNINGINFO {
+    int ticksPerFrame;
+    float secsPerTick;
+    int start;
+    int end;
+    float speed;
+    float distance;
+    float slope;
+    int assetFlags;
+    float lHeelStart, lHeelEnd;
+    float lToeStart, lToeEnd;
+    float rHeelStart, rHeelEnd;
+    float rToeStart, rToeEnd;
+    VECTOR3 moveDirection;
+};
+
 struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 numberOfMaterials)
 {
     uint32 chunkID;
@@ -261,6 +300,17 @@ struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 num
     char m_arrMaterials[numberOfMaterials];
 };
 
+struct CRYLINK {        // CryHeader.h
+    int boneID;
+    VECTOR3 offset;
+    float blending;
+};
+
+struct HELPER(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileType);
+    uint type;  // Type of helper. 0=point,1=Dummy
+    VECTOR3 Pos <comment=PrintVector3>;
+};
 
 struct MTLNAME(FILETYPE fileVersion) {
     if (fileVersion == CRYENGINE_3_4) {
@@ -396,6 +446,17 @@ struct EXPORTFLAGS(int fileVersion) {
     uint revision;
     char rcVersionString[0x90];
 };
+
+struct SPEEDINFO(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileType);
+    float speed;
+    float distance;
+    float slope;
+    int animFlags;
+    VECTOR3 moveDir <comment=PrintVector3>;
+    QUATERNION startPosition;
+};
+
 
 struct DATASTREAMCHUNK(FILETYPE fileType) {
     local int i;
