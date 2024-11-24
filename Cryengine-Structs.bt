@@ -192,9 +192,7 @@ struct BONETOWORLD {
 struct MTLNAME(FILETYPE fileVersion) {
     if (fileVersion == CRYENGINE_3_4) {
         CHUNKHEADER chunkHeader(fileVersion);
-        if (chunkHeader.version == 0x80000800) {
-            BigEndian();
-        };
+        if (chunkHeader.version == 0x80000800) { BigEndian(); };
         MtlNameTypeEnum mtlType;
         int NFlags2;
         char Name[128];
@@ -204,9 +202,7 @@ struct MTLNAME(FILETYPE fileVersion) {
         int AdvancedDataChunkID;
         float Opacity;
         int reserved[32];
-        if (chunkHeader.version == 0x80000800) {
-            LittleEndian();
-        };
+        if (chunkHeader.version == 0x80000800) { LittleEndian(); };
     }
     else if (fileVersion == CRYENGINE_3_8) {
         char Name[128];
@@ -267,9 +263,6 @@ struct NODECHUNK(FILETYPE fileVersion) {
     int scalePos <format=hex>;
     int propertyStringLength <format=hex>;          // length of property string
 };
-
-
-
 
 struct COMPILEDPHYSICALPROXIES(FILETYPE fileVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
