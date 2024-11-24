@@ -16,6 +16,7 @@
 
 #include "Cryengine-Structs.bt"
 #include "Cryengine-Enums.bt"
+#include "Cryengine-Common.bt"
 
 string PrintMatrix4x4(MATRIX4x4 &m) {
     string result;
@@ -41,6 +42,18 @@ string PrintVector3(VECTOR3 &vertex) {
     return result;
 };
 
+string PrintVector3Short(VECTOR3SHORT &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
+    return result;
+};
+
+string PrintVector3CryHalf(VECTOR3CRYHALF &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", CryHalfToFloat(vertex.x), CryHalfToFloat(vertex.y), CryHalfToFloat(vertex.z));
+    return result;
+};
+
 string PrintVector4(VECTOR4 &vertex) {
     string result;
     SPrintf(result, "%f, %f, %f, %f", vertex.x, vertex.y, vertex.z, vertex.w);
@@ -53,9 +66,80 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+string PrintMeshSubset(MESHSUBSET &meshSubset) {
+    string result;
+    SPrintf(result, "first vert: %d, num verts: %d, mat: %d", meshSubset.firstVertex, meshSubset.numberOfVertices, meshSubset.material);
+    return result;
+};
+
+string PrintBoneMapData(BONEMAPDATA &data) {
+    string result;
+    SPrintF(result, "Bone Index: [%d, %d, %d, %d], Weight: [%f, %f, %f, %f]", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3], data.weight[0], data.weight[1], data.weight[2], data.weight[3]);
+    return result;
+};
+
+string PrintBoneName(COMPILEDBONE &bone) {
+    string result;
+    SPrintf(result, "Name = %s", bone.boneName);
+    return result;
+};
+
+//string GetBoneName_800(COMPILEDBONE_800 &bone) {
+//    string result;
+//    SPrintf(result, "Name = %s", bone.boneName);
+//    return result;
+//};
+//
+//string GetBoneName_801(COMPILEDBONE_801 &bone) {
+//    string result;
+//    SPrintf(result, "Name = %s", bone.boneName);
+//    return result;
+//};
+
+string PrintVertsUvs(VERTSUV &m) {
+    string result;
+    SPrintf(result, "Verts: [%f, %f, %f], UVs: [%f, %f]", m.vertices.x, m.vertices.y, m.vertices.z, m.uv.u, m.uv.v);
+    return result;
+};
+
 string PrintUV(UV &uv) {
     string result;
     SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+string PrintUVHalf(UVHALF &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
+    string result;
+    SPrintf(result, "Type = %s", EnumToString(entry.chunkType.chunkType));
+    return result;
+};
+
+string GetMaterialName(MTLNAME &chunk) {
+    string result;
+    if (exists(chunk.mtlType)) {
+        SPrintf(result, "Name: %s, Type: %s", chunk.Name, EnumToString(chunk.mtlType));
+    } else {
+        SPrintf(result, "Name: %s, Submats: %i", chunk.Name, chunk.NumberOfSubmaterials);
+    }
+    return result;
+};
+
+string PrintMatDetails(MTLNAME &mat) {
+    string result;
+    if (exists(mat.mtlType)) {
+        local string matType = EnumToString(mat.mtlType);
+        SPrintf(result, "Name: %s, Type: %s", mat.Name, matType);
+    }
+    else {
+        SPrintf(result, "Name: %s", mat.Name);
+    };
+    
     return result;
 };
 
@@ -63,6 +147,46 @@ string PrintColor(IRGBA &color) {
     string result;
     SPrintf(result, "%d, %d, %d, %d", color.r, color.g, color.b, color.a);
     return result;
+};
+
+string PrintSourceInfo(SOURCEINFO &info) {
+    string result;
+    SPrintf(result, "%s", info.sourceFile);
+    return result;
+};
+
+string GetNodeName(NODECHUNK &chunk) {
+    string result;
+    SPrintf(result, "Name = %s", chunk.name);
+    return result;
+};
+
+string PrintDatastreamType(DATASTREAMCHUNK &datastream) {
+    string result;
+    SPrintf(result, "%s", EnumToString(datastream.datastreamType));
+    return result;
+};
+
+string PrintExportFlags(EXPORTFLAGS &flags) {
+    string result;
+    SPrintf(result, "%s", flags.rcVersionString);
+    return result;
+};
+
+string PrintTimingInfo(TIMINGINFO &info) {
+    string result;
+    SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
+    return result;
+};
+
+string PrintTangentByte(TANGENT_BYTE &tan) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", tan.x/127.0, tan.y/127.0, tan.z/127.0, tan.w/127.0);
+    return result;
+}
+
+uint SetDefaultVersion() {
+    return 0x0800;
 };
 
 #endif

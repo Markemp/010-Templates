@@ -23,11 +23,101 @@ enum DATASTREAMTYPE {
     TANGENTS = 0x6,
     SHCOEFFS = 0x7,
     SHAPEDEFORMATION = 0x8,
-    BONEMAP = 0x9,
-    FACEMAP = 0xA,
+    BONEMAPS = 0x9,
+    FACEMAPS = 0xA,
     VERTMATS = 0xB,
     QTANGENTS = 0xC,      // Seen in Hunt models
     VERTSUVS = 0xF
+};
+
+enum <uint> CHUNKTYPE_UI {
+        Any_ui                              = 0x0,
+        Mesh_ui                             = 0xCCCC0000,
+        Helper_ui                           = 0xCCCC0001,
+        VertAnim_ui                         = 0xCCCC0002,
+        BoneAnim_ui                         = 0xCCCC0003,
+        GeomNameList_ui                     = 0xCCCC0004,
+        BoneNameList_ui                     = 0xCCCC0005,
+        MtlList_ui                          = 0xCCCC0006,
+        MRM_ui                              = 0xCCCC0007, //obsolete
+        SceneProps_ui                       = 0xCCCC0008,
+        Light_ui                            = 0xCCCC0009,
+        PatchMesh_ui                        = 0xCCCC000A,
+        Node_ui                             = 0xCCCC000B,
+        Mtl_ui                              = 0xCCCC000C,
+        Controller_ui                       = 0xCCCC000D,
+        TimingInfo_ui                       = 0xCCCC000E,
+        BoneMesh_ui                         = 0xCCCC000F,
+        BoneLightBinding_ui                 = 0xCCCC0010,
+        MeshMorphTarget_ui                  = 0xCCCC0011,
+        BoneInitialPos_ui                   = 0xCCCC0012,
+        SourceInfo_ui                       = 0xCCCC0013, //Describes the source from which the cgf was exported: source max file, machine and user.
+        MtlName_ui                          = 0xCCCC0014, //provides material name as used in the material.xml file
+        ExportFlags_ui                      = 0xCCCC0015, //Describes export information.
+        DataStream_ui                       = 0xCCCC0016, //A data Stream
+        MeshSubsets_ui                      = 0xCCCC0017, //Describes an array of mesh subsets
+        MeshPhysicsData_ui                  = 0xCCCC0018, //Physicalized mesh data
+        CompiledBones_ui                    = 0xACDC0000, //unknown chunk
+        CompiledPhysicalBones_ui            = 0xACDC0001, // unknown chunk
+        CompiledMorphtargets_ui             = 0xACDC0002,  // unknown chunk
+        CompiledPhysicalProxies_ui          = 0xACDC0003, //unknown chunk
+        CompiledIntFaces_ui                 = 0xACDC0004, //unknown chunk
+        CompiledIntSkinVertices_ui          = 0xACDC0005, //unknown chunk
+        CompiledExt2IntMap_ui               = 0xACDC0006, //unknown chunk
+        BreakablePhysics_ui                 = 0xACDC0007, //unknown chunk
+        FaceMap_ui                          = 0xAAFC0000, //unknown chunk
+        SpeedInfo_ui                        = 0xAAFC0002, //Speed and distance info
+        FootPlantInfo_ui                    = 0xAAFC0003, // Footplant info
+        BonesBoxes_ui                       = 0xAAFC0004, // unknown chunk
+        UnknownAAFC0005_ui                  = 0xAAFC0005, //unknown chunk
+        GlobalAnimationHeaderCAF_ui         = 0xAAFC0007
+};
+
+enum <ushort> CHUNKTYPE_US { 
+        Any_us                              = 0x0,
+        Mesh_us                             = 0x1000,
+        Helper_us                           = 0x1001,
+        VertAnim_us                         = 0x1002,
+        BoneAnim_us                         = 0x1003,
+        GeomNameList_us                     = 0x1004,
+        BoneNameList_us                     = 0x1005,
+        MtlList_us                          = 0x1006,
+        MRM_us                              = 0x1007, //obsolete
+        SceneProps_us                       = 0x1008,
+        Light_us                            = 0x1009,
+        PatchMesh_us                        = 0x100A,
+        Node_us                             = 0x100B,
+        Mtl_us                              = 0x100C,
+        Controller_us                       = 0x100D,
+        TimingInfo_us                       = 0x100E,
+        BoneMesh_us                         = 0x100F,
+        BoneLightBinding_us                 = 0x1010,
+        MeshMorphTarget_us                  = 0x1011,
+        BoneInitialPos_us                   = 0x1012,
+        SourceInfo_us                       = 0x1013, // Describes the source from which the cgf was exported: source max file, machine and user.
+        MtlName_us                          = 0x1014, // provides material name as used in the material.xml file
+        ExportFlags_us                      = 0x1015, // Describes export information.
+        DataStream_us                       = 0x1016, // A data Stream
+        MeshSubsets_us                      = 0x1017, // Describes an array of mesh subsets
+        MeshPhysicalData_us                 = 0x1018, // Physicalized mesh data
+        CompiledBones_us                    = 0x2000, 
+        CompiledPhysicalBones_us            = 0x2001,
+        CompiledMorphtargets_us             = 0x2002,
+        CompiledPhysicalProxies_us          = 0x2003,
+        CompiledIntFaces_us                 = 0x2004,
+        CompiledIntSkinVertices_us          = 0x2005, 
+        CompiledExt2IntMap_us               = 0x2006,
+        BoneBoxes_us                        = 0x3004,
+        Unknown11_us                        = 0x300a,
+        Unknown21_Anim_us                   = 0x4007,
+        SpeedInfo_us                        = 0x0002
+};
+
+enum <string> FILETYPE { 
+    CRYENGINE_3_4, 
+    CRYENGINE_3_8, 
+    CRYENGINE_IVO, 
+    O3DE 
 };
 
 enum MtlNameTypeEnum {
@@ -41,6 +131,15 @@ enum MtlNameTypeEnum {
     Child = 0x12,
     Unknown1 = 0x0B,   // Collision materials?  In MWO, these are the torsos, arms, legs from body/<mech>.mtl
     Unknown2 = 0x04
+};
+
+enum <uint> MtlNamePhysicsType {
+    NOMTLTYPE = 0xFFFFFFFF,     // Should be NONE, but meh
+    DEFAULT = 0x00000000,
+    NOCOLLIDE = 0x00000001,
+    OBSTRUCT = 0x00000002,
+    DEFAULTPROXY = 0x000000FF,  // this needs to be checked.  cgf.xml says 256; not sure if hex or dec
+    UNKNOWN = 0x00001100,       // collision mesh?
 };
 
 enum LightType {

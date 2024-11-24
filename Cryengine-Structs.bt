@@ -13,99 +13,70 @@
 #ifndef STRUCTS_COMMON_H
 #define STRUCTS_COMMON_H
 
-struct VECTOR3 {
-    float x;
-    float y;
-    float z;
+#include "Cryengine-BaseTypes.bt"
+
+struct HEADER(FILETYPE fileType) {
+    if (fileType == CRYENGINE_3_4) {
+        char fileSig[8];
+        int fileType <format=hex>;
+        int version <format=hex>;
+        int offset <format=hex>;  // location of header chunks
+        int numChunks;
+    } else if (fileType == CRYENGINE_3_8) {
+        char fileSig[4];
+        int version <format=hex>;
+        int numChunks;
+        int offset <format=hex>;  // location of header chunks
+    };
 };
 
-struct VECTOR4 {
-    float x;
-    float y;
-    float z;
-    float w;
+struct CHUNKTYPE(FILETYPE fileType) {
+    if (fileType == CRYENGINE_3_4) {
+        CHUNKTYPE_UI chunkType;
+    } else if (fileType == CRYENGINE_3_8) {
+        CHUNKTYPE_US chunkType;
+    };
 };
 
-struct VECTOR4SHORT {
-    hfloat x;
-    hfloat y;
-    hfloat z;
-    hfloat w;
+struct CHUNKHEADER(FILETYPE fileVersion) {
+    if (fileVersion == CRYENGINE_3_4) {
+        CHUNKTYPE chunkType(fileVersion);
+        uint version <format=hex>;
+        uint offset <format=hex>;
+        uint id <format=hex>;
+    }
+    else if (fileVersion == CRYENGINE_3_8) {
+       const uint version = 0x0800;
+        // No chunk header in these.
+    };
 };
 
-struct QUATERNION {
-    float x;
-    float y;
-    float z;
-    float w;
+struct CHUNKTABLEENTRY(FILETYPE ver) {
+    if (ver == CRYENGINE_3_4 || ver == CRYENGINE_3_4) {
+        CHUNKTYPE chunkType(ver);
+        uint version <format=hex>;  
+        uint offset <format=hex>;
+        uint id <format=hex>;
+        uint size <format=hex>;
+    }
+    else if (ver == CRYENGINE_3_8) {
+        CHUNKTYPE chunkType(ver);
+        ushort version <format=hex>;
+        uint id <format=hex>;
+        uint size <format=hex>;
+        uint offset <format=hex>;
+    };
 };
 
-struct MATRIX3x4 {
-    float M11;
-    float M12;
-    float M13;
-    float M14;
-    float M21;
-    float M22;
-    float M23;
-    float M24;
-    float M31;
-    float M32;
-    float M33;
-    float M34;
+struct CHUNKTABLE(FILETYPE fileVersion, int numChunks) {
+    local uint i;
+    for (i = 0; i < numChunks; i++) {
+        CHUNKTABLEENTRY tableEntry(fileVersion) <comment=PrintChunkTableType>;
+    };
 };
 
-struct MATRIX3x3 {
-    float M11;
-    float M12;
-    float M13;
-    float M21;
-    float M22;
-    float M23;
-    float M31;
-    float M32;
-    float M33;
-};
-
-struct MATRIX4x4 {
-    float M11;
-    float M12;
-    float M13;
-    float M14;
-    float M21;
-    float M22;
-    float M23;
-    float M24;
-    float M31;
-    float M32;
-    float M33;
-    float M34;
-    float M41;
-    float M42;
-    float M43;
-    float M44;
-};
-
-struct IRGBA {
-    ubyte r;
-    ubyte g;
-    ubyte b;
-    ubyte a;
-};
-
-struct UV {
-    float u;
-    float v;
-};
-
-struct QTANGENT {
-    short x;
-    short y;
-    short z;
-    short w;
-};
-
-struct CONTROLLER_829 {
+struct CONTROLLER_829(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileVersion);
     uint controllerId;
     uint16 numberOfRotationKeys;
     uint16 numberOfPositionKeys;
@@ -117,7 +88,8 @@ struct CONTROLLER_829 {
     ubyte tracksAligned;
 };
 
-struct CONTROLLER_905 {
+struct CONTROLLER_905(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileVersion);
     uint32 numKeyPos;
     uint32 numKeyRot;
     uint32 numKeyTime;
@@ -137,16 +109,517 @@ struct CONTROLLER_905 {
     uint trackLength;
 };
 
-struct VertsUvs {
-    VECTOR3 vertices <comment=PrintVector3>;
-    IRGBA color <comment=PrintColor>;
-    UV uv <comment=PrintUV>;
+struct MESHSUBSET {
+    uint firstVertex;
+    uint numberOfVertices;
+    uint firstIndex;
+    uint numberOfIndices;
+    uint material;
+    float radius;
+    VECTOR3 center <comment=PrintVector3>;
+};
+
+struct MESHSUBSETS(FILETYPE fileVersion) {
+    local int i;
+    CHUNKHEADER chunkHeader(fileVersion);
+
+    if (fileVersion == CRYENGINE_3_8) {
+        uint flags;
+        int numberOfMeshSubsets;
+        uint unknown;  // skip bytes
+        uint unknown2;  // skip bytes
+        for (i = 0; i < numberOfMeshSubsets; i++) {
+            MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+        };
+    }
+    else {
+        if (chunkHeader.version == CRYENGINE_3_4) {
+            uint flags;
+            int numberOfMeshSubsets;
+            uint unknown;  // skip bytes
+            uint unknown2;  // skip bytes
+            for (i = 0; i < numberOfMeshSubsets; i++) {
+                MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+            };
+        }
+        else if (chunkHeader.version == 0x80000800) {
+            BigEndian();
+            uint flags;
+            int numberOfMeshSubsets;
+            uint unknown;  // skip bytes
+            uint unknown2;  // skip bytes
+            for (i = 0; i < numberOfMeshSubsets; i++) {
+                MESHSUBSET meshSubset <comment=PrintMeshSubset>;
+            };
+            LittleEndian();
+        };
+    };
+};
+
+struct VERTSUV(int bytesPerElement) {
+    if (bytesPerElement == 16) {
+        VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
+        byte skip[2];
+        IRGBA color <comment=PrintColor>;
+        UVHALF uv <comment=PrintUVHalf>;
+    }
+    else if (bytesPerElement == 20) {
+        VECTOR3 vertices <comment=PrintVector3>;
+        IRGBA color <comment=PrintColor>;
+        UV uv <comment=PrintUV>;
+    };
+};
+
+struct BONEMAPDATA(int bytesPerElement) {
+    if (bytesPerElement == 8) {
+        byte boneIndex[4];
+        byte weight[4];
+    }
+    else if (bytesPerElement == 12) {
+        ushort boneIndex[4];
+        byte weight[4];
+    }
+    else if (bytesPerElement == 24) {
+        uint boneIndex[4];
+        short weight[4];
+    };
 };
 
 struct BONETOWORLD {
     float row1[4];
     float row2[4];
     float row3[4];
+};
+
+struct BONENAMELIST {
+    string boneName;
+};
+
+struct PHYSICSGEOMETRY {
+    int physicGeom;
+    int flags;
+    VECTOR3 min <comment=PrintVector3>;
+    VECTOR3 max <comment=PrintVector3>;
+    VECTOR3 spring_angle <comment=PrintVector3>;
+    VECTOR3 spring_tension <comment=PrintVector3>;
+    VECTOR3 damping <comment=PrintVector3>;
+    MATRIX3x3 framemtx <comment=PrintMatrix3x3>;
+};
+
+struct COMPILEDBONE(int chunkVersion) {
+    if (chunkVersion == 0x0800) {
+        uint controllerID;
+        PHYSICSGEOMETRY physicsGeo[2];
+        float mass;
+        MATRIX3x4 worldToBone <comment=PrintMatrix3x4>;    //initialpose matrix World2Bone
+        MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+        char boneName[256];
+        int limbID;
+        int offsetParent;       // this bone parent is this[m_nOffsetParent], 0 if the bone is root. Normally this is <= 0
+        uint numChildren;       // The whole hierarchy of bones is kept in one big array that belongs to the ModelState
+                                // Each bone that has children has its own range of bone objects in that array,
+                                // and this points to the beginning of that range and defines the number of bones.
+    
+        int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
+                                // this is 0 if there are no children
+    } else if (chunkVersion == 0x0801) {
+        uint controllerId;
+        uint mass;
+        char unknown[208];
+        char boneName[48];
+        int offsetParent;
+        uint numChildren;
+        uint offsetChild;
+        MATRIX3x4 boneToWorld <comment=PrintMatrix3x4>;
+    };
+};
+
+struct COMPILEDBONES(int numberOfBones, int chunkVersion, FILETYPE fileType) {
+    CHUNKHEADER headerInfo(fileType);
+    char padding[32];
+    COMPILEDBONE compiledbone(chunkVersion)[numberOfBones] <comment=PrintBoneName>;
+};
+
+struct COMPILEDPHYSICALBONE {       // A lot of these are guesses.
+    uint boneIndex;            // The number of the bone found.  Index in COMPILEDBONE
+    uint parentIndex;          // Index of the parent bone
+    uint numChildren;       // Number of child bones
+    uint controllerID;      // controllerID for this bone.
+    char prop[32];          // 32 byte char array
+    PHYSICSGEOMETRY phys;   // physics.
+};
+
+struct COMPILEDPHYSICALBONES(int numberOfBones, FILETYPE fileType) {
+    CHUNKHEADER headerInfo(fileType);
+    char padding2[32];
+    COMPILEDPHYSICALBONE compiledPhysicalBone[numberOfBones];
+};
+
+struct BREAKABLEPHYSICSCHUNK {
+    uint granularity;
+    int nMode;
+    int nRetVtx;
+    int nRetTets;
+    int reserved[10];
+};
+
+struct INTSKINVERTEX {
+    VECTOR3 obsolete;
+    VECTOR3 position;
+    VECTOR3 obsolete2;
+    uint16 boneIDs[4];
+    float weights[4];
+    COLORB color;
+};
+
+struct UNKNOWN21(int size) {
+    char unknown[size];
+};
+
+struct STOREDSKINNINGINFO {
+    int ticksPerFrame;
+    float secsPerTick;
+    int start;
+    int end;
+    float speed;
+    float distance;
+    float slope;
+    int assetFlags;
+    float lHeelStart, lHeelEnd;
+    float lToeStart, lToeEnd;
+    float rHeelStart, rHeelEnd;
+    float rToeStart, rToeEnd;
+    VECTOR3 moveDirection;
+};
+
+struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 numberOfMaterials)
+{
+    uint32 chunkID;
+    VECTOR3 vertex[numberOfVertices];
+    uint16 index[numberOfIndices];
+    char m_arrMaterials[numberOfMaterials];
+};
+
+struct CRYLINK {        // CryHeader.h
+    int boneID;
+    VECTOR3 offset;
+    float blending;
+};
+
+struct HELPER(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileType);
+    uint type;  // Type of helper. 0=point,1=Dummy
+    VECTOR3 Pos <comment=PrintVector3>;
+};
+
+struct MTLNAME(FILETYPE fileVersion) {
+    if (fileVersion == CRYENGINE_3_4) {
+        CHUNKHEADER chunkHeader(fileVersion);
+        if (chunkHeader.version == 0x80000800) { BigEndian(); };
+        MtlNameTypeEnum mtlType;
+        int NFlags2;
+        char Name[128];
+        int PhysicalizeType;
+        int NumberOfSubmaterials;
+        int SubMaterialChunkID[32];
+        int AdvancedDataChunkID;
+        float Opacity;
+        int reserved[32];
+        if (chunkHeader.version == 0x80000800) { LittleEndian(); };
+    }
+    else if (fileVersion == CRYENGINE_3_8) {
+        char Name[128];
+        int NumberOfSubmaterials;
+        MtlNamePhysicsType SubMaterialChunkID[NumberOfSubmaterials];
+    };
+};
+
+struct MESHCHUNK(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+        BigEndian();
+    };
+    uint Flags1;
+    uint Flags2;
+    uint NumVertices;
+    uint NumIndices;
+    //uint NumVertSubsets; // 801 format
+    uint MeshSubsets;
+    uint VerticesData <format=hex>;
+    uint NumBuffs <format=hex>;
+    uint NormalsData <format=hex>;
+    uint UVsData <format=hex>;
+    uint ColorsData <format=hex>;
+    uint Colors2Data <format=hex>;
+    uint IndicesData <format=hex>;
+    uint TangentsData <format=hex>;
+    uint ShCoeffsData <format=hex>;
+    uint ShapeDeformationData <format=hex>;
+    uint BoneMapData <format=hex>;
+    uint FaceMapData <format=hex>;
+    uint VertMatsData <format=hex>;
+    //uint MeshPhysicsData <format=hex>; // 801 format
+    uint VertsUVData <format=hex>;
+    uint PhysicsData[4] <format=hex>;
+    VECTOR3 MinBound <comment=PrintVector3>;
+    VECTOR3 MaxBound <comment=PrintVector3>;
+    if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+        LittleEndian();
+    };
+};
+
+
+struct NODECHUNK(FILETYPE fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    char name[64];
+    uint objectNodeId <format=hex>; // Mesh chunk ID
+    uint parentNodeId <format=hex>; // Chunk ID of parent node
+    uint numberOfChildren;
+    uint materialId <format=hex>;
+    uint skipBytes;                 // Obsolete info
+    MATRIX4x4 transform <comment=PrintMatrix4x4>;   
+    VECTOR3 position <comment=PrintVector3>;        // Obsolete
+    QUATERNION rotation <comment=PrintQuaternion>;  // Obsolete
+    VECTOR3 scale <comment=PrintVector3>;           // Obsolete
+    int controllerPos <format=hex>;
+    int rotationPos <format=hex>;
+    int scalePos <format=hex>;
+    int propertyStringLength <format=hex>;          // length of property string
+};
+
+struct COMPILEDPHYSICALPROXIES(FILETYPE fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    if (chunkHeader.version == 0x0800) {
+        uint numberOfProxies;
+        local uint i;
+        for (i = 0; i < numberOfProxies; i++) {
+            uint id;
+            uint numberOfVertices;
+            uint numberOfIndices;
+            uint material;              // Size of weird null bytes at end of structure
+            VECTOR3 v;
+        };
+    }
+    else if (chunkHeader.version == 0x0801) {
+        uint numberOfProxies;
+        local uint i;
+        for (i = 0; i < numberOfProxies; i++) {
+            uint id;
+            uint numberOfVertices;
+            uint numberOfIndices;
+            uint material;              // Size of weird null bytes at end of structure
+            VECTOR3 v;
+        };
+    }
+};
+
+struct TIMINGINFO(FILETYPE fileType) {
+    if (fileType == CRYENGINE_3_4) {
+        CHUNKHEADER chunkHeader (fileType);
+    }
+    else if (fileType == CRYENGINE_3_4) {
+    }; // no headers on these chunks
+    float secondsPerTick;
+    int ticksPerFrame;
+    char globalName[32];
+    int globalRangeStart;
+    int globalRangeEnd;
+};
+
+struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry, FILETYPE fileType) {
+    CHUNKHEADER chunkHeader (fileType);
+    string sourceFile;
+    string fileDate;
+    string author;
+    // local CHUNKTYPE chunkType = tableEntry.chunkType;
+    local uint version = tableEntry.version;
+    local uint offset = tableEntry.offset;
+    local uint size = tableEntry.size;
+};
+
+struct EXPORTFLAGS(int fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    uint skipBytes;
+    uint major;
+    uint minor;
+    uint build;
+    uint revision;
+    char rcVersionString[0x90];
+};
+
+struct SPEEDINFO(FILETYPE fileType) {
+    CHUNKHEADER chunkHeader(fileType);
+    float speed;
+    float distance;
+    float slope;
+    int animFlags;
+    VECTOR3 moveDir <comment=PrintVector3>;
+    QUATERNION startPosition;
+};
+
+
+struct DATASTREAMCHUNK(FILETYPE fileType) {
+    local int i;
+
+    CHUNKHEADER headerInfo(fileType);
+    if (fileType == CRYENGINE_3_8) {  // Cryengine 3.8
+        uint flags2;
+        DATASTREAMTYPE datastreamType;
+        uint numberOfElements;
+        ushort bytesPerElement;
+        ushort unknown;
+        
+        switch (datastreamType) {
+            case VERTICES: {
+                uint flags[2];
+                for (i = 0; i < numberOfElements; i++) {
+                    VECTOR3 vertices <comment=PrintVector3>;
+                }   
+                break;
+            }
+            case VERTSUVS: {
+                uint flags[2];
+                for (i = 0; i < numberOfElements; i++) {
+                    VERTSUV vertsUvs(bytesPerElement) <comment=PrintVertsUvs,name="VertsUVs">;
+                }
+                break;
+            }
+            case NORMALS: {
+                uint flags[2];
+                VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                break;
+            }
+            case UVS: {
+                uint flags[2];
+                UV uv[numberOfElements] <comment=PrintUV>;
+                break;   
+            }
+            case COLORS: {
+                uint flags[2];
+                IRGBA colors[numberOfElements] <comment=PrintColor>;
+                break;   
+            }
+            case INDICES: {
+                uint flags[2];
+                uint16 indices[numberOfElements];
+                break;   
+            }
+            case TANGENTS: {
+                uint flags[2];
+                VECTOR4SHORT tangent[numberOfElements];
+                break;   
+            }
+            case BONEMAPS: {
+                uint flags[2];
+                BONEMAPDATA boneMap(bytesPerElement)[numberOfElements];
+                break;
+            }
+            case QTANGENTS: {
+                uint flags[2];
+                QTANGENT qtangents[numberOfElements];
+            }
+            default: {
+                break;
+            }
+        }
+    }
+    else {
+        if (fileType == CRYENGINE_3_4) {
+            if (headerInfo.version == 0x80000800) {
+                BigEndian();
+                uint flags2;
+                DATASTREAMTYPE datastreamType;
+                uint numberOfElements;
+                uint bytesPerElement;
+                uint reserved1;
+                uint reserved2;
+                switch (datastreamType) {
+                    case VERTICES: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VECTOR3 vertices <comment=PrintVector3>;
+                        }   
+                        break;
+                    }
+                    case VERTSUVS: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VERTSUV vertsUvs(bytesPerElement);
+                        }
+                        break;
+                    }
+                    case NORMALS: {
+                        VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                        break;
+                    }
+                    case UVS: {
+                        UV uv[numberOfElements] <comment=PrintUV>;
+                        break;   
+                    }
+                    case COLORS: {
+                        IRGBA colors[numberOfElements] <comment=PrintColor>;
+                        break;   
+                    }
+                    case INDICES: {
+                        uint16 indices[numberOfElements];
+                        break;   
+                    }
+                    case TANGENTS: {
+                        VECTOR4 tangent[numberOfElements];
+                        break;   
+                    }
+                    default: {
+                        break;
+                    }
+                }
+                LittleEndian();
+            } else {
+
+                uint flags2;
+                DATASTREAMTYPE datastreamType;
+                uint numberOfElements;
+                uint bytesPerElement;
+                uint reserved1;
+                uint reserved2;
+                
+                switch (datastreamType) {
+                    case VERTICES: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VECTOR3 vertices <comment=PrintVector3>;
+                        }   
+                        break;
+                    }
+                    case VERTSUVS: {
+                        for (i = 0; i < numberOfElements; i++) {
+                            VERTSUV vertsUvs(bytesPerElement);
+                        }
+                        break;
+                    }
+                    case NORMALS: {
+                        VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                        break;
+                    }
+                    case UVS: {
+                        UV uv[numberOfElements] <comment=PrintUV>;
+                        break;   
+                    }
+                    case COLORS: {
+                        IRGBA colors[numberOfElements] <comment=PrintColor>;
+                        break;   
+                    }
+                    case INDICES: {
+                        uint16 indices[numberOfElements];
+                        break;   
+                    }
+                    case TANGENTS: {
+                        VECTOR4 tangent[numberOfElements];
+                        break;   
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            };
+        }
+    };
 };
 
 #endif

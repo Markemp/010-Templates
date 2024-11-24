@@ -12,9 +12,10 @@
 //------------------------------------------------
 
 // Ivo files
-#include "CryengineIvo-Structs.bt"
+#include "Cryengine-BaseTypes.bt"
 #include "CryengineIvo-Enums.bt"
-//#include "Cryengine-Common.bt"
+#include "CryengineIvo-Structs.bt"
+#include "CryengineIvo-Helpers.bt"
 
 local uint pos;
 local int64 fileSize = FileSize() ;
@@ -52,6 +53,10 @@ struct SKINMESH {
                 IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
+            case IvoVertsUvsCGF: {
+                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                break;
+            }
             case IvoIndices: {
                 IVOINDICES indices(meshChunk.numberOfIndices) <bgcolor=cDkBlue>;
                 break;
@@ -73,39 +78,15 @@ struct SKINMESH {
                 break;
             }
             case IvoBoneMap: {
-                BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                //BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
             case IvoBoneMap32: {
-                BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
         }
     };
-};
-
-string GetB2W(BONETOWORLD &b2w) {
-    string result;
-    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", b2w.row1[0], b2w.row1[1], b2w.row1[2], b2w.row1[3], b2w.row2[0],b2w.row2[1],b2w.row2[2], b2w.row2[3], b2w.row3[0],b2w.row3[1],b2w.row3[2], b2w.row3[3]);
-    return result;
-};
-
-string GetChunkTableType(CHUNKTABLE &chunk) {
-    string result;
-    SPrintf(result, "Type = %s, ID = %u", EnumToString(chunk.chunkType), chunk.id);
-    return result; 
-};
-
-string GetChunkTypeFromChunkTableEntry(CHUNKTABLE &entry) {
-    string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
-    return result;
-};
-
-string GetBoneName(BONENAME &boneName) {
-    string result;
-    SPrintf(result, "Bone Name: %s", boneName.boneName);
-    return result;
 };
 
 pos = FTell(); // save read position
