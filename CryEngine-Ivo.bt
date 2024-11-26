@@ -20,89 +20,16 @@
 local uint pos;
 local int64 fileSize = FileSize() ;
 
-struct HEADER {
-    char fileSig[4];
-    uint version;
-    uint numChunks;
-    int chunkHeaderTableOffset;  // location of header chunks
-} headerInfo <bgcolor=cLtBlue>;
+HEADER headerInfo <bgcolor=cLtBlue>;
 
-struct SKINMESH {
-    local ulong position;
-
-    uint flags;
-    MESHCHUNK meshChunk;
-    char unknown2[116] <fgcolor=cAqua>;
-    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
-    while (!FEof()) {
-        position = FTell();
-        DatastreamType type;
-        while (!isInEnum(type)) {
-            if (FEof()) {
-                break; // Exit if we reached the end of the file
-            }
-            DatastreamType type;
-        }
-        
-        // Ensure no further processing if we break due to EOF
-        if (FEof()) {
-            break; // Stop processing if we've reached the end
-        }
-        switch (type) {
-            case IvoVertsUvs: {
-                IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
-                break;
-            }
-            case IvoVertsUvsCGF: {
-                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
-                break;
-            }
-            case IvoIndices: {
-                IVOINDICES indices(meshChunk.numberOfIndices) <bgcolor=cDkBlue>;
-                break;
-            }
-            case IvoNormals: {
-                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cBlue>;
-                break;
-            }
-            case IvoNormals2: {
-                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
-                break;
-            }    
-            case IvoColors2: {
-                IVOCOLORS colors2(meshChunk.numberOfVertices) <bgcolor=cBlue>;
-                break;
-            }
-            case IvoTangents: {
-                TANGENTS tangents(meshChunk.numberOfVertices) <bgcolor=cDkBlue>;
-                break;
-            }
-            case IvoBoneMap: {
-                //BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
-                break;
-            }
-            case IvoBoneMap32: {
-                //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
-                break;
-            }
-        }
-    };
-};
-
-pos = FTell(); // save read position
-
-FSeek(headerInfo.chunkHeaderTableOffset);
+FSeek(headerInfo.offset);
 
 local int i = 0;
-for (i = 0; i < headerInfo.numChunks; i++) {
-    CHUNKTABLE chunkTable <bgcolor=cDkBlue,comment=GetChunkTypeFromChunkTableEntry>;
-};
-
-FSeek(pos);
+CHUNKTABLE chunkTable(headerInfo.numChunks);
 
 for (i = 0; i < headerInfo.numChunks; i++) {
-    FSeek(chunkTable[i].offset);
-    switch (chunkTable[i].chunkType) {
+    FSeek(chunkTable.tableEntry[i].offset);
+    switch (chunkTable.tableEntry[i].chunkType) {
         case MeshChunk320:
         case MeshChunk: {
             MESHCHUNK meshChunk;
@@ -110,7 +37,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case CompiledBones320:
         case CompiledBones: {
-            local int64 chunkSize = chunkTable[i+1].offset - chunkTable[i].offset;
+            local int64 chunkSize = chunkTable.tableEntry[i+1].offset - chunkTable.tableEntry[i].offset;
             COMPILEDBONES compiledBones  <bgcolor=cDkRed>;
             break;
         }
@@ -123,9 +50,21 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             SKINMESH skinMesh;
             break;
         }
-        case MaterialName320:
+        case MaterialInfo:
         case MaterialName: {
             MTLNAME materialName <bgcolor=cDkGreen>;
+            break;
+        };
+        case U3_LODDistance: {
+            LODDISTANCE_x900 LODDistance <bgcolor=cLtBlue>;
+            break;
+        };
+        case U6_StatObj_Physics: {
+            STATOBJ_PHYSICS_x900 StaticObj_Phys <bgcolor=cLtGreen>;
+            break;
+        };
+        case U5_SubObjs: {
+            SUBOBJ_x900 SubObj <bgcolor=cLtRed>;
             break;
         };
         default: {

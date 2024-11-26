@@ -14,9 +14,6 @@
 #ifndef ENUMS_IVO_H
 #define ENUMS_IVO_H
 
-//#include "Cryengine-Enums.bt"
-//#include "Cryengine-Structs.bt"
-
 enum <uint> CHUNKTYPE {
     Skeleton1               = 0x0000300d,
     DBAData                 = 0x194fbc50,
@@ -24,17 +21,32 @@ enum <uint> CHUNKTYPE {
     BShapes                 = 0xf5c6eb5b,
     BShapesGPU              = 0x57a3befd,
     MaterialName            = 0x8335674e,
-    MaterialName320         = 0x83353333,
+    MaterialInfo            = 0x83353333, // 1405e8e75(CGF), 1405e9439(SKIN), v900h (Proper name appears to be MaterialInfo by 1405e8b3f)
     BShapes3                = 0x875ccb28,
     CompiledPhysicalBones   = 0x90c687dc,
-    MeshChunk320            = 0x92914444,
+    MeshChunk320            = 0x92914444, // 1405e8e33(CGF), 1405e961a(SKIN), v900h (0x92914445 seems to be upper limit for CGF; Proper name appears to be MeshInfo by RTTI.)
     MeshChunk               = 0x9293b9d8,
     SkinMesh                = 0xb875b2d9,
-    SkinMesh2               = 0xb8757777,
-    UnknownIvo              = 0xbe5e493e, // 4 words, 0x0, 0x1, 0x2, 0x0
-    CompiledBones           = 0xc201973c,
-    CompiledBones320        = 0xc2011111,
-    DBA                     = 0xf7351608
+    SkinMesh2               = 0xb8757777, // 1405e986f(SKINM), 1405e8c9b(SKINM2), v900h (Proper name appears to be Mesh by RTTI.) 
+    CompiledBones           = 0xc201973c, // 1405e9223(CGF), v901h
+    CompiledBones320        = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h (Despite what this would seem to suggest this is still be used for CHR files as a Skeleton?)
+    DBA                     = 0xf7351608,
+    U1_RC_Version           = 0xbe5e493e, // 1405e920f(CGF), 1405e8a67(CHR), 1405e9626(SKIN), v900h
+    U2_PhysicalHierarchy    = 0x90c62222, // 1405e8a4f(CGF?), 1405e9403(SKIN), v900h (0x90c62223 upper limit of skin files?)
+    U3_LODDistance          = 0x9351756f, // 1405e9203(CGF), v900h
+    U4_VisibilityGroups     = 0xc1c36afe, // 1405e921b(CGF), v900h
+    U5_SubObjs              = 0x70697fda, // 1405e8e69(CGF), v900h
+    U6_StatObj_Physics      = 0x58de1772, // 1405e8e5d(CGF), v900h
+    U7_PositionBonemap      = 0x2b7ecf9f, // 1405e8e51(CGF), v900h
+    U8_VFXHelpers           = 0x1e14a062, // 1405e8e45(CGF), v900h
+    RBF                     = 0xa7169999, // 1405e8a5b(CHR), v900h
+    U9_RigLogic             = 0x0a2485b6, // 1405e9415(SKIN), v900h
+    U10_SimTopology         = 0x2b8a2c29, // 1405e9421(SKIN), v900h
+    U11_RigInfo             = 0x7e035555, // 1405e942d(SKIN), v900h
+    U12_ProtosInfo          = 0xf7086666, // 1405e963a(SKIN), v900h
+    U13_BShapesGPU          = 0x57a38888, // 1405e9863(SKINM), v900h
+    U14_SimDeformation      = 0xff277a9a, // 1405e987b(SKINM), v900h
+    U15_VisAreas            = 0xb32459d2, // 1405e8c93(SKINM2), v900h
 };
 
 enum <uint> DatastreamType {

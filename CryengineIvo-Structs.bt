@@ -14,14 +14,27 @@
 #ifndef STRUCTS_IVO_H
 #define STRUCTS_IVO_H
 
-//#include "Cryengine-Common.bt"
-//#include "CryengineIvo-Enums.bt"
 #include "Cryengine-BaseTypes.bt"
+#include "CryengineIvo-Enums.bt"
 
-struct CHUNKTABLE {
+struct HEADER {
+    char fileSig[4];
+    uint version;
+    uint numChunks;
+    int offset;  // location of header chunks
+};
+
+struct CHUNKTABLEENTRY {
     CHUNKTYPE chunkType <format=hex>;
     uint version <format=hex>;  
     uint64 offset <format=hex>;
+};
+
+struct CHUNKTABLE(int numberOfChunks) {
+    local uint i;
+    for (i = 0; i < numberOfChunks; i++) {
+        CHUNKTABLEENTRY tableEntry <comment=PrintChunkTableType>;
+    };
 };
 
 struct MESHCHUNK {
@@ -110,7 +123,8 @@ struct TANGENTS(int numberOfVertices) {
 };
 
 struct IVOMESHSUBSET {
-    uint matId;
+    ushort matId;
+    ushort submeshParent;
     uint firstIndex;
     uint numIndices;
     uint firstVertex;
@@ -187,12 +201,133 @@ struct COMPILEDPHYSICALBONES {
     char physics[100];
 };
 
+struct LODDISTANCE_x900 {
+    uint unknown;
+    VECTOR3 unkBound1;
+    VECTOR3 unkBound2;    
+};
 
+struct STATOBJ_PHYSICS_x900 {
+    // The following values are indexes used in pointer math that are multiplied by 2
+    // which is the size of the following values being read in the chunk.
+    uint base_iter; // Base of the chunk/iteration table
+    uint unk_iter1;
+    uint unk_iter2;
+    uint unk_iter3;
+    uint unk_iter4;
+    uint unk_iter5;
+    uint unk_iter6;
+    uint unk_iter7;
+    uint unk_iter8;
+    uint unk_iter9;
+    uint end_iter; // Chunk parser attempts to parse this first
+    
+    uint unk_val1;
+    uint unk_val2;
+    
+    struct PHYS_VECS {
+        ushort index1;
+        ushort unk;
+        uint unk1;
+    };
+    
+    // Needs more work as this is obviously misaligned.
+    // Probably misreading disassembly
+    PHYS_VECS base_vec[base_iter*2];
+    PHYS_VECS unk1_vec[unk_iter1*2];
+    PHYS_VECS unk2_vec[unk_iter2*2];
+    PHYS_VECS unk3_vec[unk_iter3*2];
+    PHYS_VECS unk4_vec[unk_iter4*2];
+    PHYS_VECS unk5_vec[unk_iter5*2];
+    PHYS_VECS unk6_vec[unk_iter6*2];
+    PHYS_VECS unk7_vec[unk_iter7*2];
+    PHYS_VECS unk8_vec[unk_iter8*2];
+    PHYS_VECS unk9_vec[unk_iter9*2];
+    PHYS_VECS end_vec[end_iter*2];
+};
 
-string PrintBoneInfo(BONE &bone) {
-    string result;
-    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
-    return result;
-}
+struct SUBOBJ_x900 {
+    uint ZeroPad;
+    uint NumBones;
+    uint UnkVal1;
+    uint UnkNumVal1;
+    uint NumSubmeshes;
+    uint SBoneAttachPointStrTable;
+    uint SNodeProperties;
+    uint UnkVal2;
+    
+    ubyte BonesChunk[NumBones*208]; // A few 3x4 matrices at least per bone
+    ubyte UnkNumVal1Chunk[UnkNumVal1*2]; // No idea, but appears to be similar to submeshes
+    ubyte SubmeshesChunk[NumSubmeshes*2]; // hierarchy information?
+    ubyte BoneAttachPointStrTable[SBoneAttachPointStrTable]; // Bone attachment point string table!
+    // Unserialized node properties with newline separator?
+    // Appears to contain following properties per node:
+    // node=<>\nclass=<>\ndetach=<>
+    // Most commonly takes the form of:
+    // node=Part\nclass=ItemPort\ndetach=False
+    ubyte NodePropertiesStrTable[SNodeProperties];
+};
+
+struct SKINMESH {
+    local ulong position;
+
+    uint flags;
+    MESHCHUNK meshChunk;
+    char unknown2[116] <fgcolor=cAqua>;
+    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
+    while (!FEof()) {
+        position = FTell();
+        DatastreamType type;
+        while (!isInEnum(type)) {
+            if (FEof()) {
+                break; // Exit if we reached the end of the file
+            }
+            DatastreamType type;
+        }
+        
+        // Ensure no further processing if we break due to EOF
+        if (FEof()) {
+            break; // Stop processing if we've reached the end
+        }
+        switch (type) {
+            case IvoVertsUvs: {
+                IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                break;
+            }
+            case IvoVertsUvsCGF: {
+                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                break;
+            }
+            case IvoIndices: {
+                IVOINDICES indices(meshChunk.numberOfIndices) <bgcolor=cDkBlue>;
+                break;
+            }
+            case IvoNormals: {
+                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                break;
+            }
+            case IvoNormals2: {
+                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                break;
+            }    
+            case IvoColors2: {
+                IVOCOLORS colors2(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                break;
+            }
+            case IvoTangents: {
+                TANGENTS tangents(meshChunk.numberOfVertices) <bgcolor=cDkBlue>;
+                break;
+            }
+            case IvoBoneMap: {
+                //BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                break;
+            }
+            case IvoBoneMap32: {
+                //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                break;
+            }
+        }
+    };
+};
 
 #endif

@@ -11,21 +11,26 @@
 //   History: 
 //------------------------------------------------
 
+#ifndef HELPERS_IVO_H
+#define HELPERS_IVO_H
+
+#include "CryengineIvo-Structs.bt"
+
 string GetB2W(BONETOWORLD &b2w) {
     string result;
     SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", b2w.row1[0], b2w.row1[1], b2w.row1[2], b2w.row1[3], b2w.row2[0],b2w.row2[1],b2w.row2[2], b2w.row2[3], b2w.row3[0],b2w.row3[1],b2w.row3[2], b2w.row3[3]);
     return result;
 };
 
-string GetChunkTableType(CHUNKTABLE &chunk) {
+string PrintChunkTableType(CHUNKTABLEENTRY &chunk) {
     string result;
-    SPrintf(result, "Type = %s, ID = %u", EnumToString(chunk.chunkType), chunk.id);
+    SPrintf(result, "Type: %s, Ver: %x", EnumToString(chunk.chunkType), chunk.version);
     return result; 
 };
 
 string GetChunkTypeFromChunkTableEntry(CHUNKTABLE &entry) {
     string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType));
+    SPrintf(result, "Type: %s", EnumToString(entry.chunkType));
     return result;
 };
 
@@ -34,3 +39,11 @@ string GetBoneName(BONENAME &boneName) {
     SPrintf(result, "Bone Name: %s", boneName.boneName);
     return result;
 };
+
+string PrintBoneInfo(BONE &bone) {
+    string result;
+    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
+    return result;
+}
+
+#endif
