@@ -16,18 +16,21 @@
 enum DATASTREAMTYPE {
     VERTICES = 0x0,
     NORMALS = 0x1,
-    UVS = 0x2,
+    UVS = 0x2,           // TEXCOORDS
     COLORS = 0x3,
     COLORS2 = 0x4,
     INDICES = 0x5,
     TANGENTS = 0x6,
-    SHCOEFFS = 0x7,
-    SHAPEDEFORMATION = 0x8,
+    SHCOEFFS = 0x7,         // dummy
+    SHAPEDEFORMATION = 0x8, // dummy
     BONEMAPS = 0x9,
     FACEMAPS = 0xA,
     VERTMATS = 0xB,
     QTANGENTS = 0xC,      // Seen in Hunt models
-    VERTSUVS = 0xF
+    SKINDATA = 0xD,
+    DUMMY2 = 0xE,
+    VERTSUVS = 0xF,          // P3S_C4B_T2S, Point Color TexCoord
+    NUMTYPES = 0x10
 };
 
 enum <uint> CHUNKTYPE_UI {
@@ -57,24 +60,25 @@ enum <uint> CHUNKTYPE_UI {
         DataStream_ui                       = 0xCCCC0016, //A data Stream
         MeshSubsets_ui                      = 0xCCCC0017, //Describes an array of mesh subsets
         MeshPhysicsData_ui                  = 0xCCCC0018, //Physicalized mesh data
-        CompiledBones_ui                    = 0xACDC0000, //unknown chunk
-        CompiledPhysicalBones_ui            = 0xACDC0001, // unknown chunk
-        CompiledMorphtargets_ui             = 0xACDC0002,  // unknown chunk
-        CompiledPhysicalProxies_ui          = 0xACDC0003, //unknown chunk
-        CompiledIntFaces_ui                 = 0xACDC0004, //unknown chunk
-        CompiledIntSkinVertices_ui          = 0xACDC0005, //unknown chunk
-        CompiledExt2IntMap_ui               = 0xACDC0006, //unknown chunk
-        BreakablePhysics_ui                 = 0xACDC0007, //unknown chunk
-        FaceMap_ui                          = 0xAAFC0000, //unknown chunk
+        CompiledBones_ui                    = 0xACDC0000,
+        CompiledPhysicalBones_ui            = 0xACDC0001,
+        CompiledMorphtargets_ui             = 0xACDC0002,
+        CompiledPhysicalProxies_ui          = 0xACDC0003,
+        CompiledIntFaces_ui                 = 0xACDC0004,
+        CompiledIntSkinVertices_ui          = 0xACDC0005,
+        CompiledExt2IntMap_ui               = 0xACDC0006,
+        BreakablePhysics_ui                 = 0xACDC0007,
+        FaceMap_ui                          = 0xAAFC0000,
         SpeedInfo_ui                        = 0xAAFC0002, //Speed and distance info
         FootPlantInfo_ui                    = 0xAAFC0003, // Footplant info
-        BonesBoxes_ui                       = 0xAAFC0004, // unknown chunk
-        UnknownAAFC0005_ui                  = 0xAAFC0005, //unknown chunk
+        BonesBoxes_ui                       = 0xAAFC0004,
+        UnknownAAFC0005_ui                  = 0xAAFC0005,
         GlobalAnimationHeaderCAF_ui         = 0xAAFC0007
 };
 
 enum <ushort> CHUNKTYPE_US { 
         Any_us                              = 0x0,
+        SpeedInfo_us                        = 0x0002,
         Mesh_us                             = 0x1000,
         Helper_us                           = 0x1001,
         VertAnim_us                         = 0x1002,
@@ -107,10 +111,18 @@ enum <ushort> CHUNKTYPE_US {
         CompiledIntFaces_us                 = 0x2004,
         CompiledIntSkinVertices_us          = 0x2005, 
         CompiledExt2IntMap_us               = 0x2006,
-        BoneBoxes_us                        = 0x3004,
-        Unknown11_us                        = 0x300a,
-        Unknown21_Anim_us                   = 0x4007,
-        SpeedInfo_us                        = 0x0002
+        BreakablePhysics_us                 = 0x3000,  // was 0xAAFC0000 in chunk files with versions <= 0x745
+        FaceMap_us,         // obsolete
+        MotionParameters_us,
+        FootPlantInfo_us,   // obsolete
+        BonesBoxes_us,                      //= 0x3004,
+        FoliageInfo_us,
+        Timestamp_us,
+        GlobalAnimationHeaderCAF_us,
+        GlobalAnimationHeaderAIM_us,
+        BspTreeData_us,
+        Unknown11_us                        = 0x300a, // size of 2 vector3.  Bounding box?
+        Unknown21_Anim_us                   = 0x4007
 };
 
 enum <string> FILETYPE { 
@@ -121,8 +133,12 @@ enum <string> FILETYPE {
 };
 
 enum MtlNameTypeEnum {
-    // It looks like there is a 0x04 type now as well, for mech parts.  Not sure what that is.
-    // Also a 0x0B type now as well.
+    // this is a bitfield, not enum
+    //    FLAG_MULTI_MATERIAL  = 0x0001, // Have sub materials info.
+    //    FLAG_SUB_MATERIAL    = 0x0002, // This is sub material.
+    //    FLAG_SH_COEFFS       = 0x0004, // This material should get spherical harmonics coefficients computed.
+    //    FLAG_SH_2SIDED       = 0x0008, // This material will be used as 2 sided in the sh precomputation
+    //    FLAG_SH_AMBIENT      = 0x0010, // This material will get an ambient sh term(to not shadow it entirely)
     Basic = 0x00,
     Library = 0x01,
     MwoChild = 0x02,

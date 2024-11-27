@@ -119,6 +119,11 @@ struct MESHSUBSET {
     VECTOR3 center <comment=PrintVector3>;
 };
 
+struct BBOX {
+    VECTOR3 min <comment=PrintVector3>;
+    VECTOR3 max <comment=PrintVector3>;  
+};
+
 struct MESHSUBSETS(FILETYPE fileVersion) {
     local int i;
     CHUNKHEADER chunkHeader(fileVersion);
@@ -334,35 +339,70 @@ struct MTLNAME(FILETYPE fileVersion) {
     };
 };
 
-struct MESHCHUNK(int fileVersion) {
+struct MESHCHUNK(FILETYPE fileVersion, int chunkVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
+    if (chunkVersion == 0x0802) {
+        uint Flags1;
+        uint Flags2;
+        int NumVertices;
+        int NumIndices;
+        int NumVertSubsets; // 801 format
+        int MeshSubsetsId;
+        int temp;
+        uint VerticesData <format=hex>;
+        uint NumBuffs <format=hex>;
+        uint NormalsData <format=hex>;
+        uint UVsData <format=hex>;
+        uint ColorsData <format=hex>;
+        uint Colors2Data <format=hex>;
+        uint IndicesData <format=hex>;
+        uint TangentsData <format=hex>;
+        uint ShCoeffsData <format=hex>;
+        uint ShapeDeformationData <format=hex>;
+        uint BoneMapData <format=hex>;
+        uint FaceMapData <format=hex>;
+        uint VertMatsData <format=hex>;
+        //uint MeshPhysicsData <format=hex>; // 801 format
+        uint VertsUVData <format=hex>;
+        uint PhysicsData[4] <format=hex>;
+    
+        VECTOR3 MinBound <comment=PrintVector3>;
+        VECTOR3 MaxBound <comment=PrintVector3>;
+        return;
+    }
     if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
         BigEndian();
     };
-    uint Flags1;
-    uint Flags2;
-    uint NumVertices;
-    uint NumIndices;
-    //uint NumVertSubsets; // 801 format
-    uint MeshSubsets;
-    uint VerticesData <format=hex>;
-    uint NumBuffs <format=hex>;
-    uint NormalsData <format=hex>;
-    uint UVsData <format=hex>;
-    uint ColorsData <format=hex>;
-    uint Colors2Data <format=hex>;
-    uint IndicesData <format=hex>;
-    uint TangentsData <format=hex>;
-    uint ShCoeffsData <format=hex>;
-    uint ShapeDeformationData <format=hex>;
-    uint BoneMapData <format=hex>;
-    uint FaceMapData <format=hex>;
-    uint VertMatsData <format=hex>;
-    //uint MeshPhysicsData <format=hex>; // 801 format
-    uint VertsUVData <format=hex>;
-    uint PhysicsData[4] <format=hex>;
-    VECTOR3 MinBound <comment=PrintVector3>;
-    VECTOR3 MaxBound <comment=PrintVector3>;
+    int flags1;
+    int flags2;
+    int numVertices;
+    int numIndices;
+    int numVertSubsets; // 801 format
+    int meshSubsetsChunkId <format=hex>;
+    int vertsAnimId;  // -1 if it doesn't exist
+    int verticesData <format=hex>;
+    int normalsData <format=hex>;
+    int uVsData <format=hex>;
+    int colorsData <format=hex>;
+    int colors2Data <format=hex>;
+    int indicesData <format=hex>;
+    int tangentsData <format=hex>;
+    int shCoeffsData <format=hex>;              // dummy value
+    int shapeDeformationData <format=hex>;      // dummy value
+    int boneMapData <format=hex>;
+    int faceMapData <format=hex>;
+    int vertMatsData <format=hex>;
+    int qTangents <format=hex>;
+    int skinData <format=hex>;
+    int dummy2 <format=hex>;
+    int vertsUVData <format=hex>;
+    int physicsData[4] <format=hex>;
+
+    BBOX boundingBox <comment=PrintBBox>;
+    float texMappingDensity;
+    //float geometricMeanFaceArea;
+    int reserved[31];
+
     if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
         LittleEndian();
     };
@@ -424,6 +464,7 @@ struct TIMINGINFO(FILETYPE fileType) {
     char globalName[32];
     int globalRangeStart;
     int globalRangeEnd;
+    int qqqqnSubRanges;
 };
 
 struct SOURCEINFO(CHUNKTABLEENTRY &tableEntry, FILETYPE fileType) {

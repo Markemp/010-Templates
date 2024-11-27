@@ -150,16 +150,6 @@ struct BONETOWORLD {
     float row3[4];
 };
 
-string PrintNormal(IVONORMAL &normal) {
-    string result;
-    local VECTOR3 norm;
-    norm.x = (2 * (normal.x/127.0 * normal.z/127.0 + normal.y/127.0 * normal.w/127.0));
-    norm.y = (2 * (normal.y/127.0 * normal.z/127.0 - normal.x/127.0 * normal.w/127.0));
-    norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
-    SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
-    return result;
-};
-
 struct BONE {
     uint controllerId;
     uint limbId;
@@ -203,8 +193,8 @@ struct COMPILEDPHYSICALBONES {
 
 struct LODDISTANCE_x900 {
     uint unknown;
-    VECTOR3 unkBound1;
-    VECTOR3 unkBound2;    
+    VECTOR3 unkBound1 <comment=PrintVector3>;
+    VECTOR3 unkBound2 <comment=PrintVector3>;    
 };
 
 struct STATOBJ_PHYSICS_x900 {
@@ -246,27 +236,88 @@ struct STATOBJ_PHYSICS_x900 {
     PHYS_VECS end_vec[end_iter*2];
 };
 
+struct BBOX {
+    VECTOR3 min <comment=PrintVector3>;
+    VECTOR3 max <comment=PrintVector3>;  
+};
+
 struct SUBOBJ_x900 {
     uint ZeroPad;
-    uint NumBones;
-    uint UnkVal1;
-    uint UnkNumVal1;
+    uint NumSubObjs; // Same as number of bones?
+    uint RootNode;
+    uint NumBoneIndices;
     uint NumSubmeshes;
-    uint SBoneAttachPointStrTable;
+    uint SNodeStrTable;
     uint SNodeProperties;
     uint UnkVal2;
     
-    ubyte BonesChunk[NumBones*208]; // A few 3x4 matrices at least per bone
-    ubyte UnkNumVal1Chunk[UnkNumVal1*2]; // No idea, but appears to be similar to submeshes
-    ubyte SubmeshesChunk[NumSubmeshes*2]; // hierarchy information?
-    ubyte BoneAttachPointStrTable[SBoneAttachPointStrTable]; // Bone attachment point string table!
+    // Struct must be 208 bytes
+    struct SUBOBJCHUNK {
+        MATRIX3x4 TransMat1 <comment=PrintMat3x4Trans>;
+        MATRIX3x4 TransMat2 <comment=PrintMat3x4Trans>;
+        VECTOR3 HelperPos <comment=PrintVector3>; // Appears the be the same values previously in the helper chunk "pos" vector, but divided by 100? Clearly not a pos vector besides that.
+        uint unkVal <format=hex>; // No idea
+        ushort childIndex1; // So the following two appear to be the relative "child" index from the parent node.
+        ushort childIndex2; // I have no idea why they're duplicated though.
+        ushort parentIndex; // Parent index, 0xFF if root node.
+        ushort unkShort <format=hex>; // appears to generally be 0x3?
+        BBOX BoundingBox;
+        uint unkVals[5];
+        ushort numChildren;
+        ushort flag <format=hex>;
+        ubyte unk2[40];
+    };
+    
+    struct NodeString {
+        string AttachPoint;
+    };
+    
+    // This may be cursed, but I also may not care.
+    // The warnings do not matter, and this is necessary to make the individual values readable.
+    typedef struct (string s) {
+        local string str = s;
+    } StringWrapper <read=(str)>;
+        
+    typedef struct {
+        string source <hidden=true>;
+        
+        // Is the following disgusting? Yes.
+        // Does it make the template results nicer to look at? Also yes.
+        
+        local string prevStr = source;
+        local uint feqi = Strstr(prevStr, "=");
+        local string nextStr = StrDel(prevStr, 0, feqi+1);
+        local uint feqn = Strstr(nextStr, "\n"); // find next after first
+        
+        StringWrapper node(SubStr(prevStr, feqi+1, feqn));
+        
+        prevStr = nextStr;
+        feqi = Strstr(prevStr, "=");
+        nextStr = StrDel(prevStr, 0, feqi+1);
+        feqn = Strstr(nextStr, "\n"); // find next after first
+        
+        StringWrapper class(SubStr(prevStr, feqi+1, feqn));
+        
+        prevStr = nextStr;
+        feqi = Strstr(prevStr, "=");
+        nextStr = StrDel(prevStr, 0, feqi+1);
+        feqn = Strstr(nextStr, "\n"); // find next after first
+        
+        StringWrapper detach(SubStr(prevStr, feqi+1, feqn));
+    } NodeProperties;
+        
+    SUBOBJCHUNK SubObjChunk[NumSubObjs]; // A few 3x4 matrices at least per bone
+    ushort BonesIndices[NumBoneIndices]; // No idea, but appears to be similar to submeshes
+    ushort SubmeshesIndices[NumSubmeshes]; // hierarchy information?
+    NodeString NodeStrTable[NumSubObjs] <read=(AttachPoint), optimize=false>; // Attachment point string table!
     // Unserialized node properties with newline separator?
     // Appears to contain following properties per node:
     // node=<>\nclass=<>\ndetach=<>
     // Most commonly takes the form of:
     // node=Part\nclass=ItemPort\ndetach=False
-    ubyte NodePropertiesStrTable[SNodeProperties];
+    NodeProperties NodePropertiesStrTable[NumSubObjs] <optimize=false>;
 };
+
 
 struct SKINMESH {
     local ulong position;
@@ -326,6 +377,18 @@ struct SKINMESH {
                 //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
+            case U3_LODDistance: {
+                LODDISTANCE_x900 LODDistance <bgcolor=cLtBlue>;
+                break;
+            };
+            case U6_StatObj_Physics: {
+                STATOBJ_PHYSICS_x900 StaticObj_Phys <bgcolor=cLtGreen>;
+                break;
+            };
+            case U5_SubObjs: {
+                SUBOBJ_x900 SubObj <bgcolor=cLtRed>;
+                break;
+            };
         }
     };
 };

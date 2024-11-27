@@ -46,4 +46,38 @@ string PrintBoneInfo(BONE &bone) {
     return result;
 }
 
+string PrintMatrix4x4(MATRIX4x4 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44);
+    return result;
+};
+
+string PrintMatrix3x4(MATRIX3x4 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34);
+    return result;
+};
+
+string PrintMatrix3x3(MATRIX3x3 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f] [%f, %f, %f] [%f, %f, %f]]", m.M11, m.M12, m.M13, m.M21, m.M22, m.M23, m.M31, m.M32, m.M33);
+    return result;
+};
+
+string PrintVector3(VECTOR3 &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", vertex.x, vertex.y, vertex.z);
+    return result;
+};
+
+string PrintNormal(IVONORMAL &normal) {
+    string result;
+    local VECTOR3 norm;
+    norm.x = (2 * (normal.x/127.0 * normal.z/127.0 + normal.y/127.0 * normal.w/127.0));
+    norm.y = (2 * (normal.y/127.0 * normal.z/127.0 - normal.x/127.0 * normal.w/127.0));
+    norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
+    SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
+    return result;
+};
+
 #endif

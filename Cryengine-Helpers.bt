@@ -84,18 +84,6 @@ string PrintBoneName(COMPILEDBONE &bone) {
     return result;
 };
 
-//string GetBoneName_800(COMPILEDBONE_800 &bone) {
-//    string result;
-//    SPrintf(result, "Name = %s", bone.boneName);
-//    return result;
-//};
-//
-//string GetBoneName_801(COMPILEDBONE_801 &bone) {
-//    string result;
-//    SPrintf(result, "Name = %s", bone.boneName);
-//    return result;
-//};
-
 string PrintVertsUvs(VERTSUV &m) {
     string result;
     SPrintf(result, "Verts: [%f, %f, %f], UVs: [%f, %f]", m.vertices.x, m.vertices.y, m.vertices.z, m.uv.u, m.uv.v);
@@ -182,6 +170,12 @@ string PrintTimingInfo(TIMINGINFO &info) {
 string PrintTangentByte(TANGENT_BYTE &tan) {
     string result;
     SPrintf(result, "%f, %f, %f, %f", tan.x/127.0, tan.y/127.0, tan.z/127.0, tan.w/127.0);
+    return result;
+}
+
+string PrintBBox(BBOX &bbox) {
+    string result;
+    SPrintf(result, "Min: %f, %f, %f, Max: %f, %f, %f", bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x,bbox.max.y,bbox.max.z);
     return result;
 }
 

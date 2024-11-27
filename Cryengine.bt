@@ -81,7 +81,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case Mesh_us: 
         case Mesh_ui: {
-            MESHCHUNK chunkMesh(fileType);
+            MESHCHUNK chunkMesh(fileType, chunkTable.tableEntry[i].version);
             break;
         }
         case MeshSubsets_us: 
@@ -134,7 +134,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         };
         case Unknown11_us: {
-            char unknown1[chunkTable.tableEntry[i].size] <bgcolor=cDkBlue>;
+            BBOX unknown1 <bgcolor=cDkBlue, comment=PrintBBox>;
             break;
         }
         case Unknown21_Anim_us: {
