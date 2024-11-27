@@ -138,7 +138,7 @@ struct MESHSUBSETS(FILETYPE fileVersion) {
         };
     }
     else {
-        if (chunkHeader.version == CRYENGINE_3_4) {
+        if (chunkHeader.version == 0x0800) {
             uint flags;
             int numberOfMeshSubsets;
             uint unknown;  // skip bytes
