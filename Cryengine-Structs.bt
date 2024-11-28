@@ -395,6 +395,7 @@ struct MESHCHUNK(FILETYPE fileVersion, int chunkVersion) {
     int qTangents <format=hex>;
     int skinData <format=hex>;
     int dummy2 <format=hex>;
+    //int numberOfTypes;
     int vertsUVData <format=hex>;
     int physicsData[4] <format=hex>;
 
