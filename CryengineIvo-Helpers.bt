@@ -58,6 +58,13 @@ string PrintMatrix3x4(MATRIX3x4 &m) {
     return result;
 };
 
+string PrintMat3x4Trans (MATRIX3x4 &mat) {
+    string result;
+    SPrintf(result, "[%f, %f, %f]", mat.M14, mat.M24, mat.M34);
+    return result;  
+};
+
+
 string PrintMatrix3x3(MATRIX3x3 &m) {
     string result;
     SPrintf(result, "[[%f, %f, %f] [%f, %f, %f] [%f, %f, %f]]", m.M11, m.M12, m.M13, m.M21, m.M22, m.M23, m.M31, m.M32, m.M33);
@@ -70,6 +77,12 @@ string PrintVector3(VECTOR3 &vertex) {
     return result;
 };
 
+string PrintVector3CryHalf(VECTOR3CRYHALF &vertex) {
+    string result;
+    SPrintf(result, "%f, %f, %f", CryHalfToFloat(vertex.x), CryHalfToFloat(vertex.y), CryHalfToFloat(vertex.z));
+    return result;
+};
+
 string PrintNormal(IVONORMAL &normal) {
     string result;
     local VECTOR3 norm;
@@ -78,6 +91,66 @@ string PrintNormal(IVONORMAL &normal) {
     norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
     SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
     return result;
+};
+
+string PrintBBox(BBOX &bbox) {
+    string result;
+    SPrintf(result, "Min: %f, %f, %f, Max: %f, %f, %f", bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x,bbox.max.y,bbox.max.z);
+    return result;
+};
+
+string PrintMeshSubsetInfo(IVOMESHSUBSET &meshSubset) {
+    string result;
+    SPrintf(result, "first vert: %d, num verts: %d, mat: %d, parent: %d", meshSubset.firstVertex, meshSubset.numVertices, meshSubset.matId, meshSubset.meshParent);
+    return result;
+};
+
+string PrintColor(COLOR &color) {
+    string result;
+    SPrintf(result, "%d, %d, %d, %d", color.red, color.blue, color.green, color.alpha);
+    return result;
+};
+
+string PrintUVHalf(UVHALF &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+float CryHalfToFloat(ushort value) {
+    uint Mantissa;
+    uint Exponent;
+    uint Result;
+
+    Mantissa = (uint)(value & 0x03FF);
+
+    if ((value & 0x7C00) != 0)  // The value is normalized
+    {
+        Exponent = (uint)((value >> 10) & 0x1F);
+    }
+    else if (Mantissa != 0)     // The value is denormalized
+    {
+        // Normalize the value in the resulting float
+        Exponent = 1;
+
+        do
+        {
+            Exponent--;
+            Mantissa <<= 1;
+        } while ((Mantissa & 0x0400) == 0);
+
+        Mantissa &= 0x03FF;
+    }
+    else                        // The value is zero
+    {
+        Exponent = (uint)-112;
+    }
+
+    Result = ((value & 0x8000) << 16) | // Sign
+        ((Exponent + 112) << 23) | // Exponent
+        (Mantissa << 13);          // Mantissa
+
+    return (float)Result;
 };
 
 #endif

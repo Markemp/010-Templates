@@ -52,6 +52,16 @@ struct QUATERNION {
     float w;
 };
 
+struct CRYHALF {
+    ushort x;
+    ushort y;
+};
+
+struct CRYNORMAL {
+    short x;
+    short y;
+};
+
 struct MATRIX3x4 {
     float M11;
     float M12;
@@ -124,15 +134,15 @@ struct QTANGENT {
 
 struct COLOR {
     ubyte red;
-    ubyte blue;
     ubyte green;
+    ubyte blue;
     ubyte alpha;
 };
 
 struct COLORB {
     float red;
-    float blue;
     float green;
+    float blue;
     int flag;
 };
 

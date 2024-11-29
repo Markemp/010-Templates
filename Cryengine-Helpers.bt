@@ -72,6 +72,20 @@ string PrintMeshSubset(MESHSUBSET &meshSubset) {
     return result;
 };
 
+string PrintCryNormal(CRYNORMAL &normal) {
+    string result;
+    local float r = CryHalfToFloat(normal.x);
+    local float s = CryHalfToFloat(normal.y);
+    SPrintf(result, "x: %d, y: %d, z: ??", r, s);
+    return result;
+};
+
+string PrintCryHalf(CRYHALF &half) {
+    string result;
+    SPrintf(result, "x: %d, y: %d, z: ??", half.x, half.y);
+    return result;
+};
+
 string PrintBoneMapData(BONEMAPDATA &data) {
     string result;
     SPrintF(result, "Bone Index: [%d, %d, %d, %d], Weight: [%f, %f, %f, %f]", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3], data.weight[0], data.weight[1], data.weight[2], data.weight[3]);
@@ -104,7 +118,7 @@ string PrintUVHalf(UVHALF &uv) {
 
 string PrintChunkTableType(CHUNKTABLEENTRY &entry) {
     string result;
-    SPrintf(result, "Type = %s", EnumToString(entry.chunkType.chunkType));
+    SPrintf(result, "Type = %s, Ver: %x", EnumToString(entry.chunkType.chunkType), entry.version);
     return result;
 };
 
@@ -177,7 +191,7 @@ string PrintBBox(BBOX &bbox) {
     string result;
     SPrintf(result, "Min: %f, %f, %f, Max: %f, %f, %f", bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x,bbox.max.y,bbox.max.z);
     return result;
-}
+};
 
 uint SetDefaultVersion() {
     return 0x0800;

@@ -39,13 +39,13 @@ struct CHUNKTABLE(int numberOfChunks) {
 
 struct MESHCHUNK {
     uint flags2;  // 4 = no normals datastream, 5 has normals datastream
-    uint numberOfVertices;
-    uint numberOfIndices;
-    uint numberOfSubmeshes;
-    uint unknown;
+    int numberOfVertices;
+    int numberOfIndices;
+    int numberOfSubmeshes;
+    int unknown <format=hex>;
     VECTOR3 minBound <comment=PrintVector3>;
     VECTOR3 maxBound <comment=PrintVector3>;
-    uint unknown2;
+    int unknown2 <format=hex>;
 };
 
 struct IVOINDICES(int numberOfIndices) {
@@ -54,7 +54,7 @@ struct IVOINDICES(int numberOfIndices) {
     if (numberOfIndices % 2 == 1) {
         ushort filler;
     } else {
-        uint filler;
+        uint filler <hidden=true>;
         if (filler != 0) {
             FSeek(FTell() - 4);
         }
@@ -75,14 +75,14 @@ struct IVOVERTSUVS(int numberOfVertices) {
 struct IVOVERTSUVS_CGF(int numberOfVertices) {
 	uint bytesPerElement;
 
-	struct IVOVertsUvs_CGF {
-		VECTOR3SHORT vertices <comment=PrintVector3Short>;
+	struct IVOVERTUV {
+		VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
+        short skip;
 		COLOR color <comment=PrintColor>;
-		short unknown;
 		UVHALF uv <comment=PrintUVHalf>;
 	};
 
-	IVOVertsUvs_CGF vertUvs[numberOfVertices];
+	IVOVERTUV vertUvs[numberOfVertices];
 	
 	if(numberOfVertices % 2 == 1) {
 		uint filler;
@@ -112,6 +112,36 @@ struct IVONORMALS(int numberOfVertices) {
     }
 };
 
+typedef short snorm <read=Read_SNORM>;
+typedef ushort unorm <read=Read_UNORM>;
+
+string Read_SNORM(short s) {
+    string t;
+    float f = Max(s/32767.0, -1.0);
+    SPrintf( t, "%g", f );
+    return t;
+};
+
+string Read_UNORM(ushort s) {
+    string t;
+    float f = s/65535.0;
+    SPrintf( t, "%g", f );
+    return t;
+};
+
+struct VECTOR3SNORM {
+    snorm x;
+    snorm y;
+    snorm z;
+};
+
+struct VECTOR4SNORM {
+    snorm x;
+    snorm y;
+    snorm z;
+    snorm w;
+};
+
 struct TANGENTS(int numberOfVertices) {
     uint bytesPerElement;
     for (i = 0; i < numberOfVertices; i++) {
@@ -124,16 +154,16 @@ struct TANGENTS(int numberOfVertices) {
 
 struct IVOMESHSUBSET {
     ushort matId;
-    ushort submeshParent;
+    ushort meshParent;
     uint firstIndex;
     uint numIndices;
     uint firstVertex;
     uint unknown;
     uint numVertices;
     VECTOR3 center <comment=PrintVector3>;
-    uint unknown0 <format=hex>;
-    uint unknown1;
-    uint unknown2;
+    int unknown0 <format=hex>;
+    int unknown1 <format=hex>;
+    int unknown2 <format=hex>;
 };
 
 struct BONENAME {
@@ -241,6 +271,39 @@ struct BBOX {
     VECTOR3 max <comment=PrintVector3>;  
 };
 
+struct IVOTANGENTS_CGF(int numberOfVertices) {
+    uint bytesPerElement;
+    VECTOR4SNORM tangents[numberOfVertices];
+    if(numberOfVertices % 2 == 1) {
+        uint filler;
+    }
+};
+
+struct UNKNOWN_4BYTE {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+struct UNKNOWN_2BYTE {
+    byte x;
+    byte y;
+};
+
+struct IVOUNK3(int numberOfVertices) {
+    uint bytesPerElement;
+    UNKNOWN_2BYTE unk[numberOfVertices];
+    if (numberOfVertices % 2 == 1) {
+        ushort filler;
+    } else {
+        uint filler;
+        if (filler != 0) {
+            FSeek(FTell() - 4);
+        }
+    }
+};
+
 struct SUBOBJ_x900 {
     uint ZeroPad;
     uint NumSubObjs; // Same as number of bones?
@@ -253,19 +316,32 @@ struct SUBOBJ_x900 {
     
     // Struct must be 208 bytes
     struct SUBOBJCHUNK {
-        MATRIX3x4 TransMat1 <comment=PrintMat3x4Trans>;
-        MATRIX3x4 TransMat2 <comment=PrintMat3x4Trans>;
-        VECTOR3 HelperPos <comment=PrintVector3>; // Appears the be the same values previously in the helper chunk "pos" vector, but divided by 100? Clearly not a pos vector besides that.
+        struct Transforms {
+            MATRIX3x4 TransMatGlobal <comment=PrintMat3x4Trans>;
+            MATRIX3x4 TransMatRelative <comment=PrintMat3x4Trans>;
+            VECTOR3 HelperPos <comment=PrintVector3>; // Appears the be the same values previously in the helper chunk "pos" vector, but divided by 100? Clearly not a pos vector besides that.
+        } transforms;
+        
         uint unkVal <format=hex>; // No idea
         ushort childIndex1; // So the following two appear to be the relative "child" index from the parent node.
-        ushort childIndex2; // I have no idea why they're duplicated though.
+        ushort childIndex2; // One of these is a mapping to the Compiled Bones chunk
         ushort parentIndex; // Parent index, 0xFF if root node.
         ushort unkShort <format=hex>; // appears to generally be 0x3?
         BBOX BoundingBox;
-        uint unkVals[5];
+        uint unkVals[4];
+        uint numVertices;
         ushort numChildren;
         ushort flag <format=hex>;
-        ubyte unk2[40];
+        // Everything past this point is currently unknown
+        struct Unknown {
+            ushort unkShort;
+            ushort unkShort; // Also seems to always be 256
+            VECTOR3 unkVec1 <comment=PrintVector3>; // Both of the following have values which are conveniently floats that are either 1.0 or -1.0, 
+            VECTOR3 unkVec1 <comment=PrintVector3>; // with first value of the second vector being 0.
+            uint unkInt;
+            uint unkInt_256; // Seems to always be 256?
+            uint unkInt_0;
+        } unknown_chunk;
     };
     
     struct NodeString {
@@ -318,35 +394,25 @@ struct SUBOBJ_x900 {
     NodeProperties NodePropertiesStrTable[NumSubObjs] <optimize=false>;
 };
 
-
 struct SKINMESH {
-    local ulong position;
-
     uint flags;
     MESHCHUNK meshChunk;
-    char unknown2[116] <fgcolor=cAqua>;
+    BBOX boundingBox <comment=PrintBBox>;
+    char unknown2[92] <fgcolor=cAqua>;
     IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
+    // So interestingly the first datastream in every valid submesh MUST be an Index stream in #ivo.
+    // There's also an explicit check of the "stride"/element to ensure that it's 2 to make sure the
+    // datastream exported correctly. This may be worth considering as a test.
     while (!FEof()) {
-        position = FTell();
-        DatastreamType type;
+        DatastreamType type <hidden=true>;
         while (!isInEnum(type)) {
-            if (FEof()) {
-                break; // Exit if we reached the end of the file
-            }
-            DatastreamType type;
-        }
-        
-        // Ensure no further processing if we break due to EOF
-        if (FEof()) {
-            break; // Stop processing if we've reached the end
-        }
+            if (!FEof()) {
+                DatastreamType type <hidden=true>;
+            };
+        };
         switch (type) {
             case IvoVertsUvs: {
                 IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
-                break;
-            }
-            case IvoVertsUvsCGF: {
-                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
             case IvoIndices: {
@@ -377,20 +443,97 @@ struct SKINMESH {
                 //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
-            case U3_LODDistance: {
-                LODDISTANCE_x900 LODDistance <bgcolor=cLtBlue>;
+            case IvoVertsUvsCGF: {
+                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cDkBlue>;
                 break;
-            };
-            case U6_StatObj_Physics: {
-                STATOBJ_PHYSICS_x900 StaticObj_Phys <bgcolor=cLtGreen>;
+            }
+            case IvoTangentsCGF: {
+                TANGENTS tangents(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
-            };
-            case U5_SubObjs: {
-                SUBOBJ_x900 SubObj <bgcolor=cLtRed>;
+            }
+            case IvoUnknown3: {
+                IVOUNK3 unk(meshChunk.numberOfVertices) <bgcolor=cBlue>;
                 break;
-            };
+            }
         }
     };
 };
+
+
+//struct SKINMESH {
+//    local ulong position;
+//
+//    uint flags;
+//    MESHCHUNK meshChunk;
+//    BBOX boundingBox <comment=PrintBBox>;
+//    char unknown2[92] <fgcolor=cAqua>;
+//    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes] <comment=PrintMeshSubsetInfo>;
+//
+//    while (!FEof()) {
+//        position = FTell();
+//        DatastreamType type;
+//        while (!isInEnum(type)) {
+//            if (FEof()) {
+//                break; // Exit if we reached the end of the file
+//            }
+//            DatastreamType type;
+//        }
+//        
+//        // Ensure no further processing if we break due to EOF
+//        if (FEof()) {
+//            break; // Stop processing if we've reached the end
+//        }
+//        switch (type) {
+//            case IvoVertsUvs: {
+//                IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+//                break;
+//            }
+//            case IvoVertsUvsCGF: {
+//                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+//                break;
+//            }
+//            case IvoIndices: {
+//                IVOINDICES indices(meshChunk.numberOfIndices) <bgcolor=cDkBlue>;
+//                break;
+//            }
+//            case IvoNormals: {
+//                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+//                break;
+//            }
+//            case IvoNormals2: {
+//                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+//                break;
+//            }    
+//            case IvoColors2: {
+//                IVOCOLORS colors2(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+//                break;
+//            }
+//            case IvoTangents: {
+//                TANGENTS tangents(meshChunk.numberOfVertices) <bgcolor=cDkBlue>;
+//                break;
+//            }
+//            case IvoBoneMap: {
+//                //BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+//                break;
+//            }
+//            case IvoBoneMap32: {
+//                //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+//                break;
+//            }
+//            case U3_LODDistance: {
+//                LODDISTANCE_x900 LODDistance <bgcolor=cLtBlue>;
+//                break;
+//            };
+//            case U6_StatObj_Physics: {
+//                STATOBJ_PHYSICS_x900 StaticObj_Phys <bgcolor=cLtGreen>;
+//                break;
+//            };
+//            case U5_SubObjs: {
+//                SUBOBJ_x900 SubObj <bgcolor=cLtRed>;
+//                break;
+//            };
+//        }
+//    };
+//};
 
 #endif

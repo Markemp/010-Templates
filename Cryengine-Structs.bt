@@ -110,11 +110,11 @@ struct CONTROLLER_905(FILETYPE fileType) {
 };
 
 struct MESHSUBSET {
-    uint firstVertex;
-    uint numberOfVertices;
-    uint firstIndex;
-    uint numberOfIndices;
-    uint material;
+    int firstIndex;
+    int numberOfIndices;
+    int firstVertex;
+    int numberOfVertices;
+    int material;
     float radius;
     VECTOR3 center <comment=PrintVector3>;
 };
@@ -305,7 +305,7 @@ struct PHYSICALPROXY(uint32 numberOfVertices, uint32 numberOfIndices, uint32 num
     char m_arrMaterials[numberOfMaterials];
 };
 
-struct CRYLINK {        // CryHeader.h
+struct CRYLINK {
     int boneID;
     VECTOR3 offset;
     float blending;
@@ -528,7 +528,11 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
             }
             case NORMALS: {
                 uint flags[2];
-                VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                if (bytesPerElement == 12) {
+                    VECTOR3 normals[numberOfElements] <comment=PrintVector3>;
+                } else if (bytesPerElement == 4) {
+                    CRYHALF normals[numberOfElements] <comment=PrintCryHalf>;
+                };
                 break;
             }
             case UVS: {
