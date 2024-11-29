@@ -81,6 +81,7 @@ int isInEnum(DatastreamType type) {
         case IvoColors2: 
         case IvoIndices: 
         case IvoVertsUvsCGF: 
+        case IvoTangentsCGF:
         case IvoUnknown2:
         case IvoUnknown3:
         case IvoUnknown4:

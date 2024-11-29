@@ -45,7 +45,9 @@ struct MESHCHUNK {
     int unknown <format=hex>;
     VECTOR3 minBound <comment=PrintVector3>;
     VECTOR3 maxBound <comment=PrintVector3>;
-    int unknown2 <format=hex>;
+    VECTOR3 unkBound1 <comment=PrintVector3>;
+    VECTOR3 unkBound2 <comment=PrintVector3>;
+    uint vertexFormat <format=hex>; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
 };
 
 struct IVOINDICES(int numberOfIndices) {
@@ -327,7 +329,7 @@ struct SUBOBJ_x900 {
         ushort childIndex2; // One of these is a mapping to the Compiled Bones chunk
         ushort parentIndex; // Parent index, 0xFF if root node.
         ushort unkShort <format=hex>; // appears to generally be 0x3?
-        BBOX BoundingBox;
+        BBOX BoundingBox <comment=PrintBBox>;
         uint unkVals[4];
         uint numVertices;
         ushort numChildren;
@@ -397,9 +399,9 @@ struct SUBOBJ_x900 {
 struct SKINMESH {
     uint flags;
     MESHCHUNK meshChunk;
-    BBOX boundingBox <comment=PrintBBox>;
+    //BOX boundingBox <comment=PrintBBox>;
     char unknown2[92] <fgcolor=cAqua>;
-    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes];
+    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes] <comment=PrintMeshSubsetInfo>;
     // So interestingly the first datastream in every valid submesh MUST be an Index stream in #ivo.
     // There's also an explicit check of the "stride"/element to ensure that it's 2 to make sure the
     // datastream exported correctly. This may be worth considering as a test.

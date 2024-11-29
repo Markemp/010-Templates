@@ -64,7 +64,6 @@ string PrintMat3x4Trans (MATRIX3x4 &mat) {
     return result;  
 };
 
-
 string PrintMatrix3x3(MATRIX3x3 &m) {
     string result;
     SPrintf(result, "[[%f, %f, %f] [%f, %f, %f] [%f, %f, %f]]", m.M11, m.M12, m.M13, m.M21, m.M22, m.M23, m.M31, m.M32, m.M33);
