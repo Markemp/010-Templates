@@ -66,6 +66,14 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+string PrintTangentBitangent(TANGENTBITANGENT &d) {
+    string result;
+    SPrintf(result, "Tangent: x: %f, y: %f, z: %f, w: %f, Bitangent: x: %f, y: %f, z: %f, w: %f", 
+        d.tangent.x / 32767.0, d.tangent.y / 32767.0, d.tangent.z / 32767.0, d.tangent.w / 32767.0, 
+        d.bitangent.x / 32767.0, d.bitangent.y / 32767.0, d.bitangent.z / 32767.0, d.bitangent.w / 32767.0);
+    return result;
+};
+
 string PrintMeshSubset(MESHSUBSET &meshSubset) {
     string result;
     SPrintf(result, "first vert: %d, num verts: %d, mat: %d", meshSubset.firstVertex, meshSubset.numberOfVertices, meshSubset.material);

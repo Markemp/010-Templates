@@ -499,7 +499,6 @@ struct SPEEDINFO(FILETYPE fileType) {
     QUATERNION startPosition;
 };
 
-
 struct DATASTREAMCHUNK(FILETYPE fileType) {
     local int i;
 
@@ -609,7 +608,7 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
                         break;   
                     }
                     case TANGENTS: {
-                        VECTOR4 tangent[numberOfElements];
+                        TANGENTBITANGENT tangent[numberOfElements] <comment=PrintTangentBitangent>;
                         break;   
                     }
                     default: {
@@ -618,7 +617,6 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
                 }
                 LittleEndian();
             } else {
-
                 uint flags2;
                 DATASTREAMTYPE datastreamType;
                 uint numberOfElements;
@@ -656,7 +654,7 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
                         break;   
                     }
                     case TANGENTS: {
-                        VECTOR4 tangent[numberOfElements];
+                        TANGENTBITANGENT tangent[numberOfElements] <comment=PrintTangentBitangent>;
                         break;   
                     }
                     default: {

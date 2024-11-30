@@ -104,6 +104,21 @@ struct QUATERNION {
     float w;
 };
 
+struct TANGENTBITANGENT {
+    struct TANGENT {
+        short x;
+        short y;
+        short z;
+        short w;
+    } tangent;
+    struct BITANGENT {
+        short x;
+        short y;
+        short z;
+        short w;
+    } bitangent;
+};
+
 struct CRYHALF {
     ushort x;
     ushort y;
