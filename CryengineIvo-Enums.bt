@@ -35,7 +35,7 @@ enum <uint> CHUNKTYPE {
     U2_PhysicalHierarchy    = 0x90c62222, // 1405e8a4f(CGF?), 1405e9403(SKIN), v900h (0x90c62223 upper limit of skin files?)
     U3_LODDistance          = 0x9351756f, // 1405e9203(CGF), v900h
     U4_VisibilityGroups     = 0xc1c36afe, // 1405e921b(CGF), v900h
-    U5_SubObjs              = 0x70697fda, // 1405e8e69(CGF), v900h
+    NodeMeshCombos          = 0x70697fda, // 1405e8e69(CGF), v900h
     U6_StatObj_Physics      = 0x58de1772, // 1405e8e5d(CGF), v900h
     U7_PositionBonemap      = 0x2b7ecf9f, // 1405e8e51(CGF), v900h
     U8_VFXHelpers           = 0x1e14a062, // 1405e8e45(CGF), v900h

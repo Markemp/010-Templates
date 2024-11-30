@@ -17,36 +17,6 @@
 #include "Cryengine-Structs.bt"
 #include "Cryengine-Enums.bt"
 
-typedef short snorm <read=Read_SNORM>;
-typedef ushort unorm <read=Read_UNORM>;
-
-string Read_SNORM(short s) {
-    string t;
-    float f = Max(s/32767.0, -1.0);
-    SPrintf( t, "%g", f );
-    return t;
-};
-
-string Read_UNORM(ushort s) {
-    string t;
-    float f = s/65535.0;
-    SPrintf( t, "%g", f );
-    return t;
-};
-
-struct VECTOR3SNORM {
-    snorm x;
-    snorm y;
-    snorm z;
-};
-
-struct VECTOR4SNORM {
-    snorm x;
-    snorm y;
-    snorm z;
-    snorm w;
-};
-
 struct BONEMAP(int numberOfVertices) {
     uint bytesPerElement;
     BONEMAPDATA bonemap(bytesPerElement)[numberOfVertices] <comment=PrintBoneMapData>;

@@ -63,8 +63,8 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             STATOBJ_PHYSICS_x900 StaticObj_Phys <bgcolor=cLtGreen>;
             break;
         };
-        case U5_SubObjs: {
-            SUBOBJ_x900 SubObj <bgcolor=cLtRed>;
+        case NodeMeshCombos: {
+            NODEMESHCOMBOCHUNK NodeMeshCombo <bgcolor=cLtRed>;
             break;
         };
         default: {

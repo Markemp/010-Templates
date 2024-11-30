@@ -45,6 +45,58 @@ struct VECTOR4SHORT {
     hfloat w;
 };
 
+typedef short snorm <read=Read_SNORM>;
+typedef ushort unorm <read=Read_UNORM>;
+typedef byte bnorm <read=Read_BNORM>;
+
+string Read_SNORM(short s) {
+    string t;
+    float f = Max(s/32767.0, -1.0);
+    SPrintf( t, "%g", f );
+    return t;
+};
+
+string Read_UNORM(ushort s) {
+    string t;
+    float f = s/65535.0;
+    SPrintf( t, "%g", f );
+    return t;
+};
+
+string Read_BNORM(byte s) {
+    string t;
+    float f = s/127.0;
+    SPrintf( t, "%g", f );
+    return t;
+};
+
+struct VECTOR3SNORM {
+    snorm x;
+    snorm y;
+    snorm z;
+};
+
+struct VECTOR4SNORM {
+    snorm x;
+    snorm y;
+    snorm z;
+    snorm w;
+};
+
+struct VECTOR4BNORM {
+    bnorm x;
+    bnorm y;
+    bnorm z;
+    bnorm w;
+};
+
+struct VECTOR4UNORM {
+    unorm x;
+    unorm y;
+    unorm z;
+    unorm w;
+};
+
 struct QUATERNION {
     float x;
     float y;

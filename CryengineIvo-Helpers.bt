@@ -82,6 +82,12 @@ string PrintVector3CryHalf(VECTOR3CRYHALF &vertex) {
     return result;
 };
 
+string PrintTangentByte(TANGENT_BYTE &tangent) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f", tangent.x/127, tangent.y/127, tangent.z/127, tangent.z/127);
+    return result;
+};
+
 string PrintNormal(IVONORMAL &normal) {
     string result;
     local VECTOR3 norm;
@@ -89,6 +95,24 @@ string PrintNormal(IVONORMAL &normal) {
     norm.y = (2 * (normal.y/127.0 * normal.z/127.0 - normal.x/127.0 * normal.w/127.0));
     norm.z = (2 * (normal.z/127.0 * normal.z/127.0 + normal.w/127.0 * normal.w/127.0)) - 1;
     SPrintf(result, "%f, %f, %f", norm.x, norm.y, norm.z);
+    return result;
+};
+
+string PrintVector4SNorm(VECTOR4SNORM &norm) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f", Max(norm.x/32767.0, -1.0), Max(norm.y/32767.0, -1.0), Max(norm.z/32767.0, -1.0), Max(norm.w/32767.0, -1.0));
+    return result;
+};
+
+string PrintVector4BNorm(VECTOR4BNORM &norm) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f", Max(norm.x/127.0, -1.0), Max(norm.y/127.0, -1.0), Max(norm.z/127.0, -1.0), Max(norm.w/127.0, -1.0));
+    return result;
+};
+
+string PrintVector4UNorm(VECTOR4UNORM &norm) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f", Max(norm.x/32767.0, -1.0), Max(norm.y/32767.0, -1.0), Max(norm.z/32767.0, -1.0), Max(norm.w/32767.0, -1.0));
     return result;
 };
 
