@@ -116,6 +116,12 @@ string PrintVector4UNorm(VECTOR4UNORM &norm) {
     return result;
 };
 
+//string PrintSubObjChunk(SUBOBJCHUNK &chunk) {
+//    string result;
+//    SPrintf(result, "%s", name);
+//    return result;
+//};
+
 string PrintBBox(BBOX &bbox) {
     string result;
     SPrintf(result, "Min: %f, %f, %f, Max: %f, %f, %f", bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x,bbox.max.y,bbox.max.z);

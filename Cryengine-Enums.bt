@@ -190,4 +190,9 @@ enum NodeType {
     NODE_HELPER
 };
 
+enum VERTEXFORMAT {
+    P3F_C4B_T2H,    // 20 bytes.  3 float, 4 bytes, 2 half
+    P3S_C4B_T2H     // 16 bytes.  2 short, 4 bytes, 2 half
+};
+
 #endif

@@ -45,8 +45,8 @@ struct MESHCHUNK {
     int unknown <format=hex>;
     VECTOR3 minBound <comment=PrintVector3>;
     VECTOR3 maxBound <comment=PrintVector3>;
-    VECTOR3 unkBound1 <comment=PrintVector3>;
-    VECTOR3 unkBound2 <comment=PrintVector3>;
+    VECTOR3 scalingMinBound <comment=PrintVector3>;
+    VECTOR3 scalingMaxBound <comment=PrintVector3>;
     uint vertexFormat <format=hex>; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
 };
 
@@ -108,14 +108,14 @@ struct IVONORMALS(int numberOfVertices) {
     if (numberOfVertices % 2 == 1) uint filler;
 };
 
-struct TANGENTBITANGENT {
+struct TANGENTBITANGENT_IVO {
     VECTOR4BNORM tangents <comment=PrintVector4BNorm>;
     VECTOR4BNORM bitangents <comment=PrintVector4BNorm>;
 };
 
 struct TANGENTS(int numberOfVertices) {
     uint bytesPerElement;
-    TANGENTBITANGENT tangents[numberOfVertices];
+    TANGENTBITANGENT_IVO tangents[numberOfVertices];
     if (numberOfVertices % 2 == 1) uint filler;
 };
 
@@ -265,8 +265,8 @@ struct IVOUNK3(int numberOfVertices) {
 
 struct NODEMESHCOMBOCHUNK {
     uint ZeroPad;
-    uint NumSubObjs; // Same as number of bones?
-    uint RootNode;
+    uint numberOfNodes;
+    uint numberOfMeshSubsets;
     uint NumBoneIndices;
     uint NumSubmeshes;
     uint SNodeStrTable;
@@ -341,16 +341,16 @@ struct NODEMESHCOMBOCHUNK {
         StringWrapper detach(SubStr(prevStr, feqi+1, feqn));
     } NodeProperties;
         
-    SUBOBJCHUNK SubObjChunk[NumSubObjs]; // A few 3x4 matrices at least per bone
+    SUBOBJCHUNK SubObjChunk[numberOfNodes];
     ushort BonesIndices[NumBoneIndices]; // No idea, but appears to be similar to submeshes
-    ushort materialIndices[NumSubmeshes]; // hierarchy information?
-    NodeString NodeStrTable[NumSubObjs] <read=(AttachPoint), optimize=false>; // Attachment point string table!
+    ushort materialIndices[NumSubmeshes];
+    NodeString NodeStrTable[numberOfNodes] <read=(AttachPoint), optimize=false>; // Attachment point string table!
     // Unserialized node properties with newline separator?
     // Appears to contain following properties per node:
     // node=<>\nclass=<>\ndetach=<>
     // Most commonly takes the form of:
     // node=Part\nclass=ItemPort\ndetach=False
-    NodeProperties NodePropertiesStrTable[NumSubObjs] <optimize=false>;
+    NodeProperties NodePropertiesStrTable[numberOfNodes] <optimize=false>;
 };
 
 struct SKINMESH {
