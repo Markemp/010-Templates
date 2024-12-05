@@ -47,7 +47,7 @@ struct MESHCHUNK {
     VECTOR3 maxBound <comment=PrintVector3>;
     VECTOR3 scalingMinBound <comment=PrintVector3>;
     VECTOR3 scalingMaxBound <comment=PrintVector3>;
-    uint vertexFormat <format=hex>; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
+    VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
 };
 
 struct IVOINDICES(int numberOfIndices) {
