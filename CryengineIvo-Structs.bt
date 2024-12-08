@@ -151,9 +151,9 @@ struct BONE {
     uint controllerId;
     uint limbId;
     int parentIndex;
-    QUATERNION relativeQuat <comment=GetQuaterion>;
+    QUATERNION relativeQuat <comment=PrintQuaternion>;
     VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
-    QUATERNION worldQuat <comment=GetQuaterion>;
+    QUATERNION worldQuat <comment=PrintQuaternion>;
     VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
 };
 
@@ -167,20 +167,26 @@ struct BONEIDS_x901 {
 };
 
 struct BONETRANSFORMS_x901 {
-	QUATERNION relativeQuat <comment=GetQuaterion>;
+	QUATERNION relativeQuat <comment=PrintQuaternion>;
 	VECTOR3 relativeTransform <comment=PrintVector3>; // relative x,y,z from parent
-	QUATERNION worldQuat <comment=GetQuaterion>;
+	QUATERNION worldQuat <comment=PrintQuaternion>;
 	VECTOR3 worldTransform <comment=PrintVector3>; // absolute x,y,z from origin
 };
 
-struct COMPILEDBONES {
-    uint numberOfBones;
-    local int i;
-    for (i = 0; i < numberOfBones; i++) {
-        BONE bone <comment=PrintBoneInfo>;
-    };
-    for (i = 0; i < numberOfBones; i++) {
-        BONENAME boneName <comment=GetBoneName>;
+struct COMPILEDBONES(int version) {
+    if (version == 0x0900) {
+        int numberOfBones;
+        local int i;
+        for (i = 0; i < numberOfBones; i++) {
+            BONE bone <comment=PrintBoneInfo>;
+        };
+        for (i = 0; i < numberOfBones; i++) {
+            BONENAME boneName <comment=GetBoneName>;
+        };
+    } else if (version == 0x0901) {
+        int numberOfBones;
+        local int i;
+        
     };
 };
 
