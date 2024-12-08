@@ -35,7 +35,9 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             MESHCHUNK meshChunk;
             break;
         }
-        case CompiledBones320:
+        case NodeChunkDetails:
+            NODEDETAILSIVO nodeDetails;
+            break;
         case CompiledBones: {
             local int64 chunkSize = chunkTable.tableEntry[i+1].offset - chunkTable.tableEntry[i].offset;
             COMPILEDBONES compiledBones(chunkTable.tableEntry[i].version)  <bgcolor=cDkRed>;

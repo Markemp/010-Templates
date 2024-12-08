@@ -28,8 +28,8 @@ enum <uint> CHUNKTYPE {
     MeshChunk               = 0x9293b9d8,
     SkinMesh                = 0xb875b2d9,
     SkinMesh2               = 0xb8757777, // 1405e986f(SKINM), 1405e8c9b(SKINM2), v900h (Proper name appears to be Mesh by RTTI.) 
-    CompiledBones           = 0xc201973c, // 1405e9223(CGF), v901h
-    CompiledBones320        = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h (Despite what this would seem to suggest this is still be used for CHR files as a Skeleton?)
+    NodeChunkDetails        = 0xc201973c, // 1405e9223(CGF), v901h  Node info?
+    CompiledBones           = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h (Despite what this would seem to suggest this is still be used for CHR files as a Skeleton?)
     DBA                     = 0xf7351608,
     U1_RC_Version           = 0xbe5e493e, // 1405e920f(CGF), 1405e8a67(CHR), 1405e9626(SKIN), v900h
     U2_PhysicalHierarchy    = 0x90c62222, // 1405e8a4f(CGF?), 1405e9403(SKIN), v900h (0x90c62223 upper limit of skin files?)

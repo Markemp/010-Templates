@@ -40,6 +40,12 @@ string GetBoneName(BONENAME &boneName) {
     return result;
 };
 
+string PrintNodeName(NODENAME &nodeName) {
+    string result;
+    SPrintf(result, "Node Name: %s", nodeName.nodeName);
+    return result;
+};
+
 string PrintBoneInfo(BONE &bone) {
     string result;
     SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);

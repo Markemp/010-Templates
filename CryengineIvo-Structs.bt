@@ -166,6 +166,39 @@ struct BONEIDS_x901 {
 	short uBoneIndex; // Seems to be an indicator of location within a larger set of bones? Ordered by parent, then iterative by this value
 };
 
+struct NODENAME {
+    string nodeName;
+};
+
+struct NODEDETAIL {
+    uint controllerId; // ?
+    short unknown1;
+    short numberOfChildren;
+    short parentIndex;  // 0xffff if root
+    short unknown2;  // always 0xffff
+    short unknown3;  // always 0xffff
+    short objectNodeId; // points to mesh info identifier (like chunk id)
+};
+
+struct NODEDETAILSIVO {
+    local int i;
+    int numberOfNodes;
+    int stringTableSize;
+    int flags1;
+    int flags2;
+    for (i = 0; i < numberOfNodes; i++) {
+        NODEDETAIL nodeDetail;
+    };
+    for (i = 0; i < numberOfNodes; i++) {
+        NODENAME nodeName  <comment=PrintNodeName>;
+    };
+    local int pos;
+    pos = FTell();
+    if (pos % 4 != 0) {
+        byte skip[4 - (pos % 4)] <hidden=true>;
+    };
+};
+
 struct BONETRANSFORMS_x901 {
 	QUATERNION relativeQuat <comment=PrintQuaternion>;
 	VECTOR3 relativeTransform <comment=PrintVector3>; // relative x,y,z from parent
@@ -274,7 +307,7 @@ struct NODEMESHCOMBOCHUNK {
     uint numberOfNodes;
     uint numberOfMeshSubsets;
     uint NumBoneIndices;
-    uint NumSubmeshes;
+    uint numSubmeshes;
     uint SNodeStrTable;
     uint SNodeProperties;
     uint UnkVal2;
@@ -288,9 +321,9 @@ struct NODEMESHCOMBOCHUNK {
         } transforms;
         
         uint unkVal <format=hex>; // No idea
-        ushort childIndex1; // So the following two appear to be the relative "child" index from the parent node.
-        ushort childIndex2; // One of these is a mapping to the Compiled Bones chunk
-        ushort parentIndex; // Parent index, 0xFF if root node.
+        ushort childIndex1; 
+        ushort childIndex2; 
+        ushort parentNodeId; // Parent id, 
         ushort unkShort <format=hex>; // appears to generally be 0x3?
         BBOX BoundingBox <comment=PrintBBox>;
         uint unkVals[4];
@@ -345,18 +378,18 @@ struct NODEMESHCOMBOCHUNK {
         feqn = Strstr(nextStr, "\n"); // find next after first
         
         StringWrapper detach(SubStr(prevStr, feqi+1, feqn));
-    } NodeProperties;
+    } NODEPROPERTIES;
         
     SUBOBJCHUNK SubObjChunk[numberOfNodes];
     ushort BonesIndices[NumBoneIndices]; // No idea, but appears to be similar to submeshes
-    ushort materialIndices[NumSubmeshes];
+    ushort materialIndices[numSubmeshes];
     NodeString NodeStrTable[numberOfNodes] <read=(AttachPoint), optimize=false>; // Attachment point string table!
     // Unserialized node properties with newline separator?
     // Appears to contain following properties per node:
     // node=<>\nclass=<>\ndetach=<>
     // Most commonly takes the form of:
     // node=Part\nclass=ItemPort\ndetach=False
-    NodeProperties NodePropertiesStrTable[numberOfNodes] <optimize=false>;
+    NODEPROPERTIES NodePropertiesStrTable[numberOfNodes] <optimize=false>;
 };
 
 struct SKINMESH {
