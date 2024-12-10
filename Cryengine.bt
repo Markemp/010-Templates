@@ -76,12 +76,12 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case Node_us: 
         case Node_ui: {
-            NODECHUNK nodeChunk(fileType) <comment=GetNodeName>;
+            NODECHUNK nodeChunk(fileType) <comment=GetNodeName, bgcolor=cDkPurple>;
             break;
         }
         case Mesh_us: 
         case Mesh_ui: {
-            MESHCHUNK chunkMesh(fileType, chunkTable.tableEntry[i].version);
+            MESHCHUNK chunkMesh(fileType, chunkTable.tableEntry[i].version) <bgcolor=cPurple>;
             break;
         }
         case MeshSubsets_us: 

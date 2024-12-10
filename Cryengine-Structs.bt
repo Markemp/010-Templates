@@ -131,18 +131,17 @@ struct MESHSUBSETS(FILETYPE fileVersion) {
     if (fileVersion == CRYENGINE_3_8) {
         uint flags;
         int numberOfMeshSubsets;
-        uint unknown;  // skip bytes
-        uint unknown2;  // skip bytes
+        int reserved[2];  // skip bytes
         for (i = 0; i < numberOfMeshSubsets; i++) {
             MESHSUBSET meshSubset <comment=PrintMeshSubset>;
         };
+        int64 unknowns[numberOfMeshSubsets] <hidden=true>;  // maybe identifiers?  2 words per number of submeshes.
     }
     else {
         if (chunkHeader.version == 0x0800) {
             uint flags;
             int numberOfMeshSubsets;
-            uint unknown;  // skip bytes
-            uint unknown2;  // skip bytes
+            int reserved[2];  // skip bytes
             for (i = 0; i < numberOfMeshSubsets; i++) {
                 MESHSUBSET meshSubset <comment=PrintMeshSubset>;
             };
@@ -151,8 +150,7 @@ struct MESHSUBSETS(FILETYPE fileVersion) {
             BigEndian();
             uint flags;
             int numberOfMeshSubsets;
-            uint unknown;  // skip bytes
-            uint unknown2;  // skip bytes
+            int reserved[2];  // skip bytes
             for (i = 0; i < numberOfMeshSubsets; i++) {
                 MESHSUBSET meshSubset <comment=PrintMeshSubset>;
             };
