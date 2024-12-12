@@ -24,23 +24,23 @@ HEADER headerInfo <bgcolor=cLtBlue>;
 
 FSeek(headerInfo.offset);
 
-local int i = 0;
+local int index = 0;
 CHUNKTABLE chunkTable(headerInfo.numChunks);
 
-for (i = 0; i < headerInfo.numChunks; i++) {
-    FSeek(chunkTable.tableEntry[i].offset);
-    switch (chunkTable.tableEntry[i].chunkType) {
+for (index = 0; index < headerInfo.numChunks; index++) {
+    FSeek(chunkTable.tableEntry[index].offset);
+    switch (chunkTable.tableEntry[index].chunkType) {
         case MeshChunk320:
         case MeshChunk: {
-            MESHCHUNK meshChunk;
+            MESHCHUNK meshChunk <bgcolor=cPurple>;
             break;
         }
         case NodeChunkDetails:
-            NODEDETAILSIVO nodeDetails;
+            NODEDETAILSIVO nodeDetails <bgcolor=cDkPurple>;
             break;
         case CompiledBones: {
-            local int64 chunkSize = chunkTable.tableEntry[i+1].offset - chunkTable.tableEntry[i].offset;
-            COMPILEDBONES compiledBones(chunkTable.tableEntry[i].version)  <bgcolor=cDkRed>;
+            local int64 chunkSize = chunkTable.tableEntry[index+1].offset - chunkTable.tableEntry[index].offset;
+            COMPILEDBONES compiledBones(chunkTable.tableEntry[index].version)  <bgcolor=cDkRed>;
             break;
         }
         case CompiledPhysicalBones: {
@@ -66,7 +66,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             break;
         };
         case NodeMeshCombos: {
-            NODEMESHCOMBOCHUNK NodeMeshCombo <bgcolor=cLtRed>;
+            NODEMESHCOMBOCHUNK NodeMeshCombo <bgcolor=cLtBlue>;
             break;
         };
         default: {

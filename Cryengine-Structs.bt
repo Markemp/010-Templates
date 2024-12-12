@@ -135,7 +135,7 @@ struct MESHSUBSETS(FILETYPE fileVersion) {
         for (i = 0; i < numberOfMeshSubsets; i++) {
             MESHSUBSET meshSubset <comment=PrintMeshSubset>;
         };
-        int64 unknowns[numberOfMeshSubsets] <hidden=true>;  // maybe identifiers?  2 words per number of submeshes.
+        int64 unknowns[numberOfMeshSubsets] <hidden=false>;  // maybe identifiers?  2 words per number of submeshes.
     }
     else {
         if (chunkHeader.version == 0x0800) {
