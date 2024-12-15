@@ -320,13 +320,12 @@ struct NODEMESHCOMBO {
         MATRIX3x4 transMatRelative <comment=PrintMat3x4Trans>;
         VECTOR3 scaleComponent <comment=PrintVector3>; // Appears the be the same values previously in the helper chunk "pos" vector, but divided by 100? Clearly not a pos vector besides that.
     } transforms;
-    //IVOTRANSFORMS transforms;
+
     uint unkVal <format=hex>; // No idea
-    ushort childIndex1; 
-    ushort childIndex2; 
+    uint unknown;
     ushort parentNodeId; // Parent id, 
     ushort unkShort <format=hex>; // appears to generally be 0x3?
-    BBOX BoundingBox <comment=PrintBBox>;
+    BBOX boundingBox <comment=PrintBBox>;
     uint unkVals[4];
     uint numVertices;
     ushort numChildren;
@@ -344,19 +343,21 @@ struct NODEMESHCOMBO {
 };
 
 struct NODEMESHCOMBOCHUNK {
-    uint ZeroPad;
+    uint zeroPad;
     uint numberOfNodes;
-    uint numberOfMeshSubsets;
+    uint numberOfMeshes; // Not all nodes will have a mesh chunk.  Examples:  Helper nodes
     uint unknown;
-    uint numSubmeshes;
+    uint numberOfMeshSubsets;
     uint stringTableSize;
-    uint SNodeProperties;
-    uint UnkVal2;
+    uint unknown2;
+    uint unknown3;
            
     NODEMESHCOMBO nodeMeshCombo[numberOfNodes];
-    ushort BonesIndices[unknown]; // No idea, but appears to be similar to submeshes
+    
+    ushort unknownIndices[unknown]; // No idea, but count matches unknown under numberOfMeshes (numberOfMeshes - 1)
+    ushort materialIndices[numberOfMeshSubsets];
+
     local int i;
-    ushort materialIndices[numSubmeshes];
     for (i = 0; i < numberOfNodes; i++) {
         NODENAME nodeName  <comment=PrintNodeName>;
     };

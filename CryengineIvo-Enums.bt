@@ -31,7 +31,7 @@ enum <uint> CHUNKTYPE {
     NodeChunkDetails        = 0xc201973c, // 1405e9223(CGF), v901h  Node info?
     CompiledBones           = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h (Despite what this would seem to suggest this is still be used for CHR files as a Skeleton?)
     DBA                     = 0xf7351608,
-    U1_RC_Version           = 0xbe5e493e, // 1405e920f(CGF), 1405e8a67(CHR), 1405e9626(SKIN), v900h
+    ExportFlags             = 0xbe5e493e, // 1405e920f(CGF), 1405e8a67(CHR), 1405e9626(SKIN), v900h
     U2_PhysicalHierarchy    = 0x90c62222, // 1405e8a4f(CGF?), 1405e9403(SKIN), v900h (0x90c62223 upper limit of skin files?)
     U3_LODDistance          = 0x9351756f, // 1405e9203(CGF), v900h
     U4_VisibilityGroups     = 0xc1c36afe, // 1405e921b(CGF), v900h
@@ -90,20 +90,19 @@ enum VERTEXFORMAT {
 enum <uint> DatastreamType {
     IvoNormals2 = 0x38A581FE, // [6], size 04h
     IvoBoneMap = 0x677C7B23, // [4], size 0ch
+    IvoUnknown6 = 0x69655CD8, // [12], size 04h
     IvoBoneMap32 = 0x6ECA3708, // [5], size 18h
+    IvoUnknown5 = 0x7E216CAB, // [11], size 0ch
     IvoVertsUvs = 0x91329AE9, // [0], size 14h
     IvoNormals = 0x9CF3F615, // [1], size 04h
-    IvoTangents = 0xB95E9A1B, // [3], size 08h
-    IvoColors2 = 0xD9EED421, // [2], size 04h
-    IvoIndices = 0xEECDC168, // Does exist, oddly is inlined
-    IvoVertsUvsCGF = 0xB3A70D5E, // [7], size 0ch
-    IvoTangentsCGF = 0xEE057252,
-    IvoUnknown2 = 0xEE057252, // [8], size 08h
     IvoUnknown3 = 0x9D51C5EE, // [9], size 02h
     IvoUnknown4 = 0xA596C0E6, // [10], size 0ch
-    IvoUnknown5 = 0x7E216CAB, // [11], size 0ch
-    IvoUnknown6 = 0x69655CD8, // [12], size 04h
+    IvoTangents = 0xB95E9A1B, // [3], size 08h
+    IvoVertsUvsCGF = 0xB3A70D5E, // [7], size 0ch
     IvoUnknown7 = 0xDA86BE9C, // [13], size 10h
+    IvoColors2 = 0xD9EED421, // [2], size 04h
+    IvoIndices = 0xEECDC168, // Does exist, oddly is inlined
+    IvoTangentsCGF = 0xEE057252, // [8], size 08h
 };
 
 // Check if value is in a given enum. 
@@ -120,7 +119,6 @@ int isInEnum(DatastreamType type) {
         case IvoIndices: 
         case IvoVertsUvsCGF: 
         case IvoTangentsCGF:
-        case IvoUnknown2:
         case IvoUnknown3:
         case IvoUnknown4:
         case IvoUnknown5:

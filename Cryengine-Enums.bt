@@ -132,6 +132,12 @@ enum <string> FILETYPE {
     O3DE 
 };
 
+enum EFileType
+{
+    Geom = 0xFFFF0000U,
+    Anim,
+};
+
 enum MtlNameTypeEnum {
     // this is a bitfield, not enum
     //    FLAG_MULTI_MATERIAL  = 0x0001, // Have sub materials info.
