@@ -28,7 +28,7 @@ enum <uint> CHUNKTYPE {
     MeshChunk               = 0x9293b9d8, // Older Ivo skin mesh chunks.
     SkinMesh                = 0xb875b2d9,
     SkinMesh2               = 0xb8757777, // 1405e986f(SKINM), 1405e8c9b(SKINM2), v900h (Proper name appears to be Mesh by RTTI.) 
-    CompiledBones           = 0xc201973c, // 1405e9223(CGF), v901h  Node info?
+    CompiledBones           = 0xc201973c, // 1405e9223(CGF), 0x900h and 0x901
     CompiledBones_Skin      = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h Bone size 44h
     DBA                     = 0xf7351608,
     ExportFlags             = 0xbe5e493e, // 1405e920f(CGF), 1405e8a67(CHR), 1405e9626(SKIN), v900h

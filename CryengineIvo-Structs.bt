@@ -38,16 +38,19 @@ struct CHUNKTABLE(int numberOfChunks) {
 };
 
 struct MESHINFO {
+    // This data structure changed between SC 3.22 and 3.24.  
     uint flags2;  // 4 = no normals datastream, 5 has normals datastream
     int numberOfVertices;
     int numberOfIndices;
     int numberOfSubmeshes;
     int unknown <format=hex>;
+    int unknown2 <format=hex>;
     VECTOR3 minBound <comment=PrintVector3>;
     VECTOR3 maxBound <comment=PrintVector3>;
-    VECTOR3 scalingMinBound <comment=PrintVector3>;
-    VECTOR3 scalingMaxBound <comment=PrintVector3>;
-    VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
+    // Chunk IDs of physical mesh data. (Must be ChunkType_MeshPhysicsData)
+    int physicsDataChunkId[4];
+    int unknown3;
+    float texMappingDensity;
 };
 
 struct MESHCHUNK {
@@ -169,22 +172,13 @@ struct BONE(int ver) {
         VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
     } else if (ver == 0x0901) {
         uint controllerId;
-        short unknown;
         short limbId;
         short numberOfChildren;
+        short parentIndex;
         short unknown2;
         short unknown3;
         short objectNodeIndex;
     };
-};
-
-struct BONEIDS_x901 {
-	uint controllerId;
-	uint uVal1; // I haven't a damn clue what this is, it may be a uint id, it may be some kind of referencing with two shorts. 
-	short uParentIndex;
-	short uVal3;
-	short numberOfVertices; // Seems to be two shorts that are always -1 in the files I've seen
-	short uBoneIndex; // Seems to be an indicator of location within a larger set of bones? Ordered by parent, then iterative by this value
 };
 
 struct NODENAME {
@@ -226,12 +220,7 @@ struct COMPILEDBONES(int version) {
         for (i = 0; i < numberOfBones; i++) {
             BONENAME boneName <comment=GetBoneName>;
         };
-        local int pos;
-        pos = FTell();
-        if (pos % 4 != 0) {
-            byte skip[4 - (pos % 4)] <hidden=false>;
-        };
-        SOMENODEINFO someBoneInfo[numberOfBones];
+        BONETRANSFORMS_x901 boneTransformData[numberOfBones];
     };
 };
 
