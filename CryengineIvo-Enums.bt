@@ -24,12 +24,12 @@ enum <uint> CHUNKTYPE {
     MaterialInfo            = 0x83353333, // 1405e8e75(CGF), 1405e9439(SKIN), v900h (Proper name appears to be MaterialInfo by 1405e8b3f)
     BShapes3                = 0x875ccb28,
     CompiledPhysicalBones   = 0x90c687dc,
-    MeshChunk320            = 0x92914444, // 1405e8e33(CGF), 1405e961a(SKIN), v900h (0x92914445 seems to be upper limit for CGF; Proper name appears to be MeshInfo by RTTI.)
-    MeshChunk               = 0x9293b9d8,
+    MeshInfo                = 0x92914444, // 1405e8e33(CGF), 1405e961a(SKIN), v900h (0x92914445 seems to be upper limit for CGF; Proper name appears to be MeshInfo by RTTI.)
+    MeshChunk               = 0x9293b9d8, // Older Ivo skin mesh chunks.
     SkinMesh                = 0xb875b2d9,
     SkinMesh2               = 0xb8757777, // 1405e986f(SKINM), 1405e8c9b(SKINM2), v900h (Proper name appears to be Mesh by RTTI.) 
-    NodeChunkDetails        = 0xc201973c, // 1405e9223(CGF), v901h  Node info?
-    CompiledBones           = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h (Despite what this would seem to suggest this is still be used for CHR files as a Skeleton?)
+    CompiledBones           = 0xc201973c, // 1405e9223(CGF), v901h  Node info?
+    CompiledBones_Skin      = 0xc2011111, // 1405e8a6f(CHR?), 1405e9632(SKIN), v900h Bone size 44h
     DBA                     = 0xf7351608,
     ExportFlags             = 0xbe5e493e, // 1405e920f(CGF), 1405e8a67(CHR), 1405e9626(SKIN), v900h
     U2_PhysicalHierarchy    = 0x90c62222, // 1405e8a4f(CGF?), 1405e9403(SKIN), v900h (0x90c62223 upper limit of skin files?)

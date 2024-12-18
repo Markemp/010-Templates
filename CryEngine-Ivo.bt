@@ -30,15 +30,16 @@ CHUNKTABLE chunkTable(headerInfo.numChunks);
 for (index = 0; index < headerInfo.numChunks; index++) {
     FSeek(chunkTable.tableEntry[index].offset);
     switch (chunkTable.tableEntry[index].chunkType) {
-        case MeshChunk320:
+        case MeshInfo: {
+            MESHINFO meshInfo <bgcolor=cPurple>;
+            break;
+        }
         case MeshChunk: {
             MESHCHUNK meshChunk <bgcolor=cPurple>;
             break;
         }
-        case NodeChunkDetails:
-            NODEDETAILSIVO nodeDetails <bgcolor=cDkPurple>;
-            break;
-        case CompiledBones: {
+        case CompiledBones:
+        case CompiledBones_Skin: {
             local int64 chunkSize = chunkTable.tableEntry[index+1].offset - chunkTable.tableEntry[index].offset;
             COMPILEDBONES compiledBones(chunkTable.tableEntry[index].version)  <bgcolor=cDkRed>;
             break;

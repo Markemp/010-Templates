@@ -37,7 +37,7 @@ struct CHUNKTABLE(int numberOfChunks) {
     };
 };
 
-struct MESHCHUNK {
+struct MESHINFO {
     uint flags2;  // 4 = no normals datastream, 5 has normals datastream
     int numberOfVertices;
     int numberOfIndices;
@@ -47,6 +47,17 @@ struct MESHCHUNK {
     VECTOR3 maxBound <comment=PrintVector3>;
     VECTOR3 scalingMinBound <comment=PrintVector3>;
     VECTOR3 scalingMaxBound <comment=PrintVector3>;
+    VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
+};
+
+struct MESHCHUNK {
+    uint flags2;  // 4 = no normals datastream, 5 has normals datastream
+    int numberOfVertices;
+    int numberOfIndices;
+    int numberOfSubmeshes;
+    int unknown <format=hex>;
+    VECTOR3 minBound <comment=PrintVector3>;
+    VECTOR3 maxBound <comment=PrintVector3>;
     VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
 };
 
@@ -147,14 +158,24 @@ struct BONETOWORLD {
     float row3[4];
 };
 
-struct BONE {
-    uint controllerId;
-    uint limbId;
-    int parentIndex;
-    QUATERNION relativeQuat <comment=PrintQuaternion>;
-    VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
-    QUATERNION worldQuat <comment=PrintQuaternion>;
-    VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
+struct BONE(int ver) {
+    if (ver == 0x0900) {
+        uint controllerId;
+        uint limbId;
+        int parentIndex;
+        QUATERNION relativeQuat <comment=PrintQuaternion>;
+        VECTOR3 relativeTransform <comment=PrintVector3>;     // relative x,y,z from parent
+        QUATERNION worldQuat <comment=PrintQuaternion>;
+        VECTOR3 worldTransform <comment=PrintVector3>;        // absolute x,y,z from origin
+    } else if (ver == 0x0901) {
+        uint controllerId;
+        short unknown;
+        short limbId;
+        short numberOfChildren;
+        short unknown2;
+        short unknown3;
+        short objectNodeIndex;
+    };
 };
 
 struct BONEIDS_x901 {
@@ -170,45 +191,11 @@ struct NODENAME {
     string nodeName;
 };
 
-struct NODEDETAIL {
-    uint controllerId; // ?
-    short unknown1;
-    short numberOfChildren;
-    short parentIndex;  // 0xffff if root
-    short unknown2;  // always 0xffff
-    short unknown3;  // always 0xffff
-    short objectNodeId; // points to mesh info identifier (like chunk id)
-};
-
 struct SOMENODEINFO { // 14 words
     int parentId, otherId;
     int someId;
     int someZeros, someMoreZeros;
     int data[9];
-};
-
-struct NODEDETAILSIVO {
-    local int i;
-    int numberOfNodes;
-    int stringTableSize;
-    int flags1;
-    int flags2;
-    for (i = 0; i < numberOfNodes; i++) {
-        NODEDETAIL nodeDetail;
-    };
-    for (i = 0; i < numberOfNodes; i++) {
-        NODENAME nodeName  <comment=PrintNodeName>;
-    };
-    local int pos;
-    pos = FTell();
-    if (pos % 4 != 0) {
-        byte skip[4 - (pos % 4)] <hidden=false>;
-    };
-    if (pos % 8 != 0) {
-        int skip2 <hidden=false>;
-    };
-    SOMENODEINFO someNodeInfo[numberOfNodes];
-    
 };
 
 struct BONETRANSFORMS_x901 {
@@ -219,19 +206,32 @@ struct BONETRANSFORMS_x901 {
 };
 
 struct COMPILEDBONES(int version) {
+    local int i;
     if (version == 0x0900) {
         int numberOfBones;
-        local int i;
         for (i = 0; i < numberOfBones; i++) {
-            BONE bone <comment=PrintBoneInfo>;
+            BONE bone(version) <comment=PrintBoneInfo>;
         };
         for (i = 0; i < numberOfBones; i++) {
             BONENAME boneName <comment=GetBoneName>;
         };
     } else if (version == 0x0901) {
         int numberOfBones;
-        local int i;
-        
+        int stringTableSize;
+        int flags1;
+        int flags2;
+        for (i = 0; i < numberOfBones; i++) {
+            BONE bone(version) <comment=PrintBoneInfo>;
+        };
+        for (i = 0; i < numberOfBones; i++) {
+            BONENAME boneName <comment=GetBoneName>;
+        };
+        local int pos;
+        pos = FTell();
+        if (pos % 4 != 0) {
+            byte skip[4 - (pos % 4)] <hidden=false>;
+        };
+        SOMENODEINFO someBoneInfo[numberOfBones];
     };
 };
 

@@ -108,7 +108,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
                 CONTROLLER_829 controller(fileType);
             } 
             else if (chunkTable.tableEntry[i].version == 0x0905) {
-                CONTROLLER_905 controller(fileTYpe);
+                CONTROLLER_905 controller(fileType);
             };
             break;
         };

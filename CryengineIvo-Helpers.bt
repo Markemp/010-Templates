@@ -48,7 +48,9 @@ string PrintNodeName(NODENAME &nodeName) {
 
 string PrintBoneInfo(BONE &bone) {
     string result;
-    SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
+    if (exists(bone.relativeTransform)) {    
+        SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f", bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z, bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
+    };
     return result;
 }
 
