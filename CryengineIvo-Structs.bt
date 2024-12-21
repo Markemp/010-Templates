@@ -311,14 +311,14 @@ struct NODEMESHCOMBO {
     } transforms;
 
     uint unkVal <format=hex>; // No idea
-    uint unknown;
+    uint unknown <format=hex>;
     ushort parentNodeId; // Parent id, 
     ushort unkShort <format=hex>; // appears to generally be 0x3?
     BBOX boundingBox <comment=PrintBBox>;
     uint unkVals[4];
     uint numVertices;
     ushort numChildren;
-    ushort flag <format=hex>;
+    ushort meshChunkId <format=hex>;
     // Everything past this point is currently unknown
     struct Unknown {
         ushort unkShort;
@@ -341,7 +341,7 @@ struct NODEMESHCOMBOCHUNK {
     uint unknown2;
     uint unknown3;
            
-    NODEMESHCOMBO nodeMeshCombo[numberOfNodes];
+    NODEMESHCOMBO nodeMeshCombo[numberOfNodes] <comment=PrintNodeMeshCombo>;
     
     ushort unknownIndices[unknown]; // No idea, but count matches unknown under numberOfMeshes (numberOfMeshes - 1)
     ushort materialIndices[numberOfMeshSubsets];

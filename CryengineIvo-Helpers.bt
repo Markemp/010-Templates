@@ -54,6 +54,13 @@ string PrintBoneInfo(BONE &bone) {
     return result;
 }
 
+string PrintNodeMeshCombo(NODEMESHCOMBO &node) {
+    string result;
+    SPrintf(result, "unkVal: %x, unknown: %x, parentNodeId: %x, unkShort: %x, meshChunkId: %x", node.unkVal, node.unknown[0], node.parentNodeId, node.unkShort, node.meshChunkId);
+
+    return result;
+};
+
 string PrintMatrix4x4(MATRIX4x4 &m) {
     string result;
     SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24, m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44);

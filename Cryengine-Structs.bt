@@ -199,7 +199,7 @@ struct BONENAMELIST {
 };
 
 struct PHYSICSGEOMETRY {
-    int physicGeom;
+    int physicGeom;  // pointer to the physics geometry
     int flags;
     VECTOR3 min <comment=PrintVector3>;
     VECTOR3 max <comment=PrintVector3>;
@@ -226,9 +226,9 @@ struct COMPILEDBONE(int chunkVersion) {
         int offsetChild;        // the beginning of the subarray of children is at this[m_nOffsetChildren]
                                 // this is 0 if there are no children
     } else if (chunkVersion == 0x0801) {
-        uint controllerId;
+        uint controllerId;      // Supposed to be crc32 of bone name, but have seen 0xffffffff for multiple bones
         uint mass;
-        char unknown[208];
+        PHYSICSGEOMETRY physicsGeo[2];
         char boneName[48];
         int offsetParent;
         uint numChildren;
