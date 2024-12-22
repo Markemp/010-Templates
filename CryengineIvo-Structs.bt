@@ -389,7 +389,7 @@ struct SKINMESH {
     uint flags;
     GEOMETRYMESHDETAILS geometryMeshDetails;
     char unknown2[92] <fgcolor=cAqua>;
-    IVOMESHSUBSET meshSubsets[geometryMeshDetails.numberOfSubmeshes] <comment=PrintMeshSubsetInfo>;
+    IVOMESHSUBSET meshSubsets[geometryMeshDetails.numberOfSubmeshes] <comment=PrintMeshSubsetInfo,bgcolor=cLtGreen>;
 
     while (!FEof()) {
         DatastreamType type <hidden=true,fgcolor=cRed>;
@@ -430,7 +430,7 @@ struct SKINMESH {
                 break;
             }
             case IvoTangentsCGF: {
-                TANGENTS tangents(geometryMeshDetails.numberOfVertices) <bgcolor=cLtBlue>;
+                TANGENTS tangents(geometryMeshDetails.numberOfVertices) <bgcolor=cLtYellow>;
                 break;
             }
             case IvoUnknown3: {

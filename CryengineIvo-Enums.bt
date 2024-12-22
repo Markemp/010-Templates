@@ -53,7 +53,7 @@ enum VERTEXFORMAT {
     eVF_Unknown,
 
     // Base stream
-    eVF_P3F_C4B_T2F,
+    eVF_P3F_C4B_T2F,        // 3 float for verts, 4 bytes for color, 2 floats for UV
     eVF_P3F_C4B_T2F_T2F,
     eVF_P3S_C4B_T2S,        
     eVF_P3S_C4B_T2S_T2S, // For UV2 support  
