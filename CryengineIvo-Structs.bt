@@ -86,36 +86,36 @@ struct IVOINDICES(int numberOfIndices) {
     AlignTo8ByteBoundary();
 };
 
-struct IVOVERTSUVS(int numberOfVertices) {
-    uint bytesPerElement;
-
-    struct VERTUV {
-        VECTOR3 vertex <comment=PrintVector3>;
-        COLOR color <comment=PrintColor>;
-        UVHALF uv <comment=PrintUVHalf>;
-    };
-    VERTUV vertUvs[numberOfVertices];
-    AlignTo8ByteBoundary();
+struct VERTUV {
+    VECTOR3 vertex <comment=PrintVector3>;
+    COLOR color <comment=PrintColor>;
+    UVHALF uv <comment=PrintUVHalf>;
 };
 
-struct IVOVERTSUVS_CGF(int numberOfVertices) {
-	uint bytesPerElement;
+struct IVOVERTUV {
+	VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
+    short skip;
+	COLOR color <comment=PrintColor>;
+	UVHALF uv <comment=PrintUVHalf>;
+};
 
-	struct IVOVERTUV {
-		VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
-        short skip;
-		COLOR color <comment=PrintColor>;
-		UVHALF uv <comment=PrintUVHalf>;
-	};
-
-	IVOVERTUV vertUvs[numberOfVertices];
-	AlignTo8ByteBoundary();
+struct IVOVERTSUVS(int numberOfVertices) {
+    uint bytesPerElement;
+    
+    if (bytesPerElement == 0x10) {
+        IVOVERTUV vertUvs[numberOfVertices];
+    }
+    else if (bytesPerElement == 0x14) {
+        VERTUV vertUvs[numberOfVertices];
+    };
+    
+    AlignTo8ByteBoundary();
 };
 
 struct IVOCOLORS(int numberOfVertices) {
     uint bytesPerElement;
     COLOR vertexColors[numberOfVertices] <comment=PrintColor>;
-    if (numberOfVertices % 2 == 1) uint filler;
+    AlignTo8ByteBoundary();
 };
 
 struct IVONORMAL {
@@ -399,7 +399,8 @@ struct SKINMESH {
             };
         };
         switch (type) {
-            case IvoVertsUvs: {
+            case IvoVertsUvs:
+            case IvoVertsUvsCGF: {
                 IVOVERTSUVS vertsUvs(geometryMeshDetails.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
@@ -426,10 +427,6 @@ struct SKINMESH {
             case IvoBoneMap:
             case IvoBoneMap32: {
                 BONEMAPDATA bonemap(geometryMeshDetails.numberOfVertices) <bgcolor=cLtGreen>;
-                break;
-            }
-            case IvoVertsUvsCGF: {
-                IVOVERTSUVS_CGF vertsUvs(geometryMeshDetails.numberOfVertices) <bgcolor=cDkBlue>;
                 break;
             }
             case IvoTangentsCGF: {
