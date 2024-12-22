@@ -37,6 +37,11 @@ struct CHUNKTABLE(int numberOfChunks) {
     };
 };
 
+struct BBOX {
+    VECTOR3 min <comment=PrintVector3>;
+    VECTOR3 max <comment=PrintVector3>;  
+};
+
 struct MESHINFO {
     // This data structure changed between SC 3.22 and 3.24.  
     uint flags2;  // 4 = no normals datastream, 5 has normals datastream
@@ -64,17 +69,21 @@ struct MESHCHUNK {
     VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
 };
 
+struct GEOMETRYMESHDETAILS {
+    uint flags2;  // 4 = no normals datastream, 5 has normals datastream
+    int numberOfVertices;
+    int numberOfIndices;
+    int numberOfSubmeshes;
+    int unknown <format=hex>;
+    BBOX boundingBox <comment=PrintBBox>;
+    BBOX unknownVectors <comment=PrintBBox>;
+    VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
+};
+
 struct IVOINDICES(int numberOfIndices) {
     uint bytesPerElement;
     ushort indices[numberOfIndices];
-    if (numberOfIndices % 2 == 1) {
-        ushort filler;
-    } else {
-        uint filler <hidden=true>;
-        if (filler != 0) {
-            FSeek(FTell() - 4);
-        }
-    }
+    AlignTo8ByteBoundary();
 };
 
 struct IVOVERTSUVS(int numberOfVertices) {
@@ -86,7 +95,7 @@ struct IVOVERTSUVS(int numberOfVertices) {
         UVHALF uv <comment=PrintUVHalf>;
     };
     VERTUV vertUvs[numberOfVertices];
-    if (numberOfVertices % 2 == 1) uint filler;
+    AlignTo8ByteBoundary();
 };
 
 struct IVOVERTSUVS_CGF(int numberOfVertices) {
@@ -100,7 +109,7 @@ struct IVOVERTSUVS_CGF(int numberOfVertices) {
 	};
 
 	IVOVERTUV vertUvs[numberOfVertices];
-	if (numberOfVertices % 2 == 1) uint filler;
+	AlignTo8ByteBoundary();
 };
 
 struct IVOCOLORS(int numberOfVertices) {
@@ -119,7 +128,7 @@ struct IVONORMAL {
 struct IVONORMALS(int numberOfVertices) {
     uint bytesPerElement;
     IVONORMAL normals[numberOfVertices] <comment=PrintNormal>;
-    if (numberOfVertices % 2 == 1) uint filler;
+    AlignTo8ByteBoundary();
 };
 
 struct TANGENTBITANGENT_IVO {
@@ -130,7 +139,7 @@ struct TANGENTBITANGENT_IVO {
 struct TANGENTS(int numberOfVertices) {
     uint bytesPerElement;
     TANGENTBITANGENT_IVO tangents[numberOfVertices];
-    if (numberOfVertices % 2 == 1) uint filler;
+    AlignTo8ByteBoundary();
 };
 
 struct IVOMESHSUBSET {
@@ -273,10 +282,6 @@ struct STATOBJ_PHYSICS_x900 {
     PHYS_VECS end_vec[end_iter*2];
 };
 
-struct BBOX {
-    VECTOR3 min <comment=PrintVector3>;
-    VECTOR3 max <comment=PrintVector3>;  
-};
 
 struct UNKNOWN_4BYTE {
     byte x;
@@ -303,6 +308,29 @@ struct IVOUNK3(int numberOfVertices) {
     }
 };
 
+struct BONEMAP(int bytesPerElement) {
+    if (bytesPerElement == 8) {
+        byte boneIndex[4];
+        byte weight[4];
+    }
+    else if (bytesPerElement == 12) {
+        ushort boneIndex[4];
+        byte weight[4];
+    }
+    else if (bytesPerElement == 24) {
+        uint boneIndex[4];
+        short weight[4];
+    };
+};
+
+struct BONEMAPDATA(int numberOfVertices) {
+    local uint pos;
+    pos = FTell();
+    uint bytesPerElement;
+    BONEMAP boneMap(bytesPerElement)[numberOfVertices];
+    AlignTo8ByteBoundary();
+};
+
 struct NODEMESHCOMBO {
     struct IVOTRANSFORMS {
         MATRIX3x4 transMatGlobal <comment=PrintMat3x4Trans>;
@@ -310,10 +338,10 @@ struct NODEMESHCOMBO {
         VECTOR3 scaleComponent <comment=PrintVector3>; // Appears the be the same values previously in the helper chunk "pos" vector, but divided by 100? Clearly not a pos vector besides that.
     } transforms;
 
-    uint unkVal <format=hex>; // No idea
+    uint id <format=hex>;
     uint unknown <format=hex>;
-    ushort parentNodeId; // Parent id, 
-    ushort unkShort <format=hex>; // appears to generally be 0x3?
+    ushort parentNodeIndex; // Parent index
+    ushort geometryFlag <format=hex>; // 0x0 has geometry.  Also type 0x2 and 0x3.
     BBOX boundingBox <comment=PrintBBox>;
     uint unkVals[4];
     uint numVertices;
@@ -359,60 +387,57 @@ struct NODEMESHCOMBOCHUNK {
 
 struct SKINMESH {
     uint flags;
-    MESHCHUNK meshChunk;
+    GEOMETRYMESHDETAILS geometryMeshDetails;
     char unknown2[92] <fgcolor=cAqua>;
-    IVOMESHSUBSET meshSubsets[meshChunk.numberOfSubmeshes] <comment=PrintMeshSubsetInfo>;
+    IVOMESHSUBSET meshSubsets[geometryMeshDetails.numberOfSubmeshes] <comment=PrintMeshSubsetInfo>;
 
     while (!FEof()) {
-        DatastreamType type <hidden=true>;
+        DatastreamType type <hidden=true,fgcolor=cRed>;
         while (!isInEnum(type)) {
             if (!FEof()) {
-                DatastreamType type <hidden=true>;
+                DatastreamType type <hidden=false>;
             };
         };
         switch (type) {
             case IvoVertsUvs: {
-                IVOVERTSUVS vertsUvs(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                IVOVERTSUVS vertsUvs(geometryMeshDetails.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
             case IvoIndices: {
-                IVOINDICES indices(meshChunk.numberOfIndices) <bgcolor=cDkBlue>;
+                IVOINDICES indices(geometryMeshDetails.numberOfIndices) <bgcolor=cDkBlue>;
                 break;
             }
             case IvoNormals: {
-                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                IVONORMALS normals(geometryMeshDetails.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
             case IvoNormals2: {
-                IVONORMALS normals(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                IVONORMALS normals(geometryMeshDetails.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }    
             case IvoColors2: {
-                IVOCOLORS colors2(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                IVOCOLORS colors2(geometryMeshDetails.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
             case IvoTangents: {
-                TANGENTS tangents(meshChunk.numberOfVertices) <bgcolor=cDkBlue>;
+                TANGENTS tangents(geometryMeshDetails.numberOfVertices) <bgcolor=cDkBlue>;
                 break;
             }
-            case IvoBoneMap: {
-                //BONEMAP bonemap(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
-                break;
-            }
+            case IvoBoneMap:
             case IvoBoneMap32: {
-                //BONEMAP32 bonemap(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                BONEMAPDATA bonemap(geometryMeshDetails.numberOfVertices) <bgcolor=cLtGreen>;
                 break;
             }
             case IvoVertsUvsCGF: {
-                IVOVERTSUVS_CGF vertsUvs(meshChunk.numberOfVertices) <bgcolor=cDkBlue>;
+                IVOVERTSUVS_CGF vertsUvs(geometryMeshDetails.numberOfVertices) <bgcolor=cDkBlue>;
                 break;
             }
             case IvoTangentsCGF: {
-                TANGENTS tangents(meshChunk.numberOfVertices) <bgcolor=cLtBlue>;
+                TANGENTS tangents(geometryMeshDetails.numberOfVertices) <bgcolor=cLtBlue>;
                 break;
             }
             case IvoUnknown3: {
-                IVOUNK3 unk(meshChunk.numberOfVertices) <bgcolor=cBlue>;
+                IVOUNK3 unk(geometryMeshDetails.numberOfVertices) <bgcolor=cBlue>;
                 break;
             }
         }

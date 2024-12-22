@@ -16,6 +16,15 @@
 
 #include "CryengineIvo-Structs.bt"
 
+void AlignTo8ByteBoundary() {
+    local uint pos = FTell();
+    local uint mod = pos % 8;
+    if (pos % 8 != 0) {
+        local uint padding = 8 - mod;
+        ubyte filler[padding] <hidden=true,fgcolor=cDkGray>;
+    }
+};
+
 string GetB2W(BONETOWORLD &b2w) {
     string result;
     SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]", b2w.row1[0], b2w.row1[1], b2w.row1[2], b2w.row1[3], b2w.row2[0],b2w.row2[1],b2w.row2[2], b2w.row2[3], b2w.row3[0],b2w.row3[1],b2w.row3[2], b2w.row3[3]);
@@ -56,7 +65,7 @@ string PrintBoneInfo(BONE &bone) {
 
 string PrintNodeMeshCombo(NODEMESHCOMBO &node) {
     string result;
-    SPrintf(result, "unkVal: %x, unknown: %x, parentNodeId: %x, unkShort: %x, meshChunkId: %x", node.unkVal, node.unknown[0], node.parentNodeId, node.unkShort, node.meshChunkId);
+    SPrintf(result, "id: %x, unknown: %x, parentindex: %d, geometryFlag: %x, meshChunkId: %x", node.id, node.unknown[0], node.parentNodeIndex, node.geometryFlag, node.meshChunkId);
 
     return result;
 };
