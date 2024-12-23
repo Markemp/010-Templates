@@ -50,7 +50,7 @@ for (index = 0; index < headerInfo.numChunks; index++) {
         }
         case SkinMesh2:
         case SkinMesh: {
-            SKINMESH skinMesh;
+            SKINMESH skinMesh(chunkTable.tableEntry[index].chunkType);
             break;
         }
         case MaterialInfo:

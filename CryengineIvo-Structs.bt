@@ -142,18 +142,23 @@ struct TANGENTS(int numberOfVertices) {
     AlignTo8ByteBoundary();
 };
 
-struct IVOMESHSUBSET {
+struct IVOMESHSUBSET(CHUNKTYPE chunkType) {
     ushort matId;
     ushort meshParent;
     uint firstIndex;
     uint numIndices;
     uint firstVertex;
-    uint unknown;
+    if (chunkType == SkinMesh2) {
+        uint unknown;
+    };
     uint numVertices;
     VECTOR3 center <comment=PrintVector3>;
     int unknown0 <format=hex>;
     int unknown1 <format=hex>;
     int unknown2 <format=hex>;
+    if (chunkType == SkinMesh) {
+        uint unknown;
+    };
 };
 
 struct BONENAME {
@@ -385,11 +390,11 @@ struct NODEMESHCOMBOCHUNK {
     };
 };
 
-struct SKINMESH {
+struct SKINMESH(CHUNKTYPE chunkType) {
     uint flags;
     GEOMETRYMESHDETAILS geometryMeshDetails;
     char unknown2[92] <fgcolor=cAqua>;
-    IVOMESHSUBSET meshSubsets[geometryMeshDetails.numberOfSubmeshes] <comment=PrintMeshSubsetInfo,bgcolor=cLtGreen>;
+    IVOMESHSUBSET meshSubsets(chunkType)[geometryMeshDetails.numberOfSubmeshes] <comment=PrintMeshSubsetInfo,bgcolor=cLtGreen>;
 
     while (!FEof()) {
         DatastreamType type <hidden=true,fgcolor=cRed>;
