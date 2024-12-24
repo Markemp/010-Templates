@@ -144,7 +144,7 @@ struct TANGENTS(int numberOfVertices) {
 
 struct IVOMESHSUBSET(CHUNKTYPE chunkType) {
     ushort matId;
-    ushort meshParent;
+    ushort meshParent;  // index of the node chunk with the geometry info
     uint firstIndex;
     uint numIndices;
     uint firstVertex;
