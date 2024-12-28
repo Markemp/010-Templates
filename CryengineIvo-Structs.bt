@@ -93,7 +93,7 @@ struct VERTUV {
 };
 
 struct IVOVERTUV {
-	VECTOR3CRYHALF vertices <comment=PrintVector3CryHalf>;
+	VECTOR3SNORM vertices <comment=PrintVector3SNorm>;
     short skip;
 	COLOR color <comment=PrintColor>;
 	UVHALF uv <comment=PrintUVHalf>;
@@ -127,18 +127,24 @@ struct IVONORMAL {
 
 struct IVONORMALS(int numberOfVertices) {
     uint bytesPerElement;
-    IVONORMAL normals[numberOfVertices] <comment=PrintNormal>;
+    if (bytesPerElement == 4) {
+        CRYNORMAL normal[numberOfVertices] <comment=PrintCryNormal>;
+        
+    };
+    // IVONORMAL normals[numberOfVertices] <comment=PrintNormal>;
     AlignTo8ByteBoundary();
-};
-
-struct TANGENTBITANGENT_IVO {
-    VECTOR4BNORM tangents <comment=PrintVector4BNorm>;
-    VECTOR4BNORM bitangents <comment=PrintVector4BNorm>;
 };
 
 struct TANGENTS(int numberOfVertices) {
     uint bytesPerElement;
-    TANGENTBITANGENT_IVO tangents[numberOfVertices];
+    if (bytesPerElement == 8) {
+        VECTOR4SNORM qTangents[numberOfVertices] <comment=PrintVector4SNorm>;
+    }
+    else if (bytePerElement == 16) {
+        VECTOR4SNORM tangents[numberOfVertices] <comment=PrintVector4SNorm>;
+        VECTOR4SNORM bitangents[numberOfVertices] <comment=PrintVector4SNorm>;
+    };
+    
     AlignTo8ByteBoundary();
 };
 
@@ -152,8 +158,8 @@ struct IVOMESHSUBSET(CHUNKTYPE chunkType) {
         uint unknown;
     };
     uint numVertices;
+    float radius;
     VECTOR3 center <comment=PrintVector3>;
-    int unknown0 <format=hex>;
     int unknown1 <format=hex>;
     int unknown2 <format=hex>;
     if (chunkType == SkinMesh) {
@@ -303,14 +309,7 @@ struct UNKNOWN_2BYTE {
 struct IVOUNK3(int numberOfVertices) {
     uint bytesPerElement;
     UNKNOWN_2BYTE unk[numberOfVertices];
-    if (numberOfVertices % 2 == 1) {
-        ushort filler;
-    } else {
-        uint filler;
-        if (filler != 0) {
-            FSeek(FTell() - 4);
-        }
-    }
+    AlignTo8ByteBoundary();
 };
 
 struct BONEMAP(int bytesPerElement) {
@@ -434,6 +433,7 @@ struct SKINMESH(CHUNKTYPE chunkType) {
                 BONEMAPDATA bonemap(geometryMeshDetails.numberOfVertices) <bgcolor=cLtGreen>;
                 break;
             }
+            case IvoTangents:
             case IvoTangentsCGF: {
                 TANGENTS tangents(geometryMeshDetails.numberOfVertices) <bgcolor=cLtYellow>;
                 break;

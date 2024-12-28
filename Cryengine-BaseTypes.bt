@@ -13,6 +13,10 @@
 #ifndef BASETYPES_H
 #define BASETYPES_H
 
+typedef short snorm <read=Read_SNORM>;
+typedef ushort unorm <read=Read_UNORM>;
+typedef byte bnorm <read=Read_BNORM>;
+
 struct VECTOR3 {
     float x;
     float y;
@@ -44,10 +48,6 @@ struct VECTOR4SHORT {
     hfloat z;
     hfloat w;
 };
-
-typedef short snorm <read=Read_SNORM>;
-typedef ushort unorm <read=Read_UNORM>;
-typedef byte bnorm <read=Read_BNORM>;
 
 string Read_SNORM(short s) {
     string t;
@@ -127,6 +127,12 @@ struct CRYHALF {
 struct CRYNORMAL {
     short x;
     short y;
+};
+
+string PrintCryNormal(CRYNORMAL &vertex) {
+    string result;
+    SPrintf(result, "%f, %f", vertex.x / 32767.0, vertex.y / 32767.0);
+    return result;
 };
 
 struct MATRIX3x4 {

@@ -315,8 +315,9 @@ struct HELPER(FILETYPE fileType) {
     VECTOR3 Pos <comment=PrintVector3>;
 };
 
-struct MTLNAME(FILETYPE fileVersion) {
-    if (fileVersion == CRYENGINE_3_4) {
+struct MTLNAME(FILETYPE fileVersion, CHUNKTABLEENTRY &entry) {
+    //if (fileVersion == CRYENGINE_3_4) {
+    if (entry.version == 0x0800) {
         CHUNKHEADER chunkHeader(fileVersion);
         if (chunkHeader.version == 0x80000800) { BigEndian(); };
         MtlNameTypeEnum mtlType;
@@ -330,10 +331,18 @@ struct MTLNAME(FILETYPE fileVersion) {
         int reserved[32];
         if (chunkHeader.version == 0x80000800) { LittleEndian(); };
     }
-    else if (fileVersion == CRYENGINE_3_8) {
+    else if (entry.version == 0x0802) {
         char Name[128];
         int NumberOfSubmaterials;
         MtlNamePhysicsType SubMaterialChunkID[NumberOfSubmaterials];
+    }
+    else if (entry.version == 0x0804) {
+        char assetId[38];
+        char skip[26];
+        byte count;
+        char skip2[3];
+        char skip3[4*count];
+        string Name;
     };
 };
 
@@ -506,7 +515,7 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
         DATASTREAMTYPE datastreamType;
         uint numberOfElements;
         ushort bytesPerElement;
-        ushort unknown;
+        ushort starcitizenFlag;  // 0x0101 if it's using CryHalfs or DymekHalfs
         
         switch (datastreamType) {
             case VERTICES: {

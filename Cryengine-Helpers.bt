@@ -66,6 +66,12 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+//string PrintCryNormal(CRYNORMAL &vertex) {
+//    string result;
+//    SPrintf(result, "%f, %f", vertex.x / 32767.0, vertex.y / 32767.0);
+//    return result;
+//};
+
 string PrintTangentBitangent(TANGENTBITANGENT &d) {
     string result;
     SPrintf(result, "Tangent: x: %f, y: %f, z: %f, w: %f, Bitangent: x: %f, y: %f, z: %f, w: %f", 
@@ -80,13 +86,13 @@ string PrintMeshSubset(MESHSUBSET &meshSubset) {
     return result;
 };
 
-string PrintCryNormal(CRYNORMAL &normal) {
-    string result;
-    local float r = CryHalfToFloat(normal.x);
-    local float s = CryHalfToFloat(normal.y);
-    SPrintf(result, "x: %d, y: %d, z: ??", r, s);
-    return result;
-};
+//string PrintCryNormal(CRYNORMAL &normal) {
+//    string result;
+//    local float r = CryHalfToFloat(normal.x);
+//    local float s = CryHalfToFloat(normal.y);
+//    SPrintf(result, "x: %d, y: %d, z: ??", r, s);
+//    return result;
+//};
 
 string PrintCryHalf(CRYHALF &half) {
     string result;

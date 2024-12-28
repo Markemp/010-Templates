@@ -71,7 +71,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case MtlName_us: 
         case MtlName_ui: {
-            MTLNAME mtlName(fileType) <comment=GetMaterialName, bgcolor=cDkGreen>;
+            MTLNAME mtlName(fileType, chunkTable.tableEntry[i]) <comment=GetMaterialName, bgcolor=cDkGreen>;
             break;
         }
         case Node_us: 
@@ -91,7 +91,7 @@ for (i = 0; i < headerInfo.numChunks; i++) {
         }
         case DataStream_us: 
         case DataStream_ui: {
-            DATASTREAMCHUNK chunkDatastream(fileType) <comment=PrintDatastreamType>;
+            DATASTREAMCHUNK chunkDatastream(fileType) <bgcolor=cSilver,comment=PrintDatastreamType>;
             break;
         }
         case CompiledExt2IntMap_ui: {
