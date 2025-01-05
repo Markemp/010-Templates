@@ -198,6 +198,11 @@ struct UVHALF {
     hfloat v;
 };
 
+struct UVCRYHALF {
+    ushort u;
+    ushort v;
+};
+
 struct QTANGENT {
     short x;
     short y;

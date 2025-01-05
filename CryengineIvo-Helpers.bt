@@ -170,6 +170,12 @@ string PrintMeshSubsetInfo(IVOMESHSUBSET &meshSubset) {
     return result;
 };
 
+string PrintIvoVertUv(IVOVERTUV &obj) {
+    string result;
+    SPrintf(result, "%f, %f, %f, UV %f, %f", obj.vertices.x / 32767.0, obj.vertices.y / 32767.0, obj.vertices.z / 32767.0, obj.uv.u, obj.uv.v);
+    return result;
+};
+
 string PrintColor(COLOR &color) {
     string result;
     SPrintf(result, "%d, %d, %d, %d", color.red, color.blue, color.green, color.alpha);
@@ -179,6 +185,12 @@ string PrintColor(COLOR &color) {
 string PrintUVHalf(UVHALF &uv) {
     string result;
     SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+};
+
+string PrintUVCryHalf(UVCRYHALF &uv) {
+    string result;
+    SPrintf(result, "%f, %f", CryHalfToFloat(uv.u), CryHalfToFloat(uv.v));
     return result;
 };
 

@@ -103,7 +103,7 @@ struct IVOVERTSUVS(int numberOfVertices) {
     uint bytesPerElement;
     
     if (bytesPerElement == 0x10) {
-        IVOVERTUV vertUvs[numberOfVertices];
+        IVOVERTUV vertUvs[numberOfVertices] <comment=PrintIvoVertUv>;
     }
     else if (bytesPerElement == 0x14) {
         VERTUV vertUvs[numberOfVertices];
