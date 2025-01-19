@@ -86,14 +86,6 @@ string PrintMeshSubset(MESHSUBSET &meshSubset) {
     return result;
 };
 
-//string PrintCryNormal(CRYNORMAL &normal) {
-//    string result;
-//    local float r = CryHalfToFloat(normal.x);
-//    local float s = CryHalfToFloat(normal.y);
-//    SPrintf(result, "x: %d, y: %d, z: ??", r, s);
-//    return result;
-//};
-
 string PrintCryHalf(CRYHALF &half) {
     string result;
     SPrintf(result, "x: %d, y: %d, z: ??", half.x, half.y);

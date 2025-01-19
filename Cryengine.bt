@@ -141,5 +141,10 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             UNKNOWN21 unknown21(chunkTable.tableEntry[i].size) <bgcolor=cDkGreen>;
             break;
         } 
+        case MeshPhysicsData_ui:
+        case MeshPhysicsData_us: {
+            MESHPHYSICS meshPhysics(fileType) <bgcolor=cLtGreen>;
+            break;
+        }
     }
 };

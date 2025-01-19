@@ -103,7 +103,7 @@ enum <ushort> CHUNKTYPE_US {
         ExportFlags_us                      = 0x1015, // Describes export information.
         DataStream_us                       = 0x1016, // A data Stream
         MeshSubsets_us                      = 0x1017, // Describes an array of mesh subsets
-        MeshPhysicalData_us                 = 0x1018, // Physicalized mesh data
+        MeshPhysicsData_us                  = 0x1018, // Physicalized mesh data
         CompiledBones_us                    = 0x2000, 
         CompiledPhysicalBones_us            = 0x2001,
         CompiledMorphtargets_us             = 0x2002,
@@ -194,6 +194,15 @@ enum NodeType {
     NODE_MESH,
     NODE_LIGHT,
     NODE_HELPER
+};
+
+enum <uint> HELPERTYPES 
+{
+    POINT,
+    DUMMY,
+    XREF,
+    CAMERA,
+    GEOMETRY
 };
 
 enum VERTEXFORMAT {

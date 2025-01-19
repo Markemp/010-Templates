@@ -198,6 +198,14 @@ struct BONENAMELIST {
     string boneName;
 };
 
+struct MESHPHYSICS(FILETYPE fileVersion) {
+    CHUNKHEADER chunkHeader(fileVersion);
+    uint ChunkID;
+    uint numPoints;
+    uint numIndices;
+    uint numMaterials;
+};
+
 struct PHYSICSGEOMETRY {
     int physicGeom;  // pointer to the physics geometry
     int flags;
@@ -311,8 +319,8 @@ struct CRYLINK {
 
 struct HELPER(FILETYPE fileType) {
     CHUNKHEADER chunkHeader(fileType);
-    uint type;  // Type of helper. 0=point,1=Dummy
-    VECTOR3 Pos <comment=PrintVector3>;
+    HELPERTYPES type;  // Type of helper. 0=point,1=Dummy
+    VECTOR3 Size <comment=PrintVector3>;  // size for dummy only
 };
 
 struct MTLNAME(FILETYPE fileVersion, CHUNKTABLEENTRY &entry) {
