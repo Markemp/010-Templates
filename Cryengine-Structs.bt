@@ -176,15 +176,15 @@ struct VERTSUV(int bytesPerElement) {
 struct BONEMAPDATA(int bytesPerElement) {
     if (bytesPerElement == 8) {
         byte boneIndex[4];
-        byte weight[4];
+        ubyte weight[4];
     }
     else if (bytesPerElement == 12) {
         ushort boneIndex[4];
-        byte weight[4];
+        ubyte weight[4];
     }
     else if (bytesPerElement == 24) {
         uint boneIndex[4];
-        short weight[4];
+        ushort weight[4];
     };
 };
 
@@ -278,9 +278,19 @@ struct INTSKINVERTEX {
     VECTOR3 obsolete;
     VECTOR3 position;
     VECTOR3 obsolete2;
-    uint16 boneIDs[4];
-    float weights[4];
+    BONEMAPDATA boneMapData(12)  <comment=PrintBoneMapData>;
     COLORB color;
+};
+
+struct COMPILEDINTSKINVERTICES(int numberOfVertices, FILETYPE fileType) {
+    CHUNKHEADER headerInfo(fileType);
+    char skipBytes[32];   // Skip
+    INTSKINVERTEX intSkinVertex[numberOfVertices];
+};
+
+struct COMPILEDEXT2INTMAP(FILETYPE fileType) {
+    CHUNKHEADER headerInfo(fileType);
+    uint16 source[10];
 };
 
 struct UNKNOWN21(int size) {
@@ -347,10 +357,12 @@ struct MTLNAME(FILETYPE fileVersion, CHUNKTABLEENTRY &entry) {
     else if (entry.version == 0x0804) {
         char assetId[38];
         char skip[26];
-        byte count;
-        char skip2[3];
-        char skip3[4*count];
-        string Name;
+        uint numberOfMaterials;
+        int skip3[numberOfMaterials];
+        local uint i;
+        for (i = 0; i < numberOfMaterials; i++) {
+            string matNames;
+        }
     };
 };
 
@@ -626,6 +638,10 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
                         TANGENTBITANGENT tangent[numberOfElements] <comment=PrintTangentBitangent>;
                         break;   
                     }
+                    case BONEMAPS: {
+                        BONEMAPDATA boneMap(bytesPerElement)[numberOfElements] <comment=PrintBoneMapData>;
+                        break;
+                    }
                     default: {
                         break;
                     }
@@ -671,6 +687,10 @@ struct DATASTREAMCHUNK(FILETYPE fileType) {
                     case TANGENTS: {
                         TANGENTBITANGENT tangent[numberOfElements] <comment=PrintTangentBitangent>;
                         break;   
+                    }
+                    case BONEMAPS: {
+                        BONEMAPDATA boneMap(bytesPerElement)[numberOfElements] <comment=PrintBoneMapData>;
+                        break;
                     }
                     default: {
                         break;

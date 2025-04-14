@@ -94,7 +94,7 @@ string PrintCryHalf(CRYHALF &half) {
 
 string PrintBoneMapData(BONEMAPDATA &data) {
     string result;
-    SPrintF(result, "Bone Index: [%d, %d, %d, %d], Weight: [%f, %f, %f, %f]", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3], data.weight[0], data.weight[1], data.weight[2], data.weight[3]);
+    SPrintf(result, "Bone Index: [%d, %d, %d, %d], Weight: [%f, %f, %f, %f]", data.boneIndex[0], data.boneIndex[1], data.boneIndex[2], data.boneIndex[3], data.weight[0], data.weight[1], data.weight[2], data.weight[3]);
     return result;
 };
 

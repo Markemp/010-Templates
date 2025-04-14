@@ -76,7 +76,7 @@ struct GEOMETRYMESHDETAILS {
     int numberOfSubmeshes;
     int unknown <format=hex>;
     BBOX boundingBox <comment=PrintBBox>;
-    BBOX unknownVectors <comment=PrintBBox>;
+    BBOX scalingVectors <comment=PrintBBox>;
     VERTEXFORMAT vertexFormat; // 0x2 for eVF_P3F_C4B_T2H, 0x4 for eVF_P3S_C4B_T2H
 };
 
