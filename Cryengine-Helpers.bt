@@ -157,6 +157,20 @@ string PrintColor(IRGBA &color) {
     return result;
 };
 
+string PrintColorB(COLORB &color) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0);
+    return result;
+};
+
+string PrintIntSkinVertex(INTSKINVERTEX &vert) {
+    string result;
+    SPrintf(result, "Bone indes: [%d, %d, %d, %d], Weight: [%f, %f, %f, %f]", 
+        vert.boneMapData.boneIndex[0], vert.boneMapData.boneIndex[1], vert.boneMapData.boneIndex[2], vert.boneMapData.boneIndex[3],
+        vert.boneMapData.weight[0], vert.boneMapData.weight[1], vert.boneMapData.weight[2], vert.boneMapData.weight[3]);
+    return result;
+};
+
 string PrintSourceInfo(SOURCEINFO &info) {
     string result;
     SPrintf(result, "%s", info.sourceFile);

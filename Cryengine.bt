@@ -94,10 +94,12 @@ for (i = 0; i < headerInfo.numChunks; i++) {
             DATASTREAMCHUNK chunkDatastream(fileType) <bgcolor=cSilver,comment=PrintDatastreamType>;
             break;
         }
+        case CompiledIntSkinVertices_us:
         case CompiledIntSkinVertices_ui: {
             COMPILEDINTSKINVERTICES compiledIntSkinVertices(10, fileType);
             break;
         }
+        case CompiledExt2IntMap_us:
         case CompiledExt2IntMap_ui: {
             COMPILEDEXT2INTMAP compiledExt2IntMap(fileType);
             break;

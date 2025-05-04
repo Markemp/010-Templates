@@ -217,11 +217,18 @@ struct COLOR {
     ubyte alpha;
 };
 
-struct COLORB {
-    float red;
-    float green;
-    float blue;
-    int flag;
+struct COLORB(int numberOfBytes) {
+    if (numberOfBytes == 4) {
+        ubyte red;
+        ubyte green;
+        ubyte blue;
+        ubyte alpha;
+    } else {
+        float red;
+        float green;
+        float blue;
+        int flag;
+    }
 };
 
 struct TANGENT_BYTE {
