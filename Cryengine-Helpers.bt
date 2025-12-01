@@ -217,4 +217,56 @@ uint SetDefaultVersion() {
     return 0x0800;
 };
 
+// Helper functions for sizes
+int GetRotationSize(ubyte format) {
+  switch (format) {
+      case eNoCompress:
+      case eNoCompressQuat:
+          return 16;  // 4 floats (w,x,y,z)
+      case eSmallTree48BitQuat:
+          return 6;
+      case eSmallTree64BitQuat:
+      case eSmallTree64BitExtQuat:
+          return 8;
+      default:
+          return 16;
+  }
+}
+
+int GetPositionSize(ubyte format) {
+  switch (format) {
+      case eNoCompress:
+      case eNoCompressVec3:
+          return 12;  // 3 floats (x,y,z)
+      default:
+          return 12;
+  }
+}
+
+int GetTimeKeySize(ubyte format) {
+  switch (format) {
+      case eF32:
+      case eF32StartStop:
+          return 4;
+      case eUINT16:
+      case eUINT16StartStop:
+      case eBitset:
+          return 2;
+      case eByte:
+      case eByteStartStop:
+          return 1;
+      default:
+          return 4;
+  }
+}
+
+// Align to 4-byte boundary
+void AlignTo4() {
+  local int pos = FTell();
+  local int padding = (4 - (pos % 4)) % 4;
+  if (padding > 0) {
+      FSkip(padding);
+  }
+}
+
 #endif

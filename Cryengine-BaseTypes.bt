@@ -238,4 +238,33 @@ struct TANGENT_BYTE {
     byte w;
 };
 
+// Quaternion structures for different compression formats
+struct NoCompressQuat {
+  float w;
+  float x;
+  float y;
+  float z;
+};
+
+struct SmallTree48BitQuat {
+  ubyte data[6];
+};
+
+struct SmallTree64BitQuat {
+  ubyte data[8];
+};
+
+// Time key structures
+struct F32KeyTime {
+  float time;
+};
+
+struct UINT16KeyTime {
+  uint16 time;
+};
+
+struct ByteKeyTime {
+  ubyte time;
+};
+
 #endif

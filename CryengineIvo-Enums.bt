@@ -20,6 +20,7 @@ enum <uint> CHUNKTYPE {
     Skeleton                = 0x1bbc4103,
     BShapes                 = 0xf5c6eb5b,
     BShapesGPU              = 0x57a3befd,
+    Turret_Unk              = 0x69655cd8,
     MaterialName            = 0x8335674e,
     MaterialInfo            = 0x83353333, // 1405e8e75(CGF), 1405e9439(SKIN), v900h (Proper name appears to be MaterialInfo by 1405e8b3f)
     BShapes3                = 0x875ccb28,

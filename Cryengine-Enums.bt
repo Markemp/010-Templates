@@ -243,4 +243,29 @@ enum VERTEXFORMAT {
     // There are more 
 };
 
+enum <ubyte> ECompressionFormat {
+  eNoCompress = 0,
+  eNoCompressQuat = 1,
+  eNoCompressVec3 = 2,
+  eShotInt3Quat = 3,
+  eSmallTreeDWORDQuat = 4,
+  eSmallTree48BitQuat = 5,
+  eSmallTree64BitQuat = 6,
+  ePolarQuat = 7,
+  eSmallTree64BitExtQuat = 8,
+  eAutomaticQuat = 9
+};
+
+enum <ubyte> EKeyTimesFormat {
+  eF32 = 0,
+  eUINT16 = 1,
+  eByte = 2,
+  eF32StartStop = 3,
+  eUINT16StartStop = 4,
+  eByteStartStop = 5,
+  eBitset = 6
+};
+
+
+
 #endif

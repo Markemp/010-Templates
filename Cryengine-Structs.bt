@@ -75,20 +75,140 @@ struct CHUNKTABLE(FILETYPE fileVersion, int numChunks) {
     };
 };
 
-struct CONTROLLER_829(FILETYPE fileType) {
-    CHUNKHEADER chunkHeader(fileVersion);
-    uint controllerId;
-    uint16 numberOfRotationKeys;
-    uint16 numberOfPositionKeys;
-    ubyte rotationFormat;
-    ubyte rotationTimeFormat;
-    ubyte positionFormat;
-    ubyte positionKeyInfo;
-    ubyte positionTimeFormat;
-    ubyte tracksAligned;
+// Main controller structure
+struct CONTROLLER_829(FILETYPE fileVersion) {
+  CHUNKHEADER chunkHeader(fileVersion);
+
+  // Header fields
+  uint controllerId;
+  uint16 numberOfRotationKeys;
+  uint16 numberOfPositionKeys;
+  ubyte rotationFormat;
+  ubyte rotationTimeFormat;
+  ubyte positionFormat;
+  ubyte positionKeyInfo;
+  ubyte positionTimeFormat;
+  ubyte tracksAligned;
+
+  local int alignment = (tracksAligned != 0) ? 4 : 1;
+  local int i;
+
+  // --- Rotation Data ---
+  if (numberOfRotationKeys > 0) {
+      // Rotation values
+      switch (rotationFormat) {
+          case eNoCompress:
+          case eNoCompressQuat:
+              NoCompressQuat rotationKeys[numberOfRotationKeys];
+              break;
+          case eSmallTree48BitQuat:
+              SmallTree48BitQuat rotationKeys[numberOfRotationKeys];
+              break;
+          case eSmallTree64BitQuat:
+          case eSmallTree64BitExtQuat:
+              SmallTree64BitQuat rotationKeys[numberOfRotationKeys];
+              break;
+          default:
+              ubyte rotationData[numberOfRotationKeys * GetRotationSize(rotationFormat)];
+              break;
+      }
+
+      // Align if needed
+      if (tracksAligned != 0) {
+          local int pos = FTell();
+          local int padding = (4 - (pos % 4)) % 4;
+          if (padding > 0) {
+              ubyte rotationValuePadding[padding];
+          }
+      }
+
+      // Rotation time keys
+      switch (rotationTimeFormat) {
+          case eF32:
+          case eF32StartStop:
+              F32KeyTime rotationTimes[numberOfRotationKeys];
+              break;
+          case eUINT16:
+          case eUINT16StartStop:
+          case eBitset:
+              UINT16KeyTime rotationTimes[numberOfRotationKeys];
+              break;
+          case eByte:
+          case eByteStartStop:
+              ByteKeyTime rotationTimes[numberOfRotationKeys];
+              break;
+          default:
+              ubyte rotationTimeData[numberOfRotationKeys * GetTimeKeySize(rotationTimeFormat)];
+              break;
+      }
+
+      // Align if needed
+      if (tracksAligned != 0) {
+          local int pos = FTell();
+          local int padding = (4 - (pos % 4)) % 4;
+          if (padding > 0) {
+              ubyte rotationTimePadding[padding];
+          }
+      }
+  }
+
+  // --- Position Data ---
+  if (numberOfPositionKeys > 0) {
+      // Position values
+      switch (positionFormat) {
+          case eNoCompress:
+          case eNoCompressVec3:
+              VECTOR3 positionKeys[numberOfPositionKeys];
+              break;
+          default:
+              ubyte positionData[numberOfPositionKeys * GetPositionSize(positionFormat)];
+              break;
+      }
+
+      // Align if needed
+      if (tracksAligned != 0) {
+          local int pos = FTell();
+          local int padding = (4 - (pos % 4)) % 4;
+          if (padding > 0) {
+              ubyte positionValuePadding[padding];
+          }
+      }
+
+      // Position time keys - ONLY if positionKeyInfo != 0 (eKeyTimeRotation)
+      // If positionKeyInfo == 0, position shares rotation's time keys
+      if (positionKeyInfo != 0) {
+          switch (positionTimeFormat) {
+              case eF32:
+              case eF32StartStop:
+                  F32KeyTime positionTimes[numberOfPositionKeys];
+                  break;
+              case eUINT16:
+              case eUINT16StartStop:
+              case eBitset:
+                  UINT16KeyTime positionTimes[numberOfPositionKeys];
+                  break;
+              case eByte:
+              case eByteStartStop:
+                  ByteKeyTime positionTimes[numberOfPositionKeys];
+                  break;
+              default:
+                  ubyte positionTimeData[numberOfPositionKeys * GetTimeKeySize(positionTimeFormat)];
+                  break;
+          }
+
+          // Final alignment if needed
+          if (tracksAligned != 0) {
+              local int pos = FTell();
+              local int padding = (4 - (pos % 4)) % 4;
+              if (padding > 0) {
+                  ubyte positionTimePadding[padding];
+              }
+          }
+      }
+  }
 };
 
-struct CONTROLLER_905(FILETYPE fileType) {
+struct CONTROLLER_905(FILETYPE fileVersion) {
     CHUNKHEADER chunkHeader(fileVersion);
     uint32 numKeyPos;
     uint32 numKeyRot;
@@ -338,7 +458,6 @@ struct HELPER(FILETYPE fileType) {
 };
 
 struct MTLNAME(FILETYPE fileVersion, CHUNKTABLEENTRY &entry) {
-    //if (fileVersion == CRYENGINE_3_4) {
     if (entry.version == 0x0800) {
         CHUNKHEADER chunkHeader(fileVersion);
         if (chunkHeader.version == 0x80000800) { BigEndian(); };
@@ -364,9 +483,9 @@ struct MTLNAME(FILETYPE fileVersion, CHUNKTABLEENTRY &entry) {
         uint numberOfMaterials;
         int skip3[numberOfMaterials];
         local uint i;
-        for (i = 0; i < numberOfMaterials; i++) {
-            string matNames;
-        }
+        //for (i = 0; i < numberOfMaterials; i++) {
+        //    string matNames;
+        //}
     };
 };
 
