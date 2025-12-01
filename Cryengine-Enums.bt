@@ -266,6 +266,23 @@ enum <ubyte> EKeyTimesFormat {
   eBitset = 6
 };
 
+// Animation asset flags (AnimFlags / m_nAssetFlags)
+// From ICryAnimation.h
+enum <uint32> CA_AssetFlags {
+  CA_ASSET_BIG_ENDIAN   = 0x0001,
+  CA_ASSET_CREATED      = 0x0002,
+  CA_ASSET_ONDEMAND     = 0x0004,
+  CA_ASSET_LOADED       = 0x0008,
+  CA_ASSET_ADDITIVE     = 0x0010,
+  CA_ASSET_CYCLE        = 0x0020,
+  CA_ASSET_NOT_FOUND    = 0x0040,
+  CA_ASSET_LMG          = 0x0080,
+  CA_ASSET_LMG_VALID    = 0x0100,
+  CA_AIMPOSE            = 0x0200,
+  CA_AIMPOSE_UNLOADED   = 0x0400,
+  CA_ASSET_TCB          = 0x0800
+};
+
 
 
 #endif

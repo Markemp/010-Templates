@@ -267,4 +267,18 @@ struct ByteKeyTime {
   ubyte time;
 };
 
+// Position/Rotation format count array (one count per ECompressionFormat, ~10 values)
+struct CompressionFormatCounts {
+  uint32 eNoCompress;
+  uint32 eNoCompressQuat;
+  uint32 eNoCompressVec3;
+  uint32 eShotInt3Quat;
+  uint32 eSmallTreeDWORDQuat;
+  uint32 eSmallTree48BitQuat;
+  uint32 eSmallTree64BitQuat;
+  uint32 ePolarQuat;
+  uint32 eSmallTree64BitExtQuat;
+  uint32 eAutomaticQuat;
+};
+
 #endif

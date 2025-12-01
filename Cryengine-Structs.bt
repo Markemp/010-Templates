@@ -208,25 +208,163 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
   }
 };
 
-struct CONTROLLER_905(FILETYPE fileVersion) {
-    CHUNKHEADER chunkHeader(fileVersion);
-    uint32 numKeyPos;
-    uint32 numKeyRot;
-    uint32 numKeyTime;
-    uint32 numAnims;
+// Key times format count array (one count per EKeyTimesFormat, 7 values)
+struct KeyTimesFormatCounts {
+  uint32 eF32;
+  uint32 eUINT16;
+  uint32 eByte;
+  uint32 eF32StartStop;
+  uint32 eUINT16StartStop;
+  uint32 eByteStartStop;
+  uint32 eBitset;
+};
 
-    local uint i;
-    // Key time lengths
-    uint16 keyTime[numKeyTime];
-    uint keyTimeFormat[7];
-    uint16 keyPositionLength[numKeyPos];
-    uint keyPositionFormat[9];
-    uint16 keyRotationLength[numKeyRot];
-    uint keyRotationFormat[9];
-    uint keyTimeOffset[numKeyTime];
-    uint keyPositionOffset[numKeyPos];
-    uint keyRotationOffset[numKeyRot];
-    uint trackLength;
+// Main chunk header
+struct CONTROLLER_CHUNK_DESC_0905 {
+  uint32 numKeyPos;    // Number of position track entries
+  uint32 numKeyRot;    // Number of rotation track entries
+  uint32 numKeyTime;   // Number of key time track entries
+  uint32 numAnims;     // Number of animations in database
+};
+
+// Forward declarations of size arrays (populated from chunk data)
+local uint32 g_numKeyTime;
+local uint32 g_numKeyPos;
+local uint32 g_numKeyRot;
+local uint32 g_numAnims;
+
+struct QuatT {
+  QUATERNION q;      // Quaternion (16 bytes)
+  VECTOR3 t;      // Translation (12 bytes)
+};  // Total: 28 bytes
+
+// Motion parameters for each animation
+struct MotionParams905 {
+  uint32 m_nAssetFlags;
+  uint32 m_nCompression;
+  int32  m_nTicksPerFrame;
+  float  m_fSecsPerTick;
+  int32  m_nStart;
+  int32  m_nEnd;
+  float  m_fMoveSpeed;
+  float  m_fTurnSpeed;
+  float  m_fAssetTurn;
+  float  m_fDistance;
+  float  m_fSlope;
+  QuatT  m_StartLocation;
+  QuatT  m_EndLocation;
+  float  m_LHeelStart;
+  float  m_LHeelEnd;
+  float  m_LToe0Start;
+  float  m_LToe0End;
+  float  m_RHeelStart;
+  float  m_RHeelEnd;
+  float  m_RToe0Start;
+  float  m_RToe0End;
+};  // Total: 132 bytes
+
+// Controller info - references into shared track arrays
+struct CControllerInfo {
+  uint32 m_nControllerID;      // CRC32 of bone name
+  int32 m_nPosKeyTimeTrack;   // Index into key time tracks for position
+  int32 m_nPosTrack;          // Index into position tracks
+  int32 m_nRotKeyTimeTrack;   // Index into key time tracks for rotation
+  int32 m_nRotTrack;          // Index into rotation tracks
+};  // Total: 20 bytes
+
+// Animation entry in the database
+struct AnimationEntry {
+  uint16 filePathLength;
+  if (filePathLength > 0) {
+      char filePath[filePathLength];
+  }
+  MotionParams905 motionParams;
+  uint16 footPlantBitsCount;
+  if (footPlantBitsCount > 0) {
+      ubyte footPlantBits[footPlantBitsCount];
+  }
+  uint16 controllerCount;
+  // Note: In in-place streaming mode, there's an additional int32 offset here
+  // For standard files, controllers follow immediately or at end of anim block
+  CControllerInfo controllers[controllerCount];
+};
+
+struct CONTROLLER_905(FILETYPE fileVersion) {
+  CHUNKHEADER chunkHeader(fileVersion);
+
+  // Main header
+  CONTROLLER_CHUNK_DESC_0905 header;
+
+  // Store counts for later use
+  g_numKeyTime = header.numKeyTime;
+  g_numKeyPos = header.numKeyPos;
+  g_numKeyRot = header.numKeyRot;
+  g_numAnims = header.numAnims;
+
+  // === Size/Offset Block ===
+
+  // Key time sizes (number of keys in each key time track)
+  uint16 keyTimeSizes[header.numKeyTime];
+
+  // Key time format counts (cumulative counts per format type)
+  KeyTimesFormatCounts keyTimeFormatCounts;
+
+  // Position sizes (number of keys in each position track)
+  uint16 positionSizes[header.numKeyPos];
+
+  // Position format counts
+  CompressionFormatCounts positionFormatCounts;
+
+  // Rotation sizes (number of keys in each rotation track)
+  uint16 rotationSizes[header.numKeyRot];
+
+  // Rotation format counts
+  CompressionFormatCounts rotationFormatCounts;
+
+  // Offsets into track storage (can be negative for in-place streaming)
+  int32 keyTimeOffsets[header.numKeyTime];
+  int32 positionOffsets[header.numKeyPos];
+  int32 rotationOffsets[header.numKeyRot + 1];  // +1 for end marker
+
+  // Optional: padding length for in-place streaming
+  // uint32 paddingLength;  // Only present in in-place streaming mode
+
+  // Align to 4 bytes
+  local int pos = FTell();
+  local int padding = (4 - (pos % 4)) % 4;
+  if (padding > 0) {
+      ubyte alignPadding[padding];
+  }
+
+  // === Track Data Storage ===
+  // The actual track data is stored at the offsets specified above.
+  // For non-streaming files, offsets are positive from current position.
+  // For streaming files, offsets are negative from end of storage.
+
+  // We'll read the raw track storage as a blob - actual parsing requires
+  // interpreting the format counts to know the format of each track
+  local int trackDataStart = FTell();
+
+  // Calculate total track size from the last rotation offset
+  // (rotationOffsets[numKeyRot] marks the end of track storage)
+  local int trackDataSize = 0;
+  if (header.numKeyRot > 0) {
+      // In standard mode, offsets are positive
+      trackDataSize = rotationOffsets[header.numKeyRot];
+  }
+
+  if (trackDataSize > 0) {
+      ubyte trackData[trackDataSize];
+  }
+
+  // === Animation Entries ===
+  // Each animation has its own header with motion params and controller list
+  struct {
+      local int i;
+      for (i = 0; i < header.numAnims; i++) {
+          AnimationEntry animation;
+      }
+  } animations;
 };
 
 struct MESHSUBSET {
