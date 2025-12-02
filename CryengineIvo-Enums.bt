@@ -48,6 +48,9 @@ enum <uint> CHUNKTYPE {
     U13_BShapesGPU          = 0x57a38888, // 1405e9863(SKINM), v900h
     U14_SimDeformation      = 0xff277a9a, // 1405e987b(SKINM), v900h
     U15_VisAreas            = 0xb32459d2, // 1405e8c93(SKINM2), v900h
+    // Animation chunks (CAF files) - chunk type IDs need verification from actual files
+    AnimationInfo           = 0x4733c6ed, // Animation info chunk, v901h (placeholder ID)
+    CAFData                 = 0xa9496cb5, // #caf animation data chunk, v900h ("#caf" as uint32 LE)
 };
 
 enum VERTEXFORMAT {
