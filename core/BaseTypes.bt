@@ -1,0 +1,319 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: BaseTypes.bt
+//   Authors: Geoff Gerber
+//   Purpose: Primitive types for CryEngine binary formats
+//------------------------------------------------
+
+#ifndef CORE_BASETYPES_BT
+#define CORE_BASETYPES_BT
+
+//------------------------------------------------
+// Normalized type definitions with custom read functions
+//------------------------------------------------
+
+typedef short snorm <read=ReadSnorm>;
+typedef ushort unorm <read=ReadUnorm>;
+typedef byte bnorm <read=ReadBnorm>;
+
+string ReadSnorm(snorm s) {
+    string t;
+    float f = Max(s / 32767.0, -1.0);
+    SPrintf(t, "%g", f);
+    return t;
+}
+
+string ReadUnorm(unorm s) {
+    string t;
+    float f = s / 65535.0;
+    SPrintf(t, "%g", f);
+    return t;
+}
+
+string ReadBnorm(bnorm s) {
+    string t;
+    float f = s / 127.0;
+    SPrintf(t, "%g", f);
+    return t;
+}
+
+//------------------------------------------------
+// Vector types - float precision
+//------------------------------------------------
+
+struct Vector3 {
+    float x;
+    float y;
+    float z;
+};
+
+struct Vector4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+//------------------------------------------------
+// Vector types - half float precision
+//------------------------------------------------
+
+struct Vector3Half {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+};
+
+struct Vector4Half {
+    hfloat x;
+    hfloat y;
+    hfloat z;
+    hfloat w;
+};
+
+//------------------------------------------------
+// Vector types - CryHalf (ushort, needs CryHalfToFloat conversion)
+//------------------------------------------------
+
+struct Vector3CryHalf {
+    ushort x;
+    ushort y;
+    ushort z;
+};
+
+//------------------------------------------------
+// Vector types - normalized
+//------------------------------------------------
+
+struct Vector3Snorm {
+    snorm x;
+    snorm y;
+    snorm z;
+};
+
+struct Vector4Snorm {
+    snorm x;
+    snorm y;
+    snorm z;
+    snorm w;
+};
+
+struct Vector4Bnorm {
+    bnorm x;
+    bnorm y;
+    bnorm z;
+    bnorm w;
+};
+
+struct Vector4Unorm {
+    unorm x;
+    unorm y;
+    unorm z;
+    unorm w;
+};
+
+//------------------------------------------------
+// Quaternion
+//------------------------------------------------
+
+struct Quaternion {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct QTangent {
+    short x;
+    short y;
+    short z;
+    short w;
+};
+
+//------------------------------------------------
+// Matrix types
+//------------------------------------------------
+
+struct Matrix3x3 {
+    float m11; float m12; float m13;
+    float m21; float m22; float m23;
+    float m31; float m32; float m33;
+};
+
+struct Matrix3x4 {
+    float m11; float m12; float m13; float m14;
+    float m21; float m22; float m23; float m24;
+    float m31; float m32; float m33; float m34;
+};
+
+struct Matrix4x4 {
+    float m11; float m12; float m13; float m14;
+    float m21; float m22; float m23; float m24;
+    float m31; float m32; float m33; float m34;
+    float m41; float m42; float m43; float m44;
+};
+
+//------------------------------------------------
+// Color types
+//------------------------------------------------
+
+struct ColorRGBA {
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+};
+
+struct ColorRGBAFloat {
+    float r;
+    float g;
+    float b;
+    float a;
+};
+
+struct ColorB(int numBytes) {
+    if (numBytes == 4) {
+        ubyte r;
+        ubyte g;
+        ubyte b;
+        ubyte a;
+    } else {
+        float r;
+        float g;
+        float b;
+        int flag;
+    }
+};
+
+//------------------------------------------------
+// UV / Texture coordinate types
+//------------------------------------------------
+
+struct UV {
+    float u;
+    float v;
+};
+
+struct UVHalf {
+    hfloat u;
+    hfloat v;
+};
+
+struct UVCryHalf {
+    ushort u;
+    ushort v;
+};
+
+//------------------------------------------------
+// Normal types
+//------------------------------------------------
+
+struct CryNormal {
+    short x;
+    short y;
+};
+
+string PrintCryNormal(CryNormal &vertex) {
+    string result;
+    SPrintf(result, "%f, %f", vertex.x / 32767.0, vertex.y / 32767.0);
+    return result;
+}
+
+//------------------------------------------------
+// Tangent types
+//------------------------------------------------
+
+struct TangentByte {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+struct TangentBitangent {
+    struct {
+        short x;
+        short y;
+        short z;
+        short w;
+    } tangent;
+    struct {
+        short x;
+        short y;
+        short z;
+        short w;
+    } bitangent;
+};
+
+//------------------------------------------------
+// CryHalf type (ushort pair)
+//------------------------------------------------
+
+struct CryHalf {
+    ushort x;
+    ushort y;
+};
+
+//------------------------------------------------
+// Bounding Box
+//------------------------------------------------
+
+struct BBox {
+    Vector3 min;
+    Vector3 max;
+};
+
+//------------------------------------------------
+// Quaternion compression structures
+//------------------------------------------------
+
+struct NoCompressQuat {
+    float w;
+    float x;
+    float y;
+    float z;
+};
+
+struct SmallTree48BitQuat {
+    ubyte data[6];
+};
+
+struct SmallTree64BitQuat {
+    ubyte data[8];
+};
+
+//------------------------------------------------
+// Key time structures for animation
+//------------------------------------------------
+
+struct F32KeyTime {
+    float time;
+};
+
+struct Uint16KeyTime {
+    uint16 time;
+};
+
+struct ByteKeyTime {
+    ubyte time;
+};
+
+//------------------------------------------------
+// Compression format counts array
+//------------------------------------------------
+
+struct CompressionFormatCounts {
+    uint32 eNoCompress;
+    uint32 eNoCompressQuat;
+    uint32 eNoCompressVec3;
+    uint32 eShotInt3Quat;
+    uint32 eSmallTreeDWORDQuat;
+    uint32 eSmallTree48BitQuat;
+    uint32 eSmallTree64BitQuat;
+    uint32 ePolarQuat;
+    uint32 eSmallTree64BitExtQuat;
+    uint32 eAutomaticQuat;
+};
+
+#endif // CORE_BASETYPES_BT

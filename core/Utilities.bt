@@ -1,0 +1,116 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Utilities.bt
+//   Authors: Geoff Gerber
+//   Purpose: Shared utility functions for CryEngine binary formats
+//------------------------------------------------
+
+#ifndef CORE_UTILITIES_BT
+#define CORE_UTILITIES_BT
+
+#include "BaseTypes.bt"
+
+//------------------------------------------------
+// CryHalf to Float Conversion
+// Converts CryEngine's custom half-float format to standard float
+//------------------------------------------------
+
+float CryHalfToFloat(ushort value) {
+    local uint mantissa;
+    local uint exponent;
+    local uint result;
+
+    mantissa = (uint)(value & 0x03FF);
+
+    if ((value & 0x7C00) != 0) {
+        // The value is normalized
+        exponent = (uint)((value >> 10) & 0x1F);
+    } else if (mantissa != 0) {
+        // The value is denormalized - normalize it
+        exponent = 1;
+        do {
+            exponent--;
+            mantissa <<= 1;
+        } while ((mantissa & 0x0400) == 0);
+        mantissa &= 0x03FF;
+    } else {
+        // The value is zero
+        exponent = (uint)-112;
+    }
+
+    result = ((value & 0x8000) << 16) |     // Sign
+             ((exponent + 112) << 23) |      // Exponent
+             (mantissa << 13);               // Mantissa
+
+    return (float)result;
+}
+
+//------------------------------------------------
+// Alignment Helpers
+//------------------------------------------------
+
+void AlignTo4() {
+    local int64 pos = FTell();
+    local int remainder = pos % 4;
+    if (remainder != 0) {
+        FSkip(4 - remainder);
+    }
+}
+
+void AlignTo8() {
+    local int64 pos = FTell();
+    local int remainder = pos % 8;
+    if (remainder != 0) {
+        FSkip(8 - remainder);
+    }
+}
+
+void AlignTo16() {
+    local int64 pos = FTell();
+    local int remainder = pos % 16;
+    if (remainder != 0) {
+        FSkip(16 - remainder);
+    }
+}
+
+void AlignToN(int n) {
+    local int64 pos = FTell();
+    local int remainder = pos % n;
+    if (remainder != 0) {
+        FSkip(n - remainder);
+    }
+}
+
+//------------------------------------------------
+// Tangent Decoding
+// Converts byte-encoded tangent to Vector3
+//------------------------------------------------
+
+string PrintTangent(TangentByte &tan) {
+    string result;
+    local Vector3 tangent;
+    tangent.x = (2 * (tan.x / 127.0 * tan.z / 127.0 + tan.y / 127.0 * tan.w / 127.0));
+    tangent.y = (2 * (tan.y / 127.0 * tan.z / 127.0 - tan.x / 127.0 * tan.w / 127.0));
+    tangent.z = (2 * (tan.z / 127.0 * tan.z / 127.0 + tan.w / 127.0 * tan.w / 127.0)) - 1;
+    SPrintf(result, "%f, %f, %f", tangent.x, tangent.y, tangent.z);
+    return result;
+}
+
+//------------------------------------------------
+// Unknown/Placeholder Structures
+// For reverse-engineering unknown data blocks
+//------------------------------------------------
+
+struct Unknown4Byte {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+struct Unknown24Byte {
+    Unknown4Byte dataBlock[6];
+};
+
+#endif // CORE_UTILITIES_BT

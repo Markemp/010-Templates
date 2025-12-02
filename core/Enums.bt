@@ -1,0 +1,393 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Enums.bt
+//   Authors: Geoff Gerber
+//   Purpose: Unified enum definitions for all CryEngine binary formats
+//------------------------------------------------
+
+#ifndef CORE_ENUMS_BT
+#define CORE_ENUMS_BT
+
+//------------------------------------------------
+// File Format Identification
+// Named by magic header bytes, not version numbers
+//------------------------------------------------
+
+enum FileFormat {
+    CryTek,     // "CryT" header - MechWarrior Online, ArcheAge
+    CrChF,      // "CrCh" header - Hunt: Showdown
+    Ivo         // "#ivo" header - Star Citizen
+};
+
+enum EFileType {
+    Geom = 0xFFFF0000,
+    Anim
+};
+
+//------------------------------------------------
+// Chunk Types - CryTek format ("CryT" header)
+// Uses uint32 values with 0xCCCC/0xACDC/0xAAFC prefixes
+//------------------------------------------------
+
+enum <uint32> ChunkType_CryTek {
+    Any_CryTek                      = 0x0,
+    Mesh_CryTek                     = 0xCCCC0000,
+    Helper_CryTek                   = 0xCCCC0001,
+    VertAnim_CryTek                 = 0xCCCC0002,
+    BoneAnim_CryTek                 = 0xCCCC0003,
+    GeomNameList_CryTek             = 0xCCCC0004,
+    BoneNameList_CryTek             = 0xCCCC0005,
+    MtlList_CryTek                  = 0xCCCC0006,
+    MRM_CryTek                      = 0xCCCC0007,
+    SceneProps_CryTek               = 0xCCCC0008,
+    Light_CryTek                    = 0xCCCC0009,
+    PatchMesh_CryTek                = 0xCCCC000A,
+    Node_CryTek                     = 0xCCCC000B,
+    Mtl_CryTek                      = 0xCCCC000C,
+    Controller_CryTek               = 0xCCCC000D,
+    TimingInfo_CryTek               = 0xCCCC000E,
+    BoneMesh_CryTek                 = 0xCCCC000F,
+    BoneLightBinding_CryTek         = 0xCCCC0010,
+    MeshMorphTarget_CryTek          = 0xCCCC0011,
+    BoneInitialPos_CryTek           = 0xCCCC0012,
+    SourceInfo_CryTek               = 0xCCCC0013,
+    MtlName_CryTek                  = 0xCCCC0014,
+    ExportFlags_CryTek              = 0xCCCC0015,
+    DataStream_CryTek               = 0xCCCC0016,
+    MeshSubsets_CryTek              = 0xCCCC0017,
+    MeshPhysicsData_CryTek          = 0xCCCC0018,
+    CompiledBones_CryTek            = 0xACDC0000,
+    CompiledPhysicalBones_CryTek    = 0xACDC0001,
+    CompiledMorphtargets_CryTek     = 0xACDC0002,
+    CompiledPhysicalProxies_CryTek  = 0xACDC0003,
+    CompiledIntFaces_CryTek         = 0xACDC0004,
+    CompiledIntSkinVertices_CryTek  = 0xACDC0005,
+    CompiledExt2IntMap_CryTek       = 0xACDC0006,
+    BreakablePhysics_CryTek         = 0xACDC0007,
+    FaceMap_CryTek                  = 0xAAFC0000,
+    SpeedInfo_CryTek                = 0xAAFC0002,
+    FootPlantInfo_CryTek            = 0xAAFC0003,
+    BonesBoxes_CryTek               = 0xAAFC0004,
+    UnknownAAFC0005_CryTek          = 0xAAFC0005,
+    GlobalAnimationHeaderCAF_CryTek = 0xAAFC0007
+};
+
+//------------------------------------------------
+// Chunk Types - CrChF format ("CrCh" header)
+// Uses uint16 values with 0x1000/0x2000/0x3000 prefixes
+//------------------------------------------------
+
+enum <uint16> ChunkType_CrChF {
+    Any_CrChF                       = 0x0,
+    SpeedInfo_CrChF                 = 0x0002,
+    Mesh_CrChF                      = 0x1000,
+    Helper_CrChF                    = 0x1001,
+    VertAnim_CrChF                  = 0x1002,
+    BoneAnim_CrChF                  = 0x1003,
+    GeomNameList_CrChF              = 0x1004,
+    BoneNameList_CrChF              = 0x1005,
+    MtlList_CrChF                   = 0x1006,
+    MRM_CrChF                       = 0x1007,
+    SceneProps_CrChF                = 0x1008,
+    Light_CrChF                     = 0x1009,
+    PatchMesh_CrChF                 = 0x100A,
+    Node_CrChF                      = 0x100B,
+    Mtl_CrChF                       = 0x100C,
+    Controller_CrChF                = 0x100D,
+    TimingInfo_CrChF                = 0x100E,
+    BoneMesh_CrChF                  = 0x100F,
+    BoneLightBinding_CrChF          = 0x1010,
+    MeshMorphTarget_CrChF           = 0x1011,
+    BoneInitialPos_CrChF            = 0x1012,
+    SourceInfo_CrChF                = 0x1013,
+    MtlName_CrChF                   = 0x1014,
+    ExportFlags_CrChF               = 0x1015,
+    DataStream_CrChF                = 0x1016,
+    MeshSubsets_CrChF               = 0x1017,
+    MeshPhysicsData_CrChF           = 0x1018,
+    CompiledBones_CrChF             = 0x2000,
+    CompiledPhysicalBones_CrChF     = 0x2001,
+    CompiledMorphtargets_CrChF      = 0x2002,
+    CompiledPhysicalProxies_CrChF   = 0x2003,
+    CompiledIntFaces_CrChF          = 0x2004,
+    CompiledIntSkinVertices_CrChF   = 0x2005,
+    CompiledExt2IntMap_CrChF        = 0x2006,
+    BreakablePhysics_CrChF          = 0x3000,
+    FaceMap_CrChF                   = 0x3001,
+    MotionParameters_CrChF          = 0x3002,
+    FootPlantInfo_CrChF             = 0x3003,
+    BonesBoxes_CrChF                = 0x3004,
+    FoliageInfo_CrChF               = 0x3005,
+    Timestamp_CrChF                 = 0x3006,
+    GlobalAnimationHeaderCAF_CrChF  = 0x3007,
+    GlobalAnimationHeaderAIM_CrChF  = 0x3008,
+    BspTreeData_CrChF               = 0x3009,
+    Unknown11_CrChF                 = 0x300A,
+    Unknown21Anim_CrChF             = 0x4007
+};
+
+//------------------------------------------------
+// Chunk Types - Ivo format ("#ivo" header)
+// Uses uint32 hash values
+//------------------------------------------------
+
+enum <uint32> ChunkType_Ivo {
+    Skeleton1_Ivo               = 0x0000300D,
+    DBAData_Ivo                 = 0x194FBC50,
+    Skeleton_Ivo                = 0x1BBC4103,
+    BShapes_Ivo                 = 0xF5C6EB5B,
+    BShapesGPU_Ivo              = 0x57A3BEFD,
+    TurretUnk_Ivo               = 0x69655CD8,
+    MaterialName_Ivo            = 0x8335674E,
+    MaterialInfo_Ivo            = 0x83353333,
+    BShapes3_Ivo                = 0x875CCB28,
+    CompiledPhysicalBones_Ivo   = 0x90C687DC,
+    MeshInfo_Ivo                = 0x92914444,
+    MeshChunk_Ivo               = 0x9293B9D8,
+    SkinMesh_Ivo                = 0xB875B2D9,
+    SkinMesh2_Ivo               = 0xB8757777,
+    CompiledBones_Ivo           = 0xC201973C,
+    CompiledBonesSkin_Ivo       = 0xC2011111,
+    DBA_Ivo                     = 0xF7351608,
+    ExportFlags_Ivo             = 0xBE5E493E,
+    PhysicalHierarchy_Ivo       = 0x90C62222,
+    LODDistance_Ivo             = 0x9351756F,
+    VisibilityGroups_Ivo        = 0xC1C36AFE,
+    NodeMeshCombos_Ivo          = 0x70697FDA,
+    StatObjPhysics_Ivo          = 0x58DE1772,
+    PositionBonemap_Ivo         = 0x2B7ECF9F,
+    VFXHelpers_Ivo              = 0x1E14A062,
+    RBF_Ivo                     = 0xA7169999,
+    RigLogic_Ivo                = 0x0A2485B6,
+    SimTopology_Ivo             = 0x2B8A2C29,
+    RigInfo_Ivo                 = 0x7E035555,
+    ProtosInfo_Ivo              = 0xF7086666,
+    BShapesGPU2_Ivo             = 0x57A38888,
+    SimDeformation_Ivo          = 0xFF277A9A,
+    VisAreas_Ivo                = 0xB32459D2,
+    AnimationInfo_Ivo           = 0x4733C6ED,
+    CAFData_Ivo                 = 0xA9496CB5
+};
+
+//------------------------------------------------
+// Data Stream Types - Traditional (CryTek/CrChF)
+// Sequential values 0x0-0x10
+//------------------------------------------------
+
+enum DataStreamType_Cry {
+    Vertices_Cry        = 0x0,
+    Normals_Cry         = 0x1,
+    Uvs_Cry             = 0x2,
+    Colors_Cry          = 0x3,
+    Colors2_Cry         = 0x4,
+    Indices_Cry         = 0x5,
+    Tangents_Cry        = 0x6,
+    ShCoeffs_Cry        = 0x7,
+    ShapeDeformation_Cry= 0x8,
+    BoneMaps_Cry        = 0x9,
+    FaceMaps_Cry        = 0xA,
+    VertMats_Cry        = 0xB,
+    QTangents_Cry       = 0xC,
+    SkinData_Cry        = 0xD,
+    Dummy2_Cry          = 0xE,
+    VertsUvs_Cry        = 0xF,
+    NumTypes_Cry        = 0x10
+};
+
+//------------------------------------------------
+// Data Stream Types - Ivo format
+// Uses uint32 hash values
+//------------------------------------------------
+
+enum <uint32> DataStreamType_Ivo {
+    Normals2_Ivo        = 0x38A581FE,
+    BoneMap_Ivo         = 0x677C7B23,
+    Unknown6_Ivo        = 0x69655CD8,
+    BoneMap32_Ivo       = 0x6ECA3708,
+    Unknown5_Ivo        = 0x7E216CAB,
+    VertsUvs_Ivo        = 0x91329AE9,
+    Normals_Ivo         = 0x9CF3F615,
+    Unknown3_Ivo        = 0x9D51C5EE,
+    Unknown4_Ivo        = 0xA596C0E6,
+    Tangents_Ivo        = 0xB95E9A1B,
+    VertsUvsCGF_Ivo     = 0xB3A70D5E,
+    Unknown7_Ivo        = 0xDA86BE9C,
+    Colors2_Ivo         = 0xD9EED421,
+    Indices_Ivo         = 0xEECDC168,
+    TangentsCGF_Ivo     = 0xEE057252
+};
+
+// Helper function to check if value is in Ivo datastream enum
+int IsIvoDataStreamType(uint32 type) {
+    switch (type) {
+        case Normals2_Ivo:
+        case BoneMap_Ivo:
+        case BoneMap32_Ivo:
+        case VertsUvs_Ivo:
+        case Normals_Ivo:
+        case Tangents_Ivo:
+        case Colors2_Ivo:
+        case Indices_Ivo:
+        case VertsUvsCGF_Ivo:
+        case TangentsCGF_Ivo:
+        case Unknown3_Ivo:
+        case Unknown4_Ivo:
+        case Unknown5_Ivo:
+        case Unknown6_Ivo:
+        case Unknown7_Ivo:
+            return true;
+    }
+    return false;
+}
+
+//------------------------------------------------
+// Vertex Formats (shared across all formats)
+//------------------------------------------------
+
+enum VertexFormat {
+    eVF_Unknown,
+    eVF_P3F_C4B_T2F,
+    eVF_P3F_C4B_T2F_T2F,
+    eVF_P3S_C4B_T2S,
+    eVF_P3S_C4B_T2S_T2S,
+    eVF_P3S_N4B_C4B_T2S,
+    eVF_P3F_C4B_T4B_N3F2,
+    eVF_TP3F_C4B_T2F,
+    eVF_TP3F_T2F_T3F,
+    eVF_P3F_T3F,
+    eVF_P3F_T2F_T3F,
+    eVF_T2F,
+    eVF_W4B_I4S,
+    eVF_C4B_C4B,
+    eVF_P3F_P3F_I4B,
+    eVF_P3F,
+    eVF_C4B_T2S,
+    eVF_P2F_T4F_C4F,
+    eVF_P2F_T4F_T4F_C4F,
+    eVF_P2S_N4B_C4B_T1F,
+    eVF_P3F_C4B_T2S,
+    eVF_P2F_C4B_T2F_F4B,
+    eVF_P3F_C4B,
+    eVF_P3F_C4F_T2F
+};
+
+//------------------------------------------------
+// Material Name Types
+//------------------------------------------------
+
+enum MtlNameType {
+    MtlBasic    = 0x00,
+    MtlLibrary  = 0x01,
+    MtlMwoChild = 0x02,
+    MtlUnknown  = 0x04,
+    MtlSingle   = 0x10,
+    MtlChild    = 0x12,
+    MtlUnknown1 = 0x0B,
+    MtlUnknown2 = 0x04
+};
+
+enum <uint32> MtlNamePhysicsType {
+    MtlPhysNone         = 0xFFFFFFFF,
+    MtlPhysDefault      = 0x00000000,
+    MtlPhysNoCollide    = 0x00000001,
+    MtlPhysObstruct     = 0x00000002,
+    MtlPhysDefaultProxy = 0x000000FF,
+    MtlPhysUnknown      = 0x00001100
+};
+
+//------------------------------------------------
+// Light and Node Types
+//------------------------------------------------
+
+enum LightType {
+    LightOmni,
+    LightSpot,
+    LightDirect,
+    LightAmbient
+};
+
+enum NodeType {
+    NodeMesh,
+    NodeLight,
+    NodeHelper
+};
+
+enum <uint32> HelperType {
+    HelperPoint,
+    HelperDummy,
+    HelperXRef,
+    HelperCamera,
+    HelperGeometry
+};
+
+//------------------------------------------------
+// Controller Types
+//------------------------------------------------
+
+enum CtrlType {
+    CtrlNone,
+    CtrlCryBone,
+    CtrlLinear1,
+    CtrlLinear3,
+    CtrlLinearQ,
+    CtrlBezier1,
+    CtrlBezier3,
+    CtrlBezierQ,
+    CtrlTBC1,
+    CtrlTBC3,
+    CtrlTBCQ,
+    CtrlBSpline2O,
+    CtrlBSpline1O,
+    CtrlBSpline2C,
+    CtrlBSpline1C,
+    CtrlConst
+};
+
+//------------------------------------------------
+// Compression Formats
+//------------------------------------------------
+
+enum <ubyte> ECompressionFormat {
+    eNoCompress = 0,
+    eNoCompressQuat = 1,
+    eNoCompressVec3 = 2,
+    eShotInt3Quat = 3,
+    eSmallTreeDWORDQuat = 4,
+    eSmallTree48BitQuat = 5,
+    eSmallTree64BitQuat = 6,
+    ePolarQuat = 7,
+    eSmallTree64BitExtQuat = 8,
+    eAutomaticQuat = 9
+};
+
+enum <ubyte> EKeyTimesFormat {
+    eF32 = 0,
+    eUINT16 = 1,
+    eByte = 2,
+    eF32StartStop = 3,
+    eUINT16StartStop = 4,
+    eByteStartStop = 5,
+    eBitset = 6
+};
+
+//------------------------------------------------
+// Animation Asset Flags
+//------------------------------------------------
+
+enum <uint32> CA_AssetFlags {
+    CA_ASSET_BIG_ENDIAN     = 0x0001,
+    CA_ASSET_CREATED        = 0x0002,
+    CA_ASSET_ONDEMAND       = 0x0004,
+    CA_ASSET_LOADED         = 0x0008,
+    CA_ASSET_ADDITIVE       = 0x0010,
+    CA_ASSET_CYCLE          = 0x0020,
+    CA_ASSET_NOT_FOUND      = 0x0040,
+    CA_ASSET_LMG            = 0x0080,
+    CA_ASSET_LMG_VALID      = 0x0100,
+    CA_AIMPOSE              = 0x0200,
+    CA_AIMPOSE_UNLOADED     = 0x0400,
+    CA_ASSET_TCB            = 0x0800
+};
+
+#endif // CORE_ENUMS_BT
