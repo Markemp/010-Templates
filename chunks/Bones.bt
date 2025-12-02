@@ -1,0 +1,231 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Bones.bt
+//   Authors: Geoff Gerber
+//   Purpose: Skeleton and bone structures for all CryEngine formats
+//------------------------------------------------
+
+#ifndef CHUNKS_BONES_BT
+#define CHUNKS_BONES_BT
+
+#include "../core/BaseTypes.bt"
+#include "../core/Enums.bt"
+#include "../display/PrintFunctions.bt"
+#include "Header.bt"
+
+//------------------------------------------------
+// Physics Geometry (used by bones)
+//------------------------------------------------
+
+struct PhysicsGeometry {
+    int physicGeom;
+    int flags;
+    Vector3 min <comment=PrintVector3>;
+    Vector3 max <comment=PrintVector3>;
+    Vector3 springAngle <comment=PrintVector3>;
+    Vector3 springTension <comment=PrintVector3>;
+    Vector3 damping <comment=PrintVector3>;
+    Matrix3x3 frameMtx <comment=PrintMatrix3x3>;
+};
+
+//------------------------------------------------
+// Bone To World Transform
+//------------------------------------------------
+
+struct BoneToWorld {
+    float row1[4];
+    float row2[4];
+    float row3[4];
+};
+
+//------------------------------------------------
+// Bone Name
+//------------------------------------------------
+
+struct BoneName {
+    string boneName;
+};
+
+//------------------------------------------------
+// Compiled Bone - CryTek/CrChF format
+//------------------------------------------------
+
+struct CompiledBone_Cry(int chunkVersion) {
+    if (chunkVersion == 0x0800) {
+        uint controllerID;
+        PhysicsGeometry physicsGeo[2];
+        float mass;
+        Matrix3x4 worldToBone <comment=PrintMatrix3x4>;
+        Matrix3x4 boneToWorld <comment=PrintMatrix3x4>;
+        char boneName[256];
+        int limbID;
+        int offsetParent;
+        uint numChildren;
+        int offsetChild;
+    } else if (chunkVersion == 0x0801) {
+        uint controllerId;
+        uint mass;
+        PhysicsGeometry physicsGeo[2];
+        char boneName[48];
+        int offsetParent;
+        uint numChildren;
+        uint offsetChild;
+        Matrix3x4 boneToWorld <comment=PrintMatrix3x4>;
+    }
+};
+
+string PrintBoneName_Cry(CompiledBone_Cry &bone) {
+    string result;
+    SPrintf(result, "Name = %s", bone.boneName);
+    return result;
+}
+
+//------------------------------------------------
+// Compiled Bones Chunk - CryTek/CrChF format
+//------------------------------------------------
+
+struct CompiledBones_Cry(int numBones, int chunkVersion, FileFormat format) {
+    ChunkHeader headerInfo(format);
+    char padding[32];
+    CompiledBone_Cry compiledBone(chunkVersion)[numBones] <comment=PrintBoneName_Cry>;
+};
+
+//------------------------------------------------
+// Compiled Physical Bone - CryTek/CrChF format
+//------------------------------------------------
+
+struct CompiledPhysicalBone_Cry {
+    uint boneIndex;
+    uint parentIndex;
+    uint numChildren;
+    uint controllerID;
+    char prop[32];
+    PhysicsGeometry phys;
+};
+
+struct CompiledPhysicalBones_Cry(int numBones, FileFormat format) {
+    ChunkHeader headerInfo(format);
+    char padding2[32];
+    CompiledPhysicalBone_Cry compiledPhysicalBone[numBones];
+};
+
+//------------------------------------------------
+// Bone - Ivo format
+//------------------------------------------------
+
+struct Bone_Ivo(int version) {
+    if (version == 0x0900) {
+        uint controllerId;
+        uint limbId;
+        int parentIndex;
+        Quaternion relativeQuat <comment=PrintQuaternion>;
+        Vector3 relativeTransform <comment=PrintVector3>;
+        Quaternion worldQuat <comment=PrintQuaternion>;
+        Vector3 worldTransform <comment=PrintVector3>;
+    } else if (version == 0x0901) {
+        uint controllerId;
+        short limbId;
+        short numChildren;
+        short parentIndex;
+        short unknown2;
+        short unknown3;
+        short objectNodeIndex;
+    }
+};
+
+string PrintBoneInfo_Ivo(Bone_Ivo &bone) {
+    string result;
+    if (exists(bone.relativeTransform)) {
+        SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f",
+            bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z,
+            bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
+    }
+    return result;
+}
+
+//------------------------------------------------
+// Bone Transforms - Ivo v0x901
+//------------------------------------------------
+
+struct BoneTransforms_Ivo {
+    Quaternion relativeQuat <comment=PrintQuaternion>;
+    Vector3 relativeTransform <comment=PrintVector3>;
+    Quaternion worldQuat <comment=PrintQuaternion>;
+    Vector3 worldTransform <comment=PrintVector3>;
+};
+
+//------------------------------------------------
+// Compiled Bones - Ivo format
+//------------------------------------------------
+
+struct CompiledBones_Ivo(int version) {
+    local int i;
+    if (version == 0x0900) {
+        int numBones;
+        for (i = 0; i < numBones; i++) {
+            Bone_Ivo bone(version) <comment=PrintBoneInfo_Ivo>;
+        }
+        for (i = 0; i < numBones; i++) {
+            BoneName boneName;
+        }
+    } else if (version == 0x0901) {
+        int numBones;
+        int stringTableSize;
+        int flags1;
+        int flags2;
+        for (i = 0; i < numBones; i++) {
+            Bone_Ivo bone(version) <comment=PrintBoneInfo_Ivo>;
+        }
+        for (i = 0; i < numBones; i++) {
+            BoneName boneName;
+        }
+        BoneTransforms_Ivo boneTransformData[numBones];
+    }
+};
+
+//------------------------------------------------
+// Compiled Physical Bones - Ivo format
+//------------------------------------------------
+
+struct CompiledPhysicalBones_Ivo {
+    char physics[100];
+};
+
+//------------------------------------------------
+// Int Skin Vertex
+//------------------------------------------------
+
+struct IntSkinVertex {
+    Vector3 obsolete;
+    Vector3 position;
+    Vector3 obsolete2;
+    BoneMapData boneMapData(16);
+    ColorB color(4);
+};
+
+struct CompiledIntSkinVertices_Cry(int numVertices, FileFormat format) {
+    ChunkHeader headerInfo(format);
+    char skipBytes[32];
+    IntSkinVertex intSkinVertex[numVertices];
+};
+
+//------------------------------------------------
+// Compiled Ext2Int Map
+//------------------------------------------------
+
+struct CompiledExt2IntMap_Cry(FileFormat format) {
+    ChunkHeader headerInfo(format);
+    uint16 source[10];
+};
+
+//------------------------------------------------
+// Bones Boxes
+//------------------------------------------------
+
+struct BonesBoxes_Cry(FileFormat format) {
+    ChunkHeader headerInfo(format);
+    // Structure TBD based on actual file analysis
+};
+
+#endif // CHUNKS_BONES_BT

@@ -1,0 +1,153 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Node.bt
+//   Authors: Geoff Gerber
+//   Purpose: Node structures for all CryEngine formats
+//------------------------------------------------
+
+#ifndef CHUNKS_NODE_BT
+#define CHUNKS_NODE_BT
+
+#include "../core/BaseTypes.bt"
+#include "../core/Enums.bt"
+#include "../display/PrintFunctions.bt"
+#include "Header.bt"
+
+//------------------------------------------------
+// Node Chunk - CryTek/CrChF format
+//------------------------------------------------
+
+struct NodeChunk_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    char name[64];
+    uint objectNodeId <format=hex>;
+    uint parentNodeId <format=hex>;
+    uint numChildren;
+    uint materialId <format=hex>;
+    uint skipBytes;
+    Matrix4x4 transform <comment=PrintMatrix4x4>;
+    Vector3 position <comment=PrintVector3>;
+    Quaternion rotation <comment=PrintQuaternion>;
+    Vector3 scale <comment=PrintVector3>;
+    int controllerPos <format=hex>;
+    int rotationPos <format=hex>;
+    int scalePos <format=hex>;
+    int propertyStringLength <format=hex>;
+};
+
+string GetNodeName_Cry(NodeChunk_Cry &chunk) {
+    string result;
+    SPrintf(result, "Name = %s", chunk.name);
+    return result;
+}
+
+//------------------------------------------------
+// Node Name - Ivo format
+//------------------------------------------------
+
+struct NodeName_Ivo {
+    string nodeName;
+};
+
+string PrintNodeName_Ivo(NodeName_Ivo &nodeName) {
+    string result;
+    SPrintf(result, "Node Name: %s", nodeName.nodeName);
+    return result;
+}
+
+//------------------------------------------------
+// Some Node Info - Ivo format
+//------------------------------------------------
+
+struct SomeNodeInfo_Ivo {
+    int parentId, otherId;
+    int someId;
+    int someZeros, someMoreZeros;
+    int data[9];
+};
+
+//------------------------------------------------
+// Ivo Transforms
+//------------------------------------------------
+
+struct IvoTransforms {
+    Matrix3x4 transMatGlobal <comment=PrintMat3x4Trans>;
+    Matrix3x4 transMatRelative <comment=PrintMat3x4Trans>;
+    Vector3 scaleComponent <comment=PrintVector3>;
+};
+
+//------------------------------------------------
+// Node Mesh Combo - Ivo format
+//------------------------------------------------
+
+struct NodeMeshCombo_Ivo {
+    IvoTransforms transforms;
+
+    uint id <format=hex>;
+    uint unknown <format=hex>;
+    ushort parentNodeIndex;
+    ushort geometryFlag <format=hex>;
+    BBox boundingBox <comment=PrintBBox>;
+    uint unkVals[4];
+    uint numVertices;
+    ushort numChildren;
+    ushort meshChunkId <format=hex>;
+
+    struct {
+        ushort unkShort;
+        ushort unkShort2;
+        Vector3 unkVec1 <comment=PrintVector3>;
+        Vector3 unkVec2 <comment=PrintVector3>;
+        uint unkInt;
+        uint unkInt256;
+        uint unkInt0;
+    } unknownData;
+};
+
+string PrintNodeMeshCombo_Ivo(NodeMeshCombo_Ivo &node) {
+    string result;
+    SPrintf(result, "id: %x, unknown: %x, parentindex: %d, geometryFlag: %x, meshChunkId: %x",
+        node.id, node.unknown, node.parentNodeIndex, node.geometryFlag, node.meshChunkId);
+    return result;
+}
+
+//------------------------------------------------
+// Node Mesh Combo Chunk - Ivo format
+//------------------------------------------------
+
+struct NodeMeshComboChunk_Ivo {
+    uint zeroPad;
+    uint numNodes;
+    uint numMeshes;
+    uint unknown;
+    uint numMeshSubsets;
+    uint stringTableSize;
+    uint unknown2;
+    uint unknown3;
+
+    NodeMeshCombo_Ivo nodeMeshCombo[numNodes] <comment=PrintNodeMeshCombo_Ivo>;
+
+    ushort unknownIndices[unknown];
+    ushort materialIndices[numMeshSubsets];
+
+    local int i;
+    for (i = 0; i < numNodes; i++) {
+        NodeName_Ivo nodeName <comment=PrintNodeName_Ivo>;
+    }
+
+    local int pos = FTell();
+    if (pos % 4 != 0) {
+        byte skip[4 - (pos % 4)] <hidden=false>;
+    }
+};
+
+//------------------------------------------------
+// Unknown 21 Chunk
+//------------------------------------------------
+
+struct Unknown21_Cry(int size) {
+    char unknown[size];
+};
+
+#endif // CHUNKS_NODE_BT
