@@ -1,14 +1,16 @@
 //------------------------------------------------
 //--- 010 Editor v11.0 Binary Template
 //
-//      File: 
+//      File: CryEngine-Ivo.bt
 //   Authors: Geoffrey Gerber
-//   Version: 0.1
-//   Purpose: Star Citizen #ivo files
+//   Version: 0.2
+//   Purpose: Star Citizen #ivo files (CGF, SKIN, CAF, DBA)
 //  Category: Games
-// File Mask: #ivo
-//  ID Bytes: 4
-//   History: 
+// File Mask: *.cgf, *.skin, *.caf, *.dba
+//  ID Bytes: 23 69 76 6F
+//   History:
+//     0.2 - Added CAF and DBA animation support
+//     0.1 - Initial version
 //------------------------------------------------
 
 // Ivo files
@@ -16,9 +18,11 @@
 #include "CryengineIvo-Enums.bt"
 #include "CryengineIvo-Structs.bt"
 #include "CryengineIvo-Helpers.bt"
+#include "CryEngineIvo-Animation.bt"
 
 local uint pos;
-local int64 fileSize = FileSize() ;
+local int64 fileSize = FileSize();
+local char animSig[4];
 
 HEADER headerInfo <bgcolor=cLtBlue>;
 
@@ -70,7 +74,31 @@ for (index = 0; index < headerInfo.numChunks; index++) {
             NODEMESHCOMBOCHUNK NodeMeshCombo <bgcolor=cLtBlue>;
             break;
         };
+        case AnimationInfo: {
+            ANIM_INFO_CHUNK animInfo <bgcolor=cLtYellow, comment=PrintAnimInfo>;
+            break;
+        };
+        case CAFData: {
+            CAF_CHUNK cafChunk <bgcolor=cLtPurple, comment=PrintCAFChunk>;
+            break;
+        };
+        case DBAData: {
+            DBA_DATA_CHUNK dbaDataChunk <bgcolor=cDkAqua, comment=PrintDBADataChunk>;
+            break;
+        };
+        case DBA: {
+            DBA_METADATA_CHUNK dbaMetadataChunk <bgcolor=cLtRed, comment=PrintDBAMetadataChunk>;
+            break;
+        };
         default: {
+            // Check for #caf or #dba signature in case chunk type ID doesn't match enum
+            ReadBytes(animSig, FTell(), 4);
+            if (animSig[0] == '#' && animSig[1] == 'c' && animSig[2] == 'a' && animSig[3] == 'f') {
+                CAF_CHUNK cafChunk <bgcolor=cLtPurple, comment=PrintCAFChunk>;
+            }
+            else if (animSig[0] == '#' && animSig[1] == 'd' && animSig[2] == 'b' && animSig[3] == 'a') {
+                DBA_ANIMATION_BLOCK dbaBlock <bgcolor=cDkAqua, comment=PrintDBABlock>;
+            }
             break;
         }
     }

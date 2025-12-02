@@ -1,0 +1,251 @@
+//------------------------------------------------
+//--- 010 Editor v13.0.2 Binary Template
+//
+//      File: CryEngineIvo-Animation.bt
+//   Authors: Geoff Gerber
+//   Version: 0.2
+//   Purpose: Star Citizen IVO CAF/DBA Animation File structures
+//  Category: Games
+// File Mask: *.caf, *.dba
+//  ID Bytes:
+//   History:
+//     0.2 - Added DBA support
+//     0.1 - Initial CAF support
+//------------------------------------------------
+
+#ifndef ANIMATION_IVO_H
+#define ANIMATION_IVO_H
+
+#include "Cryengine-BaseTypes.bt"
+#include "CryengineIvo-Enums.bt"
+
+//===========================================
+// Animation Info Chunk (CAF files, Version 0x0901)
+// Size: 48 bytes (0x30)
+//===========================================
+struct ANIM_INFO_CHUNK {
+    uint32   flags;              // Usually 2
+    uint16   unknown1;           // Varies
+    uint16   numBones;           // Number of bones
+    uint32   unknown2;           // Usually 0
+    uint32   numPositionTracks;  // Number of bones with position data
+
+    // Bounding/scale values
+    float    boundMin[3];        // Bounding box min or special values
+    float    scale;              // Scale factor (~1.0)
+
+    // Precision value
+    double   precision;          // Very small double value
+
+    uint32   padding[2];         // Padding/reserved (zeros)
+};
+
+//===========================================
+// Controller Entry (shared by #caf and #dba)
+// Size: 24 bytes each
+//
+// Format Flags:
+//   High byte: 0x80 = rotation only, 0xC0 = has position
+//   Low byte compression format:
+//     0x42 = SmallTree48BitQuat (6 bytes/key)
+//     0x43 = SmallTree64BitQuat (8 bytes/key)
+//     0x00 = NoCompressQuat (16 bytes/key)
+//===========================================
+struct ANIM_CONTROLLER_ENTRY {
+    ubyte    numKeys;            // Number of keyframes
+    ubyte    padding;            // Always 0
+    uint16   formatFlags;        // 0x8042 = rot only, 0xC242 = has position
+    uint32   rotDataOffset;      // Offset to rotation data (relative)
+    uint32   rotTimeOffset;      // Offset to rotation time keys
+    uint32   posDataOffset;      // Offset to position data (0 if none)
+    uint32   posTimeOffset;      // Offset to position time keys (0 if none)
+    uint32   reserved;           // Reserved/padding
+};
+
+//===========================================
+// #caf / #dba Block Header (12 bytes)
+//===========================================
+struct ANIM_BLOCK_HEADER {
+    char     signature[4];       // "#caf" or "#dba"
+    ubyte    boneCount;          // Number of bones
+    ubyte    padding;            // Always 0
+    uint16   magic;              // 0xAA55
+    uint32   dataSize;           // Total size of block data (after header)
+};
+
+//===========================================
+// #caf Animation Block (single animation)
+//===========================================
+struct CAF_CHUNK {
+    ANIM_BLOCK_HEADER header <bgcolor=cLtBlue, comment=PrintAnimBlockHeader>;
+
+    local int numBones = header.boneCount;
+    local int64 blockStart = FTell() - 12;
+
+    // Bone hash array (CRC32 of bone names)
+    uint32 boneHashes[numBones] <bgcolor=cLtGreen, comment="CRC32 bone identifiers">;
+
+    // Controller entries
+    ANIM_CONTROLLER_ENTRY controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry>;
+
+    // Keyframe data
+    local int64 blockEnd = blockStart + 12 + header.dataSize;
+    local int keyframeDataSize = blockEnd - FTell();
+    if (keyframeDataSize > 0) {
+        ubyte keyframeData[keyframeDataSize] <bgcolor=cSilver, comment="Compressed keyframe data">;
+    }
+};
+
+//===========================================
+// #dba Animation Block (one animation in library)
+//===========================================
+struct DBA_ANIMATION_BLOCK {
+    ANIM_BLOCK_HEADER header <bgcolor=cLtBlue, comment=PrintAnimBlockHeader>;
+
+    local int numBones = header.boneCount;
+    local int64 blockStart = FTell() - 12;
+
+    // Bone hash array (CRC32 of bone names)
+    uint32 boneHashes[numBones] <bgcolor=cLtPurple, comment="CRC32 bone identifiers">;
+
+    // Controller entries
+    ANIM_CONTROLLER_ENTRY controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry>;
+
+    // Keyframe data
+    local int64 blockEnd = blockStart + 12 + header.dataSize;
+    local int keyframeDataSize = blockEnd - FTell();
+    if (keyframeDataSize > 0) {
+        ubyte keyframeData[keyframeDataSize] <bgcolor=cDkGray, comment="Compressed keyframe data">;
+    }
+};
+
+//===========================================
+// DBA Data Chunk (contains multiple #dba blocks)
+// Chunk ID: 0x194FBC50 (DBAData)
+//===========================================
+struct DBA_DATA_CHUNK {
+    uint32 totalDataSize <comment="Total size of all animation blocks">;
+
+    local int64 dataEnd = FTell() + totalDataSize - 4;
+    local int animIndex = 0;
+    local char sig[4];
+
+    // Parse #dba blocks until we reach the end
+    while (FTell() < dataEnd) {
+        ReadBytes(sig, FTell(), 4);
+        if (sig[0] == '#' && sig[1] == 'd' && sig[2] == 'b' && sig[3] == 'a') {
+            DBA_ANIMATION_BLOCK animation <comment=PrintDBABlock>;
+            animIndex++;
+        } else {
+            break;
+        }
+    }
+};
+
+//===========================================
+// DBA Metadata Entry (44 bytes each)
+// Note: All entries appear to be same size
+//===========================================
+struct DBA_META_ENTRY {
+    uint16   numKeys;            // Number of keyframes
+    uint16   boneCount;          // Number of bones
+    uint32   flags;              // Animation flags
+    uint32   pathLength;         // Length of path string
+    VECTOR3  startPosition;      // Start position
+    QUATERNION startRotation;    // Start rotation
+    uint32   padding;            // Padding/reserved
+};
+
+//===========================================
+// Animation Path String (null-terminated)
+//===========================================
+struct ANIM_PATH_STRING {
+    string path;
+};
+
+//===========================================
+// DBA Metadata Chunk
+// Chunk ID: 0xF7351608 (DBA)
+//===========================================
+struct DBA_METADATA_CHUNK {
+    uint32 animCount <comment="Number of animations in library">;
+    uint32 reserved;
+
+    // All entries are 44 bytes
+    DBA_META_ENTRY entries[animCount] <bgcolor=cLtRed, comment=PrintDBAMetaEntry>;
+
+    // String table - null-terminated animation paths
+    local int i;
+    for (i = 0; i < animCount; i++) {
+        ANIM_PATH_STRING animPath <bgcolor=cWhite, comment=PrintAnimPath>;
+    }
+};
+
+//===========================================
+// Helper/Print Functions
+//===========================================
+string PrintAnimInfo(ANIM_INFO_CHUNK &info) {
+    string result;
+    SPrintf(result, "Bones: %d, PosTracks: %d, Scale: %f",
+        info.numBones, info.numPositionTracks, info.scale);
+    return result;
+};
+
+string PrintAnimBlockHeader(ANIM_BLOCK_HEADER &hdr) {
+    string result;
+    SPrintf(result, "%c%c%c%c Bones: %d, Magic: 0x%04X, Size: %d",
+        hdr.signature[0], hdr.signature[1], hdr.signature[2], hdr.signature[3],
+        hdr.boneCount, hdr.magic, hdr.dataSize);
+    return result;
+};
+
+string PrintControllerEntry(ANIM_CONTROLLER_ENTRY &ctrl) {
+    string result;
+    if ((ctrl.formatFlags & 0xC000) == 0xC000) {
+        SPrintf(result, "Keys:%d Fmt:0x%04X Rot@0x%X Pos@0x%X",
+            ctrl.numKeys, ctrl.formatFlags, ctrl.rotDataOffset, ctrl.posDataOffset);
+    } else {
+        SPrintf(result, "Keys:%d Fmt:0x%04X Rot@0x%X (no pos)",
+            ctrl.numKeys, ctrl.formatFlags, ctrl.rotDataOffset);
+    }
+    return result;
+};
+
+string PrintCAFChunk(CAF_CHUNK &caf) {
+    string result;
+    SPrintf(result, "#caf - %d bones, %d bytes",
+        caf.header.boneCount, caf.header.dataSize);
+    return result;
+};
+
+string PrintDBABlock(DBA_ANIMATION_BLOCK &dba) {
+    string result;
+    SPrintf(result, "#dba - %d bones, %d bytes",
+        dba.header.boneCount, dba.header.dataSize);
+    return result;
+};
+
+string PrintDBAMetaEntry(DBA_META_ENTRY &entry) {
+    string result;
+    SPrintf(result, "Keys:%d Bones:%d PathLen:%d",
+        entry.numKeys, entry.boneCount, entry.pathLength);
+    return result;
+};
+
+string PrintDBADataChunk(DBA_DATA_CHUNK &chunk) {
+    string result;
+    SPrintf(result, "DBA Data: %d bytes", chunk.totalDataSize);
+    return result;
+};
+
+string PrintDBAMetadataChunk(DBA_METADATA_CHUNK &chunk) {
+    string result;
+    SPrintf(result, "DBA Metadata: %d animations", chunk.animCount);
+    return result;
+};
+
+string PrintAnimPath(ANIM_PATH_STRING &p) {
+    return p.path;
+};
+
+#endif
