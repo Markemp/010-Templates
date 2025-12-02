@@ -10,60 +10,147 @@ This repository contains 010 Editor binary templates (.bt files) for analyzing C
 
 ## Template Architecture
 
-### Entry Points
+### Unified Entry Point
 
-Three main entry point templates exist for different file formats:
+Use `CryengineUnified.bt` as the main entry point. It auto-detects file format via magic bytes:
 
-- **Cryengine.bt** - Universal entry point that auto-detects file type via magic bytes:
-  - `CryT` = CryEngine 3.4 format (MWO, ArcheAge)
-  - `CrCh` = CryEngine 3.8 format (Hunt: Showdown)
-  - `#ivo` = Star Citizen custom format (redirects to CryEngine-Ivo.bt)
+| Magic Bytes | Format | Suffix | Example Games |
+|-------------|--------|--------|---------------|
+| `CryT` | CryTek | `_CryTek` | MechWarrior Online, ArcheAge |
+| `CrCh` | CrChF | `_CrChF` | Hunt: Showdown |
+| `#ivo` | Ivo | `_Ivo` | Star Citizen |
 
-- **CryEngine-Ivo.bt** - Dedicated parser for Star Citizen #ivo files with different chunk structure
+### Directory Structure
 
-- **CryEngine-CryXmlB.bt** / **Cryengine-pbxml.bt** - Binary XML format parsers
+```
+010-Templates/
+├── CryengineUnified.bt      # Main entry point
+├── core/                    # Foundation modules
+│   ├── BaseTypes.bt         # Primitive types (Vector3, Matrix3x4, Quaternion, etc.)
+│   ├── Enums.bt             # Unified enums with format suffixes
+│   └── Utilities.bt         # Shared utilities (CryHalfToFloat, alignment)
+├── chunks/                  # Domain-specific chunk parsers
+│   ├── Header.bt            # File headers, chunk tables
+│   ├── Mesh.bt              # Mesh, datastreams, vertices
+│   ├── Bones.bt             # Skeleton, compiled bones
+│   ├── Materials.bt         # Materials, physics, helpers
+│   ├── Animation.bt         # Controllers, CAF/DBA
+│   └── Node.bt              # Node hierarchy
+├── display/
+│   └── PrintFunctions.bt    # 010 Editor comment functions
+└── [legacy files]           # Deprecated, kept for compatibility
+```
 
-### Shared Module Structure
+### Naming Conventions
 
-Templates use `#include` directives and header guards (`#ifndef/#define/#endif`) for modularity:
+| Element | Convention | Example |
+|---------|------------|---------|
+| Structs | PascalCase | `MeshChunk_Cry`, `CompiledBones_Ivo` |
+| Enums | PascalCase | `ChunkType_CryTek`, `DataStreamType_Ivo` |
+| Enum Values | PascalCase + suffix | `Mesh_CryTek`, `MeshInfo_Ivo` |
+| Functions | PascalCase | `PrintVector3`, `CryHalfToFloat` |
+| Variables | camelCase | `numChunks`, `bytesPerElement` |
+| Header Guards | SCREAMING_SNAKE + `_BT` | `CHUNKS_MESH_BT` |
 
-| File | Purpose |
-|------|---------|
-| `Cryengine-BaseTypes.bt` | Primitive types (VECTOR3, QUATERNION, MATRIX3x4, etc.) with custom read functions for normalized types (snorm, unorm) |
-| `Cryengine-Enums.bt` | Chunk types (CHUNKTYPE_UI, CHUNKTYPE_US), data stream types, vertex formats, compression formats |
-| `Cryengine-Structs.bt` | Main data structures (HEADER, CHUNKTABLE, MESHCHUNK, COMPILEDBONE, CONTROLLER_829/905, etc.) |
-| `Cryengine-Helpers.bt` | Print/comment functions for displaying parsed data in 010 Editor |
-| `Cryengine-Common.bt` | Shared utilities like CryHalfToFloat conversion |
+### Format Suffixes
 
-Star Citizen #ivo files have parallel modules:
-- `CryengineIvo-Enums.bt` - Different chunk types (0x-prefixed identifiers from reverse engineering)
-- `CryengineIvo-Structs.bt` - Ivo-specific structures (SKINMESH, NODEMESHCOMBOCHUNK, etc.)
-- `CryengineIvo-Helpers.bt` - Ivo-specific print functions
+- `_CryTek` - CryTek format only (CryT header, uint32 chunk types)
+- `_CrChF` - CrChF format only (CrCh header, uint16 chunk types)
+- `_Ivo` - Ivo format only (#ivo header, hash-based chunk types)
+- `_Cry` - Shared between CryTek and CrChF formats
 
-### Key Patterns
+## Key Patterns
 
-1. **Version-aware parsing**: Structures accept `FILETYPE` or version parameters to handle format differences:
-   ```c
-   struct HEADER(FILETYPE fileType) {
-       if (fileType == CRYENGINE_3_4) { ... }
-       else if (fileType == CRYENGINE_3_8) { ... }
-   }
-   ```
+### 1. Format-Parameterized Structs
 
-2. **Chunk-based format**: Files contain a header with chunk table, then chunks at specified offsets. Main parsing loop iterates chunk table and switches on chunk type.
+Structures that vary by format accept a `FileFormat` parameter:
 
-3. **Big/Little Endian handling**: Some formats (version 0x80000800) require `BigEndian()`/`LittleEndian()` toggling.
+```c
+struct Header(FileFormat format) {
+    switch (format) {
+        case CryTek:
+            // CryTek-specific layout
+            break;
+        case CrChF:
+            // CrChF-specific layout
+            break;
+        case Ivo:
+            // Ivo-specific layout
+            break;
+    }
+}
+```
 
-4. **Comment functions**: Every major struct has a corresponding `Print*` function for 010 Editor display (e.g., `PrintVector3`, `PrintBoneName`).
+### 2. Separate Enums Per Format
+
+Due to value collisions, chunk types are in separate enums:
+
+```c
+enum <uint32> ChunkType_CryTek {
+    Mesh_CryTek = 0xCCCC0000,
+    // ...
+};
+
+enum <uint16> ChunkType_CrChF {
+    Mesh_CrChF = 0x1000,
+    // ...
+};
+
+enum <uint32> ChunkType_Ivo {
+    MeshInfo_Ivo = 0x92914444,
+    // ...
+};
+```
+
+### 3. Big/Little Endian Handling
+
+Some CryTek format files (version 0x80000800) require endian toggling:
+
+```c
+if (chunkHeader.version == 0x80000800) {
+    BigEndian();
+}
+// ... parse data ...
+if (chunkHeader.version == 0x80000800) {
+    LittleEndian();
+}
+```
+
+### 4. Comment Functions
+
+Every major struct has a corresponding Print* function for 010 Editor display:
+
+```c
+string PrintVector3(Vector3 &v) {
+    string result;
+    SPrintf(result, "%f, %f, %f", v.x, v.y, v.z);
+    return result;
+}
+```
 
 ## Development Notes
 
-- When adding new chunk types, update both the enum and add a case in the main switch statement
-- Ivo datastream types are identified by magic uint32 values (e.g., `0x91329AE9` = IvoVertsUvs)
-- Alignment helpers exist: `AlignTo4()`, `AlignTo8ByteBoundary()`
-- Use `<comment=FunctionName>` and `<bgcolor=color>` attributes for 010 Editor visualization
+### Adding New Chunk Types
 
-## Planned Work (from README)
+1. Add enum value to `core/Enums.bt` with format suffix
+2. Create struct in appropriate `chunks/*.bt` file
+3. Add case to switch in `CryengineUnified.bt`
 
-- Consolidate the 3 entry points into a single root template
-- Split structs and common functions into more logical structure
+### Datastream Types
+
+- CryTek/CrChF use sequential values (0x0-0xF)
+- Ivo uses hash values (e.g., `0x91329AE9` = VertsUvs)
+- Check `IsIvoDataStreamType()` helper function
+
+### Alignment Helpers
+
+- `AlignTo4()` - Align to 4-byte boundary
+- `AlignTo8()` - Align to 8-byte boundary (common in Ivo)
+- `AlignToN(n)` - Align to n-byte boundary
+
+### Legacy Files
+
+These are deprecated but kept for compatibility:
+- `Cryengine.bt` - Old CryTek/CrChF entry point
+- `CryEngine-Ivo.bt` - Old Ivo entry point
+- `Cryengine-*.bt`, `CryengineIvo-*.bt` - Old module files
