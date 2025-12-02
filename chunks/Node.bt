@@ -9,10 +9,10 @@
 #ifndef CHUNKS_NODE_BT
 #define CHUNKS_NODE_BT
 
-#include "../core/BaseTypes.bt"
-#include "../core/Enums.bt"
-#include "../display/PrintFunctions.bt"
-#include "Header.bt"
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
 
 //------------------------------------------------
 // Node Chunk - CryTek/CrChF format

@@ -9,8 +9,8 @@
 #ifndef CHUNKS_HEADER_BT
 #define CHUNKS_HEADER_BT
 
-#include "../core/BaseTypes.bt"
-#include "../core/Enums.bt"
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
 
 //------------------------------------------------
 // File Header

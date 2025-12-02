@@ -9,8 +9,8 @@
 #ifndef DISPLAY_PRINTFUNCTIONS_BT
 #define DISPLAY_PRINTFUNCTIONS_BT
 
-#include "../core/BaseTypes.bt"
-#include "../core/Utilities.bt"
+#include "core/BaseTypes.bt"
+#include "core/Utilities.bt"
 
 //------------------------------------------------
 // Matrix Print Functions

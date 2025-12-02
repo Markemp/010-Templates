@@ -9,10 +9,10 @@
 #ifndef CHUNKS_MATERIALS_BT
 #define CHUNKS_MATERIALS_BT
 
-#include "../core/BaseTypes.bt"
-#include "../core/Enums.bt"
-#include "../display/PrintFunctions.bt"
-#include "Header.bt"
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
 
 //------------------------------------------------
 // Material Name - CryTek/CrChF format

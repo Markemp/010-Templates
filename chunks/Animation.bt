@@ -10,10 +10,10 @@
 #ifndef CHUNKS_ANIMATION_BT
 #define CHUNKS_ANIMATION_BT
 
-#include "../core/BaseTypes.bt"
-#include "../core/Enums.bt"
-#include "../display/PrintFunctions.bt"
-#include "Header.bt"
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
 
 //===========================================
 // CryTek/CrChF Animation Structures

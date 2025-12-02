@@ -9,11 +9,11 @@
 #ifndef CHUNKS_MESH_BT
 #define CHUNKS_MESH_BT
 
-#include "../core/BaseTypes.bt"
-#include "../core/Enums.bt"
-#include "../core/Utilities.bt"
-#include "../display/PrintFunctions.bt"
-#include "Header.bt"
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "core/Utilities.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
 
 //------------------------------------------------
 // Mesh Subset (shared structure)

@@ -9,7 +9,7 @@
 #ifndef CORE_UTILITIES_BT
 #define CORE_UTILITIES_BT
 
-#include "BaseTypes.bt"
+#include "core/BaseTypes.bt"
 
 //------------------------------------------------
 // CryHalf to Float Conversion
