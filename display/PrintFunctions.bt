@@ -1,0 +1,264 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: PrintFunctions.bt
+//   Authors: Geoff Gerber
+//   Purpose: Display/comment functions for 010 Editor visualization
+//------------------------------------------------
+
+#ifndef DISPLAY_PRINTFUNCTIONS_BT
+#define DISPLAY_PRINTFUNCTIONS_BT
+
+#include "../core/BaseTypes.bt"
+#include "../core/Utilities.bt"
+
+//------------------------------------------------
+// Matrix Print Functions
+//------------------------------------------------
+
+string PrintMatrix4x4(Matrix4x4 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]",
+        m.m11, m.m12, m.m13, m.m14,
+        m.m21, m.m22, m.m23, m.m24,
+        m.m31, m.m32, m.m33, m.m34,
+        m.m41, m.m42, m.m43, m.m44);
+    return result;
+}
+
+string PrintMatrix3x4(Matrix3x4 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f, %f] [%f, %f, %f, %f] [%f, %f, %f, %f]]",
+        m.m11, m.m12, m.m13, m.m14,
+        m.m21, m.m22, m.m23, m.m24,
+        m.m31, m.m32, m.m33, m.m34);
+    return result;
+}
+
+string PrintMat3x4Trans(Matrix3x4 &m) {
+    string result;
+    SPrintf(result, "[%f, %f, %f]", m.m14, m.m24, m.m34);
+    return result;
+}
+
+string PrintMatrix3x3(Matrix3x3 &m) {
+    string result;
+    SPrintf(result, "[[%f, %f, %f] [%f, %f, %f] [%f, %f, %f]]",
+        m.m11, m.m12, m.m13,
+        m.m21, m.m22, m.m23,
+        m.m31, m.m32, m.m33);
+    return result;
+}
+
+//------------------------------------------------
+// Vector Print Functions
+//------------------------------------------------
+
+string PrintVector3(Vector3 &v) {
+    string result;
+    SPrintf(result, "%f, %f, %f", v.x, v.y, v.z);
+    return result;
+}
+
+string PrintVector3Half(Vector3Half &v) {
+    string result;
+    SPrintf(result, "%f, %f, %f", v.x, v.y, v.z);
+    return result;
+}
+
+string PrintVector3CryHalf(Vector3CryHalf &v) {
+    string result;
+    SPrintf(result, "%f, %f, %f",
+        CryHalfToFloat(v.x), CryHalfToFloat(v.y), CryHalfToFloat(v.z));
+    return result;
+}
+
+string PrintVector3Snorm(Vector3Snorm &v) {
+    string result;
+    SPrintf(result, "%f, %f, %f", v.x / 32767.0, v.y / 32767.0, v.z / 32767.0);
+    return result;
+}
+
+string PrintVector4(Vector4 &v) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", v.x, v.y, v.z, v.w);
+    return result;
+}
+
+string PrintVector4Snorm(Vector4Snorm &v) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f",
+        Max(v.x / 32767.0, -1.0), Max(v.y / 32767.0, -1.0),
+        Max(v.z / 32767.0, -1.0), Max(v.w / 32767.0, -1.0));
+    return result;
+}
+
+string PrintVector4Bnorm(Vector4Bnorm &v) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f",
+        Max(v.x / 127.0, -1.0), Max(v.y / 127.0, -1.0),
+        Max(v.z / 127.0, -1.0), Max(v.w / 127.0, -1.0));
+    return result;
+}
+
+string PrintVector4Unorm(Vector4Unorm &v) {
+    string result;
+    SPrintf(result, "x: %f, y: %f, z: %f, w: %f",
+        Max(v.x / 32767.0, -1.0), Max(v.y / 32767.0, -1.0),
+        Max(v.z / 32767.0, -1.0), Max(v.w / 32767.0, -1.0));
+    return result;
+}
+
+//------------------------------------------------
+// Quaternion Print Functions
+//------------------------------------------------
+
+string PrintQuaternion(Quaternion &q) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", q.x, q.y, q.z, q.w);
+    return result;
+}
+
+//------------------------------------------------
+// Color Print Functions
+//------------------------------------------------
+
+string PrintColorRGBA(ColorRGBA &c) {
+    string result;
+    SPrintf(result, "%d, %d, %d, %d", c.r, c.g, c.b, c.a);
+    return result;
+}
+
+string PrintColorRGBAFloat(ColorRGBA &c) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0);
+    return result;
+}
+
+//------------------------------------------------
+// UV Print Functions
+//------------------------------------------------
+
+string PrintUV(UV &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+}
+
+string PrintUVHalf(UVHalf &uv) {
+    string result;
+    SPrintf(result, "%f, %f", uv.u, uv.v);
+    return result;
+}
+
+string PrintUVCryHalf(UVCryHalf &uv) {
+    string result;
+    SPrintf(result, "%f, %f", CryHalfToFloat(uv.u), CryHalfToFloat(uv.v));
+    return result;
+}
+
+//------------------------------------------------
+// Normal Print Functions
+//------------------------------------------------
+
+string PrintCryNormal(CryNormal &n) {
+    string result;
+    SPrintf(result, "%f, %f", n.x / 32767.0, n.y / 32767.0);
+    return result;
+}
+
+//------------------------------------------------
+// Tangent Print Functions
+//------------------------------------------------
+
+string PrintTangentByte(TangentByte &t) {
+    string result;
+    SPrintf(result, "%f, %f, %f, %f", t.x / 127.0, t.y / 127.0, t.z / 127.0, t.w / 127.0);
+    return result;
+}
+
+string PrintTangentBitangent(TangentBitangent &d) {
+    string result;
+    SPrintf(result, "Tangent: x: %f, y: %f, z: %f, w: %f, Bitangent: x: %f, y: %f, z: %f, w: %f",
+        d.tangent.x / 32767.0, d.tangent.y / 32767.0, d.tangent.z / 32767.0, d.tangent.w / 32767.0,
+        d.bitangent.x / 32767.0, d.bitangent.y / 32767.0, d.bitangent.z / 32767.0, d.bitangent.w / 32767.0);
+    return result;
+}
+
+//------------------------------------------------
+// Bounding Box Print Functions
+//------------------------------------------------
+
+string PrintBBox(BBox &bbox) {
+    string result;
+    SPrintf(result, "Min: %f, %f, %f, Max: %f, %f, %f",
+        bbox.min.x, bbox.min.y, bbox.min.z,
+        bbox.max.x, bbox.max.y, bbox.max.z);
+    return result;
+}
+
+//------------------------------------------------
+// CryHalf Print Functions
+//------------------------------------------------
+
+string PrintCryHalf(CryHalf &h) {
+    string result;
+    SPrintf(result, "x: %d, y: %d", h.x, h.y);
+    return result;
+}
+
+//------------------------------------------------
+// Animation Helper Functions
+//------------------------------------------------
+
+int GetRotationSize(ubyte format) {
+    switch (format) {
+        case eNoCompress:
+        case eNoCompressQuat:
+            return 16;  // 4 floats (w,x,y,z)
+        case eSmallTree48BitQuat:
+            return 6;
+        case eSmallTree64BitQuat:
+        case eSmallTree64BitExtQuat:
+            return 8;
+        default:
+            return 16;
+    }
+}
+
+int GetPositionSize(ubyte format) {
+    switch (format) {
+        case eNoCompress:
+        case eNoCompressVec3:
+            return 12;  // 3 floats (x,y,z)
+        default:
+            return 12;
+    }
+}
+
+int GetTimeKeySize(ubyte format) {
+    switch (format) {
+        case eF32:
+        case eF32StartStop:
+            return 4;
+        case eUINT16:
+        case eUINT16StartStop:
+        case eBitset:
+            return 2;
+        case eByte:
+        case eByteStartStop:
+            return 1;
+        default:
+            return 4;
+    }
+}
+
+//------------------------------------------------
+// Default Version Helper
+//------------------------------------------------
+
+uint SetDefaultVersion() {
+    return 0x0800;
+}
+
+#endif // DISPLAY_PRINTFUNCTIONS_BT
