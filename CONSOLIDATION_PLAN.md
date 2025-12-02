@@ -6,14 +6,24 @@ This document outlines the plan to consolidate the 010 Editor binary templates i
 
 | Category | Files | Lines |
 |----------|-------|-------|
-| Traditional CryEngine (3.4/3.8) | 5 files | 1,080 |
+| Traditional CryEngine (CryTek/CrChF) | 5 files | 1,080 |
 | Star Citizen Ivo | 5 files | 1,556 |
 | Shared/Base | 2 files | 715 |
 | **Total** | **13 files** | **3,351** |
 
 ### Entry Points Today
-- `Cryengine.bt` - Traditional formats (CryT, CrCh), plus redirect for #ivo
+- `Cryengine.bt` - Traditional formats (CryTek, CrChF headers), plus redirect for #ivo
 - `CryEngine-Ivo.bt` - Star Citizen #ivo files (CGF, SKIN, CAF, DBA)
+
+### Format Naming Convention
+
+Formats are named by their **magic header bytes**, not version numbers:
+
+| Magic Bytes | Format Name | Example Games |
+|-------------|-------------|---------------|
+| `CryT` | **CryTek** | MechWarrior Online, ArcheAge |
+| `CrCh` | **CrChF** | Hunt: Showdown |
+| `#ivo` | **Ivo** | Star Citizen |
 
 ### Key Conflicts Identified
 
@@ -71,7 +81,7 @@ Adopt C-style naming conventions for 010 Editor templates:
 |---------|------------|---------|
 | Structs | `PascalCase` | `MeshChunk`, `CompiledBone` |
 | Enums | `PascalCase` | `ChunkType`, `DataStreamType` |
-| Enum Values | `PascalCase` with format suffix | `Mesh_Cry34`, `Mesh_Ivo` |
+| Enum Values | `PascalCase` with format suffix | `Mesh_CryTek`, `Mesh_Ivo` |
 | Functions | `PascalCase` | `PrintVector3`, `CryHalfToFloat` |
 | Variables/Parameters | `camelCase` | `fileType`, `chunkVersion`, `numBones` |
 | Constants | `SCREAMING_SNAKE_CASE` | `MAX_BONE_COUNT` |
@@ -86,44 +96,44 @@ Adopt C-style naming conventions for 010 Editor templates:
 The same logical chunk types have different numeric values across formats:
 
 ```c
-// Traditional CryEngine 3.4 (uint32)
+// CryTek format (uint32) - "CryT" magic header
 Mesh_ui = 0xCCCC0000
 
-// Traditional CryEngine 3.8 (uint16)
+// CrChF format (uint16) - "CrCh" magic header
 Mesh_us = 0x1000
 
-// Star Citizen Ivo (uint32)
+// Ivo format (uint32) - "#ivo" magic header
 MeshChunk = 0x9293b9d8
 ```
 
 ### Solution: Format-Suffixed Enum Values
 
-Create unified enums with format-specific suffixes:
+Create unified enums with format-specific suffixes based on magic header bytes:
 
 ```c
 // core/Enums.bt - Unified Chunk Type Enum
 
 enum <uint32> ChunkType {
-    // CryEngine 3.4 format (suffix: _Cry34)
-    Mesh_Cry34              = 0xCCCC0000,
-    Node_Cry34              = 0xCCCC000B,
-    Controller_Cry34        = 0xCCCC000D,
-    CompiledBones_Cry34     = 0xCCCC1001,
+    // CryTek format (suffix: _CryTek) - "CryT" header, uint32 values
+    Mesh_CryTek              = 0xCCCC0000,
+    Node_CryTek              = 0xCCCC000B,
+    Controller_CryTek        = 0xCCCC000D,
+    CompiledBones_CryTek     = 0xACDC0000,
 
-    // CryEngine 3.8 format (suffix: _Cry38) - stored as uint16, cast to uint32
-    Mesh_Cry38              = 0x1000,
-    Node_Cry38              = 0x100B,
-    Controller_Cry38        = 0x100D,
-    CompiledBones_Cry38     = 0x1001,
+    // CrChF format (suffix: _CrChF) - "CrCh" header, uint16 values cast to uint32
+    Mesh_CrChF              = 0x1000,
+    Node_CrChF              = 0x100B,
+    Controller_CrChF        = 0x100D,
+    CompiledBones_CrChF     = 0x2000,
 
-    // Star Citizen Ivo format (suffix: _Ivo)
+    // Ivo format (suffix: _Ivo) - "#ivo" header, uint32 hash values
     MeshInfo_Ivo            = 0x92914444,
     MeshChunk_Ivo           = 0x9293B9D8,
     CompiledBones_Ivo       = 0xC201973C,
-    SkinMesh_Ivo            = 0x78B6E3C7,
-    NodeMeshCombo_Ivo       = 0x8F3F6E06,
-    AnimInfo_Ivo            = 0xB490E23E,
-    AnimController_Ivo      = 0x0E3D6C48,
+    SkinMesh_Ivo            = 0xB875B2D9,
+    NodeMeshCombo_Ivo       = 0x70697FDA,
+    AnimInfo_Ivo            = 0x4733C6ED,
+    DBAData_Ivo             = 0x194FBC50,
 };
 ```
 
@@ -133,24 +143,24 @@ Similar approach for datastream types:
 
 ```c
 enum <uint32> DataStreamType {
-    // Traditional sequential values (suffix: _Cry)
+    // Traditional sequential values (shared by CryTek and CrChF formats)
     Vertices_Cry        = 0x00,
     Normals_Cry         = 0x01,
     Uvs_Cry             = 0x02,
     Colors_Cry          = 0x03,
     Tangents_Cry        = 0x06,
-    BoneMap_Cry         = 0x08,
+    BoneMap_Cry         = 0x09,
     Indices_Cry         = 0x05,
     VertsUvs_Cry        = 0x0F,
 
     // Ivo magic hash values (suffix: _Ivo)
     VertsUvs_Ivo        = 0x91329AE9,
     Indices_Ivo         = 0xEECDC168,
-    Normals_Ivo         = 0xB872A3E8,
+    Normals_Ivo         = 0x9CF3F615,
     Normals2_Ivo        = 0x38A581FE,
-    Tangents_Ivo        = 0x33A931F2,
+    Tangents_Ivo        = 0xB95E9A1B,
     BoneMap_Ivo         = 0x677C7B23,
-    Colors_Ivo          = 0x22B38ED6,
+    Colors_Ivo          = 0xD9EED421,
 };
 ```
 
@@ -164,21 +174,21 @@ Where structs differ by format, use a `FileFormat` parameter:
 
 ```c
 enum FileFormat {
-    CryEngine34,
-    CryEngine38,
-    StarCitizenIvo
+    CryTek,      // "CryT" header - MWO, ArcheAge
+    CrChF,       // "CrCh" header - Hunt: Showdown
+    Ivo          // "#ivo" header - Star Citizen
 };
 
 struct Header(FileFormat format) {
     switch (format) {
-        case CryEngine34:
-        case CryEngine38:
+        case CryTek:
+        case CrChF:
             char signature[4];
             uint32 version;
             uint32 numChunks;
             uint32 chunkTableOffset;
             break;
-        case StarCitizenIvo:
+        case Ivo:
             char signature[4];
             uint32 version;
             uint32 numChunks;
@@ -300,13 +310,13 @@ local FileFormat detectedFormat;
 local char sig[4];
 ReadBytes(sig, 0, 4);
 
-// Detect format
+// Detect format based on magic header bytes
 if (sig == "#ivo") {
-    detectedFormat = StarCitizenIvo;
+    detectedFormat = Ivo;
 } else if (sig == "CryT") {
-    detectedFormat = CryEngine34;
+    detectedFormat = CryTek;
 } else if (sig == "CrCh") {
-    detectedFormat = CryEngine38;
+    detectedFormat = CrChF;
 }
 
 // Parse header
@@ -322,8 +332,8 @@ for (i = 0; i < header.numChunks; i++) {
 
     switch (chunkTable.entries[i].chunkType) {
         // Format-aware chunk parsing
-        case Mesh_Cry34:
-        case Mesh_Cry38:
+        case Mesh_CryTek:
+        case Mesh_CrChF:
             MeshChunk_Cry mesh(detectedFormat, chunkTable.entries[i].version);
             break;
         case MeshChunk_Ivo:
@@ -359,20 +369,20 @@ for (i = 0; i < header.numChunks; i++) {
 
 ### Test Files Required
 
-| Format | File Types | Example Games |
-|--------|------------|---------------|
-| CryEngine 3.4 | `.cgf`, `.chr`, `.skin`, `.caf` | MechWarrior Online, ArcheAge |
-| CryEngine 3.8 | `.cgf`, `.chr`, `.skin` | Hunt: Showdown |
-| Star Citizen Ivo | `.cgf`, `.skin`, `.caf`, `.dba` | Star Citizen |
+| Format | Magic | File Types | Example Games |
+|--------|-------|------------|---------------|
+| CryTek | `CryT` | `.cgf`, `.chr`, `.skin`, `.caf` | MechWarrior Online, ArcheAge |
+| CrChF | `CrCh` | `.cgf`, `.chr`, `.skin` | Hunt: Showdown |
+| Ivo | `#ivo` | `.cgf`, `.skin`, `.caf`, `.dba` | Star Citizen |
 
 ### Validation Checklist
 
-- [ ] CryT magic files parse correctly
-- [ ] CrCh magic files parse correctly
-- [ ] #ivo CGF files parse correctly
-- [ ] #ivo SKIN files parse correctly
-- [ ] #ivo CAF animation files parse correctly
-- [ ] #ivo DBA animation database files parse correctly
+- [ ] CryTek format (`CryT` magic) files parse correctly
+- [ ] CrChF format (`CrCh` magic) files parse correctly
+- [ ] Ivo format (`#ivo` magic) CGF files parse correctly
+- [ ] Ivo format SKIN files parse correctly
+- [ ] Ivo format CAF animation files parse correctly
+- [ ] Ivo format DBA animation database files parse correctly
 - [ ] All chunk types display proper comments in 010 Editor
 - [ ] No enum value collisions at runtime
 - [ ] All Print* functions display correctly
@@ -417,21 +427,19 @@ The README should be updated to:
 Parse CryEngine, Lumberyard, and O3DE game asset files.
 
 ## Supported Formats
-- CryEngine 3.4 (MechWarrior Online, ArcheAge)
-- CryEngine 3.8 (Hunt: Showdown)
-- Star Citizen (#ivo format)
+
+| Format | Magic Header | Example Games |
+|--------|--------------|---------------|
+| CryTek | `CryT` | MechWarrior Online, ArcheAge |
+| CrChF | `CrCh` | Hunt: Showdown |
+| Ivo | `#ivo` | Star Citizen |
 
 ## Quick Start
 1. Open 010 Editor
 2. File > Open Template > Cryengine.bt
-3. Open any supported binary file
+3. Open any supported binary file (.cgf, .chr, .skin, .caf, .dba)
 
-## File Format Detection
-| Magic Bytes | Format |
-|------------|--------|
-| `CryT` | CryEngine 3.4 |
-| `CrCh` | CryEngine 3.8 |
-| `#ivo` | Star Citizen |
+The template auto-detects the format based on the file's magic header bytes.
 
 ## Architecture
 [Brief architecture description with file layout]
