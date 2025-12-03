@@ -16,6 +16,26 @@
 #include "chunks/Header.bt"
 
 //------------------------------------------------
+// Bone Map Data (must be defined before DataStreamChunk)
+//------------------------------------------------
+
+struct BoneMapData(int bytesPerElement) {
+    if (bytesPerElement == 8) {
+        byte boneIndex[4];
+        ubyte weight[4];
+    } else if (bytesPerElement == 12) {
+        ushort boneIndex[4];
+        ubyte weight[4];
+    } else if (bytesPerElement == 16) {
+        ushort boneIndex[4];
+        float weight[4];
+    } else if (bytesPerElement == 24) {
+        uint boneIndex[4];
+        ushort weight[4];
+    }
+};
+
+//------------------------------------------------
 // Mesh Subset (shared structure)
 //------------------------------------------------
 
@@ -60,6 +80,12 @@ struct MeshSubsets_Cry(FileFormat format) {
         }
     }
 };
+
+string GetMeshSubsetsInfo_Cry(MeshSubsets_Cry &chunk) {
+    string result;
+    SPrintf(result, "Subsets: %d", chunk.numMeshSubsets);
+    return result;
+}
 
 //------------------------------------------------
 // Vertex + UV combined structure
@@ -186,7 +212,7 @@ struct IvoMeshSubset(uint32 chunkType) {
 // Mesh Info - Ivo format
 //------------------------------------------------
 
-struct MeshInfo_Ivo {
+struct MeshInfoData_Ivo {
     uint flags2;
     int numVertices;
     int numIndices;
@@ -204,7 +230,7 @@ struct MeshInfo_Ivo {
 // Mesh Chunk - Ivo format (older)
 //------------------------------------------------
 
-struct MeshChunk_Ivo {
+struct MeshChunkData_Ivo {
     uint flags2;
     int numVertices;
     int numIndices;
@@ -302,6 +328,12 @@ struct MeshChunk_Cry(FileFormat format, int chunkVersion) {
     }
 };
 
+string GetMeshInfo_Cry(MeshChunk_Cry &chunk) {
+    string result;
+    SPrintf(result, "Vertices: %d, Indices: %d", chunk.numVertices, chunk.numIndices);
+    return result;
+}
+
 //------------------------------------------------
 // Data Stream Chunk - CryTek/CrChF format
 //------------------------------------------------
@@ -349,7 +381,9 @@ struct DataStreamChunk_Cry(FileFormat format) {
                 Vector4Half tangent[numElements];
                 break;
             case BoneMaps_Cry:
-                BoneMapData boneMap(bytesPerElement)[numElements];
+                for (i = 0; i < numElements; i++) {
+                    BoneMapData boneMap(bytesPerElement);
+                }
                 break;
             case QTangents_Cry:
                 QTangent qtangents[numElements];
@@ -395,7 +429,9 @@ struct DataStreamChunk_Cry(FileFormat format) {
                 TangentBitangent tangent[numElements] <comment=PrintTangentBitangent>;
                 break;
             case BoneMaps_Cry:
-                BoneMapData boneMap(bytesPerElement)[numElements];
+                for (i = 0; i < numElements; i++) {
+                    BoneMapData boneMap(bytesPerElement);
+                }
                 break;
         }
 
@@ -405,25 +441,15 @@ struct DataStreamChunk_Cry(FileFormat format) {
     }
 };
 
-//------------------------------------------------
-// Bone Map Data
-//------------------------------------------------
-
-struct BoneMapData(int bytesPerElement) {
-    if (bytesPerElement == 8) {
-        byte boneIndex[4];
-        ubyte weight[4];
-    } else if (bytesPerElement == 12) {
-        ushort boneIndex[4];
-        ubyte weight[4];
-    } else if (bytesPerElement == 16) {
-        ushort boneIndex[4];
-        float weight[4];
-    } else if (bytesPerElement == 24) {
-        uint boneIndex[4];
-        ushort weight[4];
+string GetDataStreamType_Cry(DataStreamChunk_Cry &chunk) {
+    string result;
+    if (exists(chunk.datastreamType)) {
+        SPrintf(result, "Type: %s, Elements: %d", EnumToString(chunk.datastreamType), chunk.numElements);
+    } else {
+        result = "DataStream";
     }
-};
+    return result;
+}
 
 //------------------------------------------------
 // Ivo Bone Map
@@ -452,7 +478,7 @@ struct IvoBoneMapData(int numVertices) {
 // Skin Mesh - Ivo format
 //------------------------------------------------
 
-struct SkinMesh_Ivo(uint32 chunkType) {
+struct SkinMeshData_Ivo(uint32 chunkType) {
     uint flags;
     GeometryMeshDetails_Ivo geometryMeshDetails;
     char unknown2[92] <fgcolor=cAqua>;

@@ -214,12 +214,6 @@ struct CryNormal {
     short y;
 };
 
-string PrintCryNormal(CryNormal &vertex) {
-    string result;
-    SPrintf(result, "%f, %f", vertex.x / 32767.0, vertex.y / 32767.0);
-    return result;
-}
-
 //------------------------------------------------
 // Tangent types
 //------------------------------------------------

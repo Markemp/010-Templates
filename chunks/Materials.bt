@@ -225,7 +225,7 @@ struct StoredSkinningInfo {
 // LOD Distance - Ivo format
 //------------------------------------------------
 
-struct LODDistance_Ivo {
+struct LODDistanceData_Ivo {
     uint unknown;
     Vector3 unkBound1 <comment=PrintVector3>;
     Vector3 unkBound2 <comment=PrintVector3>;
@@ -235,7 +235,7 @@ struct LODDistance_Ivo {
 // StatObj Physics - Ivo format
 //------------------------------------------------
 
-struct StatObjPhysics_Ivo {
+struct StatObjPhysicsData_Ivo {
     uint baseIter;
     uint unkIter1;
     uint unkIter2;

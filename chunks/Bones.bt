@@ -159,7 +159,7 @@ struct BoneTransforms_Ivo {
 // Compiled Bones - Ivo format
 //------------------------------------------------
 
-struct CompiledBones_Ivo(int version) {
+struct CompiledBonesData_Ivo(int version) {
     local int i;
     if (version == 0x0900) {
         int numBones;
@@ -188,7 +188,7 @@ struct CompiledBones_Ivo(int version) {
 // Compiled Physical Bones - Ivo format
 //------------------------------------------------
 
-struct CompiledPhysicalBones_Ivo {
+struct CompiledPhysicalBonesData_Ivo {
     char physics[100];
 };
 

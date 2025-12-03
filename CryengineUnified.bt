@@ -37,6 +37,12 @@
 local uint i;
 local FileFormat detectedFormat;
 local char animSig[4];
+local uint chunkVersion;
+local uint chunkSize;
+local int boneSize;
+local uint chunkVersionCrChF;
+local uint chunkSizeCrChF;
+local int boneSizeCrChF;
 
 //------------------------------------------------
 // Detect file format from magic header
@@ -66,7 +72,12 @@ Header headerInfo(detectedFormat) <bgcolor=cLtBlue>;
 // Parse chunk table
 //------------------------------------------------
 
-FSeek(headerInfo.chunkTableOffset);
+// CryTek format requires +4 offset adjustment
+if (detectedFormat == CryTek) {
+    FSeek(headerInfo.chunkTableOffset + 4);
+} else {
+    FSeek(headerInfo.chunkTableOffset);
+}
 ChunkTable chunkTable(detectedFormat, headerInfo.numChunks);
 
 //------------------------------------------------
@@ -80,25 +91,25 @@ if (detectedFormat == Ivo) {
 
         switch (chunkTable.tableEntry[i].entry.chunkType) {
             case MeshInfo_Ivo:
-                MeshInfo_Ivo meshInfo <bgcolor=cPurple>;
+                MeshInfoData_Ivo meshInfo <bgcolor=cPurple>;
                 break;
 
             case MeshChunk_Ivo:
-                MeshChunk_Ivo meshChunk <bgcolor=cPurple>;
+                MeshChunkData_Ivo meshChunk <bgcolor=cPurple>;
                 break;
 
             case CompiledBones_Ivo:
             case CompiledBonesSkin_Ivo:
-                CompiledBones_Ivo compiledBones(chunkTable.tableEntry[i].entry.version) <bgcolor=cDkRed>;
+                CompiledBonesData_Ivo compiledBones(chunkTable.tableEntry[i].entry.version) <bgcolor=cDkRed>;
                 break;
 
             case CompiledPhysicalBones_Ivo:
-                CompiledPhysicalBones_Ivo compiledPhysicalBones <bgcolor=cLtGreen>;
+                CompiledPhysicalBonesData_Ivo compiledPhysicalBones <bgcolor=cLtGreen>;
                 break;
 
             case SkinMesh_Ivo:
             case SkinMesh2_Ivo:
-                SkinMesh_Ivo skinMesh(chunkTable.tableEntry[i].entry.chunkType);
+                SkinMeshData_Ivo skinMesh(chunkTable.tableEntry[i].entry.chunkType);
                 break;
 
             case MaterialInfo_Ivo:
@@ -107,11 +118,11 @@ if (detectedFormat == Ivo) {
                 break;
 
             case LODDistance_Ivo:
-                LODDistance_Ivo lodDistance <bgcolor=cLtBlue>;
+                LODDistanceData_Ivo lodDistance <bgcolor=cLtBlue>;
                 break;
 
             case StatObjPhysics_Ivo:
-                StatObjPhysics_Ivo statObjPhys <bgcolor=cLtGreen>;
+                StatObjPhysicsData_Ivo statObjPhys <bgcolor=cLtGreen>;
                 break;
 
             case NodeMeshCombos_Ivo:
@@ -150,11 +161,10 @@ if (detectedFormat == Ivo) {
     for (i = 0; i < headerInfo.numChunks; i++) {
         if (detectedFormat == CryTek) {
             FSeek(chunkTable.tableEntry[i].entry.offset);
-            local ChunkType_CryTek chunkType = chunkTable.tableEntry[i].entry.chunkType;
-            local uint chunkVersion = chunkTable.tableEntry[i].entry.version;
-            local uint chunkSize = chunkTable.tableEntry[i].entry.size;
+            chunkVersion = chunkTable.tableEntry[i].entry.version;
+            chunkSize = chunkTable.tableEntry[i].entry.size;
 
-            switch (chunkType) {
+            switch (chunkTable.tableEntry[i].entry.chunkType) {
                 case SourceInfo_CryTek:
                     SourceInfo_Cry sourceInfo(detectedFormat) <comment=PrintSourceInfo>;
                     break;
@@ -168,12 +178,12 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case CompiledBones_CryTek:
-                    local int boneSize = (chunkVersion == 0x0801) ? 324 : 584;
+                    boneSize = (chunkVersion == 0x0801) ? 324 : 584;
                     CompiledBones_Cry compiledBones((chunkSize - 32) / boneSize, chunkVersion, detectedFormat) <bgcolor=cDkRed>;
                     break;
 
                 case MtlName_CryTek:
-                    MtlName_Cry mtlName(detectedFormat, chunkVersion) <bgcolor=cDkGreen>;
+                    MtlName_Cry mtlName(detectedFormat, chunkVersion) <bgcolor=cDkGreen, comment=GetMaterialName_Cry>;
                     break;
 
                 case Node_CryTek:
@@ -181,15 +191,15 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case Mesh_CryTek:
-                    MeshChunk_Cry meshChunk(detectedFormat, chunkVersion) <bgcolor=cPurple>;
+                    MeshChunk_Cry meshChunk(detectedFormat, chunkVersion) <bgcolor=cPurple, comment=GetMeshInfo_Cry>;
                     break;
 
                 case MeshSubsets_CryTek:
-                    MeshSubsets_Cry meshSubsets(detectedFormat) <bgcolor=cLtBlue>;
+                    MeshSubsets_Cry meshSubsets(detectedFormat) <bgcolor=cLtBlue, comment=GetMeshSubsetsInfo_Cry>;
                     break;
 
                 case DataStream_CryTek:
-                    DataStreamChunk_Cry dataStream(detectedFormat) <bgcolor=cSilver>;
+                    DataStreamChunk_Cry dataStream(detectedFormat) <bgcolor=cSilver, comment=GetDataStreamType_Cry>;
                     break;
 
                 case CompiledIntSkinVertices_CryTek:
@@ -230,11 +240,10 @@ if (detectedFormat == Ivo) {
             }
         } else if (detectedFormat == CrChF) {
             FSeek(chunkTable.tableEntry[i].entry.offset);
-            local ChunkType_CrChF chunkTypeCrChF = chunkTable.tableEntry[i].entry.chunkType;
-            local uint chunkVersionCrChF = chunkTable.tableEntry[i].entry.version;
-            local uint chunkSizeCrChF = chunkTable.tableEntry[i].entry.size;
+            chunkVersionCrChF = chunkTable.tableEntry[i].entry.version;
+            chunkSizeCrChF = chunkTable.tableEntry[i].entry.size;
 
-            switch (chunkTypeCrChF) {
+            switch (chunkTable.tableEntry[i].entry.chunkType) {
                 case SourceInfo_CrChF:
                     SourceInfo_Cry sourceInfo(detectedFormat) <comment=PrintSourceInfo>;
                     break;
@@ -248,12 +257,12 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case CompiledBones_CrChF:
-                    local int boneSizeCrChF = (chunkVersionCrChF == 0x0801) ? 324 : 584;
+                    boneSizeCrChF = (chunkVersionCrChF == 0x0801) ? 324 : 584;
                     CompiledBones_Cry compiledBones((chunkSizeCrChF - 32) / boneSizeCrChF, chunkVersionCrChF, detectedFormat) <bgcolor=cDkRed>;
                     break;
 
                 case MtlName_CrChF:
-                    MtlName_Cry mtlName(detectedFormat, chunkVersionCrChF) <bgcolor=cDkGreen>;
+                    MtlName_Cry mtlName(detectedFormat, chunkVersionCrChF) <bgcolor=cDkGreen, comment=GetMaterialName_Cry>;
                     break;
 
                 case Node_CrChF:
@@ -261,15 +270,15 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case Mesh_CrChF:
-                    MeshChunk_Cry meshChunk(detectedFormat, chunkVersionCrChF) <bgcolor=cPurple>;
+                    MeshChunk_Cry meshChunk(detectedFormat, chunkVersionCrChF) <bgcolor=cPurple, comment=GetMeshInfo_Cry>;
                     break;
 
                 case MeshSubsets_CrChF:
-                    MeshSubsets_Cry meshSubsets(detectedFormat) <bgcolor=cLtBlue>;
+                    MeshSubsets_Cry meshSubsets(detectedFormat) <bgcolor=cLtBlue, comment=GetMeshSubsetsInfo_Cry>;
                     break;
 
                 case DataStream_CrChF:
-                    DataStreamChunk_Cry dataStream(detectedFormat) <bgcolor=cSilver>;
+                    DataStreamChunk_Cry dataStream(detectedFormat) <bgcolor=cSilver, comment=GetDataStreamType_Cry>;
                     break;
 
                 case CompiledIntSkinVertices_CrChF:
