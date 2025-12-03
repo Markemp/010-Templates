@@ -73,13 +73,22 @@ struct ChunkHeader(FileFormat format) {
 // Different structure per format
 //------------------------------------------------
 
-struct ChunkTableEntry_CryTek {
+struct ChunkTableEntry_CryTek(int fileVersion) {
     ChunkType_CryTek chunkType;
     uint version <format=hex>;
     uint offset <format=hex>;
     uint id <format=hex>;
-    uint size <format=hex>;
+    // Size field only present in version 0x745 and later
+    if (fileVersion >= 0x745) {
+        uint size <format=hex>;
+    }
 };
+
+string PrintChunkTableEntry_CryTek(ChunkTableEntry_CryTek &entry) {
+    string result;
+    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    return result;
+}
 
 struct ChunkTableEntry_CrChF {
     ChunkType_CrChF chunkType;
@@ -89,40 +98,56 @@ struct ChunkTableEntry_CrChF {
     uint offset <format=hex>;
 };
 
+string PrintChunkTableEntry_CrChF(ChunkTableEntry_CrChF &entry) {
+    string result;
+    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    return result;
+}
+
 struct ChunkTableEntry_Ivo {
     ChunkType_Ivo chunkType <format=hex>;
     uint version <format=hex>;
     uint64 offset <format=hex>;
 };
 
+string PrintChunkTableEntry_Ivo(ChunkTableEntry_Ivo &entry) {
+    string result;
+    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    return result;
+}
+
 //------------------------------------------------
 // Unified Chunk Table Entry
 // Wrapper that provides consistent access regardless of format
 //------------------------------------------------
 
-struct ChunkTableEntry(FileFormat format) {
+struct ChunkTableEntry(FileFormat format, int fileVersion) {
     switch (format) {
         case CryTek:
-            ChunkTableEntry_CryTek entry;
+            ChunkTableEntry_CryTek entry(fileVersion) <comment=PrintChunkTableEntry_CryTek>;
             break;
         case CrChF:
-            ChunkTableEntry_CrChF entry;
+            ChunkTableEntry_CrChF entry <comment=PrintChunkTableEntry_CrChF>;
             break;
         case Ivo:
-            ChunkTableEntry_Ivo entry;
+            ChunkTableEntry_Ivo entry <comment=PrintChunkTableEntry_Ivo>;
             break;
     }
 };
+
+string PrintChunkTableEntry(ChunkTableEntry &tableEntry) {
+    return EnumToString(tableEntry.entry.chunkType);
+}
 
 //------------------------------------------------
 // Chunk Table
 // Array of chunk table entries
 //------------------------------------------------
 
-struct ChunkTable(FileFormat format, int numChunks) {
+struct ChunkTable(FileFormat format, int numChunks, int fileVersion) {
     local int i;
     for (i = 0; i < numChunks; i++) {
-        ChunkTableEntry tableEntry(format);
+        ChunkTableEntry tableEntry(format, fileVersion) <comment=PrintChunkTableEntry>;
     }
 };
 

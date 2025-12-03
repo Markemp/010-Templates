@@ -86,10 +86,17 @@ string PrintBoneName_Cry(CompiledBone_Cry &bone) {
 //------------------------------------------------
 
 struct CompiledBones_Cry(int numBones, int chunkVersion, FileFormat format) {
+    local int boneCount = numBones;
     ChunkHeader headerInfo(format);
     char padding[32];
     CompiledBone_Cry compiledBone(chunkVersion)[numBones] <comment=PrintBoneName_Cry>;
 };
+
+string GetCompiledBonesInfo_Cry(CompiledBones_Cry &chunk) {
+    string result;
+    SPrintf(result, "Bones: %d", chunk.boneCount);
+    return result;
+}
 
 //------------------------------------------------
 // Compiled Physical Bone - CryTek/CrChF format

@@ -19,8 +19,15 @@
 //------------------------------------------------
 
 struct MtlName_Cry(FileFormat format, uint entryVersion) {
-    if (entryVersion == 0x0800) {
+    // CryTek format always has embedded chunk header
+    if (format == CryTek) {
         ChunkHeader chunkHeader(format);
+    }
+
+    if (entryVersion == 0x0800) {
+        if (format != CryTek) {
+            ChunkHeader chunkHeader(format);
+        }
         if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
             BigEndian();
         }

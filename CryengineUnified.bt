@@ -78,7 +78,7 @@ if (detectedFormat == CryTek) {
 } else {
     FSeek(headerInfo.chunkTableOffset);
 }
-ChunkTable chunkTable(detectedFormat, headerInfo.numChunks);
+ChunkTable chunkTable(detectedFormat, headerInfo.numChunks, headerInfo.version);
 
 //------------------------------------------------
 // Parse chunks based on format
@@ -162,7 +162,12 @@ if (detectedFormat == Ivo) {
         if (detectedFormat == CryTek) {
             FSeek(chunkTable.tableEntry[i].entry.offset);
             chunkVersion = chunkTable.tableEntry[i].entry.version;
-            chunkSize = chunkTable.tableEntry[i].entry.size;
+            // Size field only exists in v0x745+
+            if (headerInfo.version >= 0x745) {
+                chunkSize = chunkTable.tableEntry[i].entry.size;
+            } else {
+                chunkSize = 0;
+            }
 
             switch (chunkTable.tableEntry[i].entry.chunkType) {
                 case SourceInfo_CryTek:
@@ -170,7 +175,9 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case CompiledPhysicalBones_CryTek:
-                    CompiledPhysicalBones_Cry compiledPhysicalBones((chunkSize - 32) / 584, detectedFormat) <bgcolor=cLtGreen>;
+                    if (chunkSize > 0) {
+                        CompiledPhysicalBones_Cry compiledPhysicalBones((chunkSize - 32) / 584, detectedFormat) <bgcolor=cLtGreen>;
+                    }
                     break;
 
                 case CompiledPhysicalProxies_CryTek:
@@ -179,7 +186,9 @@ if (detectedFormat == Ivo) {
 
                 case CompiledBones_CryTek:
                     boneSize = (chunkVersion == 0x0801) ? 324 : 584;
-                    CompiledBones_Cry compiledBones((chunkSize - 32) / boneSize, chunkVersion, detectedFormat) <bgcolor=cDkRed>;
+                    if (chunkSize > 0) {
+                        CompiledBones_Cry compiledBones((chunkSize - 32) / boneSize, chunkVersion, detectedFormat) <bgcolor=cDkRed, comment=GetCompiledBonesInfo_Cry>;
+                    }
                     break;
 
                 case MtlName_CryTek:
@@ -258,7 +267,7 @@ if (detectedFormat == Ivo) {
 
                 case CompiledBones_CrChF:
                     boneSizeCrChF = (chunkVersionCrChF == 0x0801) ? 324 : 584;
-                    CompiledBones_Cry compiledBones((chunkSizeCrChF - 32) / boneSizeCrChF, chunkVersionCrChF, detectedFormat) <bgcolor=cDkRed>;
+                    CompiledBones_Cry compiledBones((chunkSizeCrChF - 32) / boneSizeCrChF, chunkVersionCrChF, detectedFormat) <bgcolor=cDkRed, comment=GetCompiledBonesInfo_Cry>;
                     break;
 
                 case MtlName_CrChF:

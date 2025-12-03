@@ -49,6 +49,12 @@ struct MeshSubset {
     Vector3 center <comment=PrintVector3>;
 };
 
+string PrintMeshSubset(MeshSubset &subset) {
+    string result;
+    SPrintf(result, "Verts: %d, Indices: %d, Mat: %d", subset.numVertices, subset.numIndices, subset.material);
+    return result;
+}
+
 //------------------------------------------------
 // Mesh Subsets Chunk - CryTek/CrChF
 //------------------------------------------------
@@ -62,7 +68,7 @@ struct MeshSubsets_Cry(FileFormat format) {
         int numMeshSubsets;
         int reserved[2];
         for (i = 0; i < numMeshSubsets; i++) {
-            MeshSubset meshSubset;
+            MeshSubset meshSubset <comment=PrintMeshSubset>;
         }
         int64 unknowns[numMeshSubsets] <hidden=false>;
     } else {
@@ -73,7 +79,7 @@ struct MeshSubsets_Cry(FileFormat format) {
         int numMeshSubsets;
         int reserved[2];
         for (i = 0; i < numMeshSubsets; i++) {
-            MeshSubset meshSubset;
+            MeshSubset meshSubset <comment=PrintMeshSubset>;
         }
         if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
             LittleEndian();
@@ -444,7 +450,7 @@ struct DataStreamChunk_Cry(FileFormat format) {
 string GetDataStreamType_Cry(DataStreamChunk_Cry &chunk) {
     string result;
     if (exists(chunk.datastreamType)) {
-        SPrintf(result, "Type: %s, Elements: %d", EnumToString(chunk.datastreamType), chunk.numElements);
+        SPrintf(result, "%s, Elements: %d, Size: %d bytes", EnumToString(chunk.datastreamType), chunk.numElements, chunk.bytesPerElement);
     } else {
         result = "DataStream";
     }
