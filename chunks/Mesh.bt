@@ -1,0 +1,548 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Mesh.bt
+//   Authors: Geoff Gerber
+//   Purpose: Mesh-related structures for all CryEngine formats
+//------------------------------------------------
+
+#ifndef CHUNKS_MESH_BT
+#define CHUNKS_MESH_BT
+
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "core/Utilities.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
+
+//------------------------------------------------
+// Bone Map Data (must be defined before DataStreamChunk)
+//------------------------------------------------
+
+struct BoneMapData(int bytesPerElement) {
+    if (bytesPerElement == 8) {
+        byte boneIndex[4];
+        ubyte weight[4];
+    } else if (bytesPerElement == 12) {
+        ushort boneIndex[4];
+        ubyte weight[4];
+    } else if (bytesPerElement == 16) {
+        ushort boneIndex[4];
+        float weight[4];
+    } else if (bytesPerElement == 24) {
+        uint boneIndex[4];
+        ushort weight[4];
+    }
+};
+
+//------------------------------------------------
+// Mesh Subset (shared structure)
+//------------------------------------------------
+
+struct MeshSubset {
+    int firstIndex;
+    int numIndices;
+    int firstVertex;
+    int numVertices;
+    int material;
+    float radius;
+    Vector3 center <comment=PrintVector3>;
+};
+
+string PrintMeshSubset(MeshSubset &subset) {
+    string result;
+    SPrintf(result, "Verts: %d, Indices: %d, Mat: %d", subset.numVertices, subset.numIndices, subset.material);
+    return result;
+}
+
+//------------------------------------------------
+// Mesh Subsets Chunk - CryTek/CrChF
+//------------------------------------------------
+
+struct MeshSubsets_Cry(FileFormat format) {
+    local int i;
+    ChunkHeader chunkHeader(format);
+
+    if (format == CrChF) {
+        uint flags;
+        int numMeshSubsets;
+        int reserved[2];
+        for (i = 0; i < numMeshSubsets; i++) {
+            MeshSubset meshSubset <comment=PrintMeshSubset>;
+        }
+        int64 unknowns[numMeshSubsets] <hidden=false>;
+    } else {
+        if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+            BigEndian();
+        }
+        uint flags;
+        int numMeshSubsets;
+        int reserved[2];
+        for (i = 0; i < numMeshSubsets; i++) {
+            MeshSubset meshSubset <comment=PrintMeshSubset>;
+        }
+        if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+            LittleEndian();
+        }
+    }
+};
+
+string GetMeshSubsetsInfo_Cry(MeshSubsets_Cry &chunk) {
+    string result;
+    SPrintf(result, "Subsets: %d", chunk.numMeshSubsets);
+    return result;
+}
+
+//------------------------------------------------
+// Vertex + UV combined structure
+//------------------------------------------------
+
+struct VertUV(int bytesPerElement) {
+    if (bytesPerElement == 16) {
+        Vector3CryHalf vertices <comment=PrintVector3CryHalf>;
+        byte skip[2];
+        ColorRGBA color <comment=PrintColorRGBA>;
+        UVHalf uv <comment=PrintUVHalf>;
+    } else if (bytesPerElement == 20) {
+        Vector3 vertices <comment=PrintVector3>;
+        ColorRGBA color <comment=PrintColorRGBA>;
+        UV uv <comment=PrintUV>;
+    }
+};
+
+//------------------------------------------------
+// Ivo-specific Vertex + UV structure
+//------------------------------------------------
+
+struct IvoVertUV {
+    Vector3Snorm vertices <comment=PrintVector3Snorm>;
+    short skip;
+    ColorRGBA color <comment=PrintColorRGBA>;
+    UVHalf uv <comment=PrintUVHalf>;
+};
+
+struct IvoVertsUVs(int numVertices) {
+    uint bytesPerElement;
+
+    if (bytesPerElement == 0x10) {
+        IvoVertUV vertUvs[numVertices];
+    } else if (bytesPerElement == 0x14) {
+        struct {
+            Vector3 vertex <comment=PrintVector3>;
+            ColorRGBA color <comment=PrintColorRGBA>;
+            UVHalf uv <comment=PrintUVHalf>;
+        } vertUvs[numVertices];
+    }
+
+    AlignTo8();
+};
+
+//------------------------------------------------
+// Ivo Indices
+//------------------------------------------------
+
+struct IvoIndices(int numIndices) {
+    uint bytesPerElement;
+    ushort indices[numIndices];
+    AlignTo8();
+};
+
+//------------------------------------------------
+// Ivo Colors
+//------------------------------------------------
+
+struct IvoColors(int numVertices) {
+    uint bytesPerElement;
+    ColorRGBA vertexColors[numVertices];
+    AlignTo8();
+};
+
+//------------------------------------------------
+// Ivo Normals
+//------------------------------------------------
+
+struct IvoNormal {
+    byte x;
+    byte y;
+    byte z;
+    byte w;
+};
+
+struct IvoNormals(int numVertices) {
+    uint bytesPerElement;
+    if (bytesPerElement == 4) {
+        CryNormal normal[numVertices] <comment=PrintCryNormal>;
+    }
+    AlignTo8();
+};
+
+//------------------------------------------------
+// Tangents
+//------------------------------------------------
+
+struct Tangents(int numVertices) {
+    uint bytesPerElement;
+    if (bytesPerElement == 8) {
+        Vector4Snorm qTangents[numVertices] <comment=PrintVector4Snorm>;
+    } else if (bytesPerElement == 16) {
+        Vector4Snorm tangents[numVertices] <comment=PrintVector4Snorm>;
+        Vector4Snorm bitangents[numVertices] <comment=PrintVector4Snorm>;
+    }
+    AlignTo8();
+};
+
+//------------------------------------------------
+// Ivo Mesh Subset
+//------------------------------------------------
+
+struct IvoMeshSubset(uint32 chunkType) {
+    ushort matId;
+    ushort meshParent;
+    uint firstIndex;
+    uint numIndices;
+    uint firstVertex;
+    if (chunkType == SkinMesh2_Ivo) {
+        uint unknown;
+    }
+    uint numVertices;
+    float radius;
+    Vector3 center <comment=PrintVector3>;
+    int unknown1 <format=hex>;
+    int unknown2 <format=hex>;
+    if (chunkType == SkinMesh_Ivo) {
+        uint unknown;
+    }
+};
+
+//------------------------------------------------
+// Mesh Info - Ivo format
+//------------------------------------------------
+
+struct MeshInfoData_Ivo {
+    uint flags2;
+    int numVertices;
+    int numIndices;
+    int numSubmeshes;
+    int unknown <format=hex>;
+    int unknown2 <format=hex>;
+    Vector3 minBound <comment=PrintVector3>;
+    Vector3 maxBound <comment=PrintVector3>;
+    int physicsDataChunkId[4];
+    int unknown3;
+    float texMappingDensity;
+};
+
+//------------------------------------------------
+// Mesh Chunk - Ivo format (older)
+//------------------------------------------------
+
+struct MeshChunkData_Ivo {
+    uint flags2;
+    int numVertices;
+    int numIndices;
+    int numSubmeshes;
+    int unknown <format=hex>;
+    Vector3 minBound <comment=PrintVector3>;
+    Vector3 maxBound <comment=PrintVector3>;
+    VertexFormat vertexFormat;
+};
+
+//------------------------------------------------
+// Geometry Mesh Details - Ivo format
+//------------------------------------------------
+
+struct GeometryMeshDetails_Ivo {
+    uint flags2;
+    int numVertices;
+    int numIndices;
+    int numSubmeshes;
+    int unknown <format=hex>;
+    BBox boundingBox <comment=PrintBBox>;
+    BBox scalingVectors <comment=PrintBBox>;
+    VertexFormat vertexFormat;
+};
+
+//------------------------------------------------
+// Mesh Chunk - CryTek/CrChF format
+//------------------------------------------------
+
+struct MeshChunk_Cry(FileFormat format, int chunkVersion) {
+    ChunkHeader chunkHeader(format);
+
+    if (chunkVersion == 0x0802) {
+        uint flags1;
+        uint flags2;
+        int numVertices;
+        int numIndices;
+        int numVertSubsets;
+        int meshSubsetsId;
+        int temp;
+        uint verticesData <format=hex>;
+        uint numBuffs <format=hex>;
+        uint normalsData <format=hex>;
+        uint uvsData <format=hex>;
+        uint colorsData <format=hex>;
+        uint colors2Data <format=hex>;
+        uint indicesData <format=hex>;
+        uint tangentsData <format=hex>;
+        uint shCoeffsData <format=hex>;
+        uint shapeDeformationData <format=hex>;
+        uint boneMapData <format=hex>;
+        uint faceMapData <format=hex>;
+        uint vertMatsData <format=hex>;
+        uint vertsUVData <format=hex>;
+        uint physicsData[4] <format=hex>;
+        Vector3 minBound <comment=PrintVector3>;
+        Vector3 maxBound <comment=PrintVector3>;
+        return;
+    }
+
+    if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+        BigEndian();
+    }
+
+    int flags1;
+    int flags2;
+    int numVertices;
+    int numIndices;
+    int numVertSubsets;
+    int meshSubsetsChunkId <format=hex>;
+    int vertsAnimId;
+    int verticesData <format=hex>;
+    int normalsData <format=hex>;
+    int uvsData <format=hex>;
+    int colorsData <format=hex>;
+    int colors2Data <format=hex>;
+    int indicesData <format=hex>;
+    int tangentsData <format=hex>;
+    int shCoeffsData <format=hex>;
+    int shapeDeformationData <format=hex>;
+    int boneMapData <format=hex>;
+    int faceMapData <format=hex>;
+    int vertMatsData <format=hex>;
+    int qTangents <format=hex>;
+    int skinData <format=hex>;
+    int dummy2 <format=hex>;
+    int vertsUVData <format=hex>;
+    int physicsData[4] <format=hex>;
+    BBox boundingBox <comment=PrintBBox>;
+    float texMappingDensity;
+    int reserved[31];
+
+    if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+        LittleEndian();
+    }
+};
+
+string GetMeshInfo_Cry(MeshChunk_Cry &chunk) {
+    string result;
+    SPrintf(result, "Vertices: %d, Indices: %d", chunk.numVertices, chunk.numIndices);
+    return result;
+}
+
+//------------------------------------------------
+// Data Stream Chunk - CryTek/CrChF format
+//------------------------------------------------
+
+struct DataStreamChunk_Cry(FileFormat format) {
+    local int i;
+    ChunkHeader chunkHeader(format);
+
+    if (format == CrChF) {
+        uint flags2;
+        DataStreamType_Cry datastreamType;
+        uint numElements;
+        ushort bytesPerElement;
+        ushort scFlag;  // 0x0101 if using CryHalfs
+        uint flags[2];
+
+        switch (datastreamType) {
+            case Vertices_Cry:
+                for (i = 0; i < numElements; i++) {
+                    Vector3 vertices <comment=PrintVector3>;
+                }
+                break;
+            case VertsUvs_Cry:
+                for (i = 0; i < numElements; i++) {
+                    VertUV vertsUvs(bytesPerElement);
+                }
+                break;
+            case Normals_Cry:
+                if (bytesPerElement == 12) {
+                    Vector3 normals[numElements] <comment=PrintVector3>;
+                } else if (bytesPerElement == 4) {
+                    CryHalf normals[numElements] <comment=PrintCryHalf>;
+                }
+                break;
+            case Uvs_Cry:
+                UV uv[numElements] <comment=PrintUV>;
+                break;
+            case Colors_Cry:
+                ColorRGBA colors[numElements] <comment=PrintColorRGBA>;
+                break;
+            case Indices_Cry:
+                uint16 indices[numElements];
+                break;
+            case Tangents_Cry:
+                Vector4Half tangent[numElements];
+                break;
+            case BoneMaps_Cry:
+                for (i = 0; i < numElements; i++) {
+                    BoneMapData boneMap(bytesPerElement);
+                }
+                break;
+            case QTangents_Cry:
+                QTangent qtangents[numElements];
+                break;
+        }
+    } else {
+        // CryTek format
+        if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+            BigEndian();
+        }
+
+        uint flags2;
+        DataStreamType_Cry datastreamType;
+        uint numElements;
+        uint bytesPerElement;
+        uint reserved1;
+        uint reserved2;
+
+        switch (datastreamType) {
+            case Vertices_Cry:
+                for (i = 0; i < numElements; i++) {
+                    Vector3 vertices <comment=PrintVector3>;
+                }
+                break;
+            case VertsUvs_Cry:
+                for (i = 0; i < numElements; i++) {
+                    VertUV vertsUvs(bytesPerElement);
+                }
+                break;
+            case Normals_Cry:
+                Vector3 normals[numElements] <comment=PrintVector3>;
+                break;
+            case Uvs_Cry:
+                UV uv[numElements] <comment=PrintUV>;
+                break;
+            case Colors_Cry:
+                ColorRGBA colors[numElements] <comment=PrintColorRGBA>;
+                break;
+            case Indices_Cry:
+                uint16 indices[numElements];
+                break;
+            case Tangents_Cry:
+                TangentBitangent tangent[numElements] <comment=PrintTangentBitangent>;
+                break;
+            case BoneMaps_Cry:
+                for (i = 0; i < numElements; i++) {
+                    BoneMapData boneMap(bytesPerElement);
+                }
+                break;
+        }
+
+        if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+            LittleEndian();
+        }
+    }
+};
+
+string GetDataStreamType_Cry(DataStreamChunk_Cry &chunk) {
+    string result;
+    if (exists(chunk.datastreamType)) {
+        SPrintf(result, "%s, Elements: %d, Size: %d bytes", EnumToString(chunk.datastreamType), chunk.numElements, chunk.bytesPerElement);
+    } else {
+        result = "DataStream";
+    }
+    return result;
+}
+
+//------------------------------------------------
+// Ivo Bone Map
+//------------------------------------------------
+
+struct IvoBoneMap(int bytesPerElement) {
+    if (bytesPerElement == 8) {
+        byte boneIndex[4];
+        byte weight[4];
+    } else if (bytesPerElement == 12) {
+        ushort boneIndex[4];
+        byte weight[4];
+    } else if (bytesPerElement == 24) {
+        uint boneIndex[4];
+        short weight[4];
+    }
+};
+
+struct IvoBoneMapData(int numVertices) {
+    uint bytesPerElement;
+    IvoBoneMap boneMap(bytesPerElement)[numVertices];
+    AlignTo8();
+};
+
+//------------------------------------------------
+// Skin Mesh - Ivo format
+//------------------------------------------------
+
+struct SkinMeshData_Ivo(uint32 chunkType) {
+    uint flags;
+    GeometryMeshDetails_Ivo geometryMeshDetails;
+    char unknown2[92] <fgcolor=cAqua>;
+    IvoMeshSubset meshSubsets(chunkType)[geometryMeshDetails.numSubmeshes] <bgcolor=cLtGreen>;
+
+    while (!FEof()) {
+        DataStreamType_Ivo type <hidden=true, fgcolor=cRed>;
+        while (!IsIvoDataStreamType(type)) {
+            if (!FEof()) {
+                DataStreamType_Ivo type <hidden=false>;
+            }
+        }
+        switch (type) {
+            case VertsUvs_Ivo:
+            case VertsUvsCGF_Ivo:
+                IvoVertsUVs vertsUvs(geometryMeshDetails.numVertices) <bgcolor=cLtBlue>;
+                break;
+            case Indices_Ivo:
+                IvoIndices indices(geometryMeshDetails.numIndices) <bgcolor=cDkBlue>;
+                break;
+            case Normals_Ivo:
+                IvoNormals normals(geometryMeshDetails.numVertices) <bgcolor=cBlue>;
+                break;
+            case Normals2_Ivo:
+                IvoNormals normals(geometryMeshDetails.numVertices) <bgcolor=cLtBlue>;
+                break;
+            case Colors2_Ivo:
+                IvoColors colors2(geometryMeshDetails.numVertices) <bgcolor=cBlue>;
+                break;
+            case Tangents_Ivo:
+            case TangentsCGF_Ivo:
+                Tangents tangents(geometryMeshDetails.numVertices) <bgcolor=cLtYellow>;
+                break;
+            case BoneMap_Ivo:
+            case BoneMap32_Ivo:
+                IvoBoneMapData bonemap(geometryMeshDetails.numVertices) <bgcolor=cLtGreen>;
+                break;
+            case Unknown3_Ivo:
+                struct {
+                    uint bytesPerElement;
+                    struct { byte x; byte y; } unk[geometryMeshDetails.numVertices];
+                    AlignTo8();
+                } ivoUnk3 <bgcolor=cBlue>;
+                break;
+        }
+    }
+};
+
+//------------------------------------------------
+// Mesh Physics - CryTek/CrChF format
+//------------------------------------------------
+
+struct MeshPhysics_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    uint chunkID;
+    uint numPoints;
+    uint numIndices;
+    uint numMaterials;
+};
+
+#endif // CHUNKS_MESH_BT

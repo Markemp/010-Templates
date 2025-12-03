@@ -1,0 +1,194 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Header.bt
+//   Authors: Geoff Gerber
+//   Purpose: File header and chunk table structures for all CryEngine formats
+//------------------------------------------------
+
+#ifndef CHUNKS_HEADER_BT
+#define CHUNKS_HEADER_BT
+
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+
+//------------------------------------------------
+// File Header
+// Varies by format type
+//------------------------------------------------
+
+struct Header(FileFormat format) {
+    switch (format) {
+        case CryTek:
+            char fileSig[8];                    // "CryTek" + padding
+            int fileType <format=hex>;
+            int version <format=hex>;
+            int chunkTableOffset <format=hex>;  // Location of chunk table
+            int numChunks;
+            break;
+
+        case CrChF:
+            char fileSig[4];                    // "CrCh"
+            int version <format=hex>;
+            int numChunks;
+            int chunkTableOffset <format=hex>;  // Location of chunk table
+            break;
+
+        case Ivo:
+            char fileSig[4];                    // "#ivo"
+            uint version;
+            uint numChunks;
+            int chunkTableOffset;               // Location of chunk table
+            break;
+    }
+};
+
+//------------------------------------------------
+// Chunk Header (embedded in chunk data)
+// Only present in CryTek format
+//------------------------------------------------
+
+struct ChunkHeader(FileFormat format) {
+    switch (format) {
+        case CryTek:
+            ChunkType_CryTek chunkType;
+            uint version <format=hex>;
+            uint offset <format=hex>;
+            uint id <format=hex>;
+            break;
+
+        case CrChF:
+            // CrChF format has no embedded chunk headers
+            local uint version = 0x0800;
+            break;
+
+        case Ivo:
+            // Ivo format has no embedded chunk headers
+            break;
+    }
+};
+
+//------------------------------------------------
+// Chunk Table Entry
+// Different structure per format
+//------------------------------------------------
+
+struct ChunkTableEntry_CryTek(int fileVersion) {
+    ChunkType_CryTek chunkType;
+    uint version <format=hex>;
+    uint offset <format=hex>;
+    uint id <format=hex>;
+    // Size field only present in version 0x745 and later
+    if (fileVersion >= 0x745) {
+        uint size <format=hex>;
+    }
+};
+
+string PrintChunkTableEntry_CryTek(ChunkTableEntry_CryTek &entry) {
+    string result;
+    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    return result;
+}
+
+struct ChunkTableEntry_CrChF {
+    ChunkType_CrChF chunkType;
+    ushort version <format=hex>;
+    uint id <format=hex>;
+    uint size <format=hex>;
+    uint offset <format=hex>;
+};
+
+string PrintChunkTableEntry_CrChF(ChunkTableEntry_CrChF &entry) {
+    string result;
+    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    return result;
+}
+
+struct ChunkTableEntry_Ivo {
+    ChunkType_Ivo chunkType <format=hex>;
+    uint version <format=hex>;
+    uint64 offset <format=hex>;
+};
+
+string PrintChunkTableEntry_Ivo(ChunkTableEntry_Ivo &entry) {
+    string result;
+    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    return result;
+}
+
+//------------------------------------------------
+// Unified Chunk Table Entry
+// Wrapper that provides consistent access regardless of format
+//------------------------------------------------
+
+struct ChunkTableEntry(FileFormat format, int fileVersion) {
+    switch (format) {
+        case CryTek:
+            ChunkTableEntry_CryTek entry(fileVersion) <comment=PrintChunkTableEntry_CryTek>;
+            break;
+        case CrChF:
+            ChunkTableEntry_CrChF entry <comment=PrintChunkTableEntry_CrChF>;
+            break;
+        case Ivo:
+            ChunkTableEntry_Ivo entry <comment=PrintChunkTableEntry_Ivo>;
+            break;
+    }
+};
+
+string PrintChunkTableEntry(ChunkTableEntry &tableEntry) {
+    return EnumToString(tableEntry.entry.chunkType);
+}
+
+//------------------------------------------------
+// Chunk Table
+// Array of chunk table entries
+//------------------------------------------------
+
+struct ChunkTable(FileFormat format, int numChunks, int fileVersion) {
+    local int i;
+    for (i = 0; i < numChunks; i++) {
+        ChunkTableEntry tableEntry(format, fileVersion) <comment=PrintChunkTableEntry>;
+    }
+};
+
+//------------------------------------------------
+// Helper functions to extract values from ChunkTableEntry
+//------------------------------------------------
+
+uint64 GetChunkOffset(ChunkTableEntry &entry, FileFormat format) {
+    switch (format) {
+        case CryTek:
+            return entry.entry.offset;
+        case CrChF:
+            return entry.entry.offset;
+        case Ivo:
+            return entry.entry.offset;
+    }
+    return 0;
+}
+
+uint GetChunkVersion(ChunkTableEntry &entry, FileFormat format) {
+    switch (format) {
+        case CryTek:
+            return entry.entry.version;
+        case CrChF:
+            return entry.entry.version;
+        case Ivo:
+            return entry.entry.version;
+    }
+    return 0;
+}
+
+uint GetChunkType(ChunkTableEntry &entry, FileFormat format) {
+    switch (format) {
+        case CryTek:
+            return entry.entry.chunkType;
+        case CrChF:
+            return entry.entry.chunkType;
+        case Ivo:
+            return entry.entry.chunkType;
+    }
+    return 0;
+}
+
+#endif // CHUNKS_HEADER_BT

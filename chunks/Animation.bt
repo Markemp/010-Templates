@@ -1,0 +1,482 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Animation.bt
+//   Authors: Geoff Gerber
+//   Purpose: Animation structures for all CryEngine formats
+//            Includes CAF/DBA support for Star Citizen Ivo format
+//------------------------------------------------
+
+#ifndef CHUNKS_ANIMATION_BT
+#define CHUNKS_ANIMATION_BT
+
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
+
+//===========================================
+// CryTek/CrChF Animation Structures
+//===========================================
+
+//------------------------------------------------
+// QuatT - Quaternion + Translation
+//------------------------------------------------
+
+struct QuatT {
+    Quaternion q;
+    Vector3 t;
+};
+
+//------------------------------------------------
+// Key Times Format Counts
+//------------------------------------------------
+
+struct KeyTimesFormatCounts {
+    uint32 eF32;
+    uint32 eUINT16;
+    uint32 eByte;
+    uint32 eF32StartStop;
+    uint32 eUINT16StartStop;
+    uint32 eByteStartStop;
+    uint32 eBitset;
+};
+
+//------------------------------------------------
+// Motion Parameters (v0905)
+//------------------------------------------------
+
+struct MotionParams905 {
+    uint32 assetFlags;
+    uint32 compression;
+    int32 ticksPerFrame;
+    float secsPerTick;
+    int32 start;
+    int32 end;
+    float moveSpeed;
+    float turnSpeed;
+    float assetTurn;
+    float distance;
+    float slope;
+    QuatT startLocation;
+    QuatT endLocation;
+    float lHeelStart;
+    float lHeelEnd;
+    float lToe0Start;
+    float lToe0End;
+    float rHeelStart;
+    float rHeelEnd;
+    float rToe0Start;
+    float rToe0End;
+};
+
+//------------------------------------------------
+// Controller Info (v0905)
+//------------------------------------------------
+
+struct CControllerInfo {
+    uint32 controllerID;
+    int32 posKeyTimeTrack;
+    int32 posTrack;
+    int32 rotKeyTimeTrack;
+    int32 rotTrack;
+};
+
+//------------------------------------------------
+// Animation Entry (v0905)
+//------------------------------------------------
+
+struct AnimationEntry {
+    uint16 filePathLength;
+    if (filePathLength > 0) {
+        char filePath[filePathLength];
+    }
+    MotionParams905 motionParams;
+    uint16 footPlantBitsCount;
+    if (footPlantBitsCount > 0) {
+        ubyte footPlantBits[footPlantBitsCount];
+    }
+    uint16 controllerCount;
+    CControllerInfo controllers[controllerCount];
+};
+
+//------------------------------------------------
+// Controller Chunk Desc (v0905)
+//------------------------------------------------
+
+struct ControllerChunkDesc905 {
+    uint32 numKeyPos;
+    uint32 numKeyRot;
+    uint32 numKeyTime;
+    uint32 numAnims;
+};
+
+//------------------------------------------------
+// Controller v0829 - CryTek/CrChF format
+//------------------------------------------------
+
+struct Controller829_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+
+    uint controllerId;
+    uint16 numRotationKeys;
+    uint16 numPositionKeys;
+    ubyte rotationFormat;
+    ubyte rotationTimeFormat;
+    ubyte positionFormat;
+    ubyte positionKeyInfo;
+    ubyte positionTimeFormat;
+    ubyte tracksAligned;
+
+    local int alignment = (tracksAligned != 0) ? 4 : 1;
+
+    // Rotation Data
+    if (numRotationKeys > 0) {
+        switch (rotationFormat) {
+            case eNoCompress:
+            case eNoCompressQuat:
+                NoCompressQuat rotationKeys[numRotationKeys];
+                break;
+            case eSmallTree48BitQuat:
+                SmallTree48BitQuat rotationKeys[numRotationKeys];
+                break;
+            case eSmallTree64BitQuat:
+            case eSmallTree64BitExtQuat:
+                SmallTree64BitQuat rotationKeys[numRotationKeys];
+                break;
+            default:
+                ubyte rotationData[numRotationKeys * GetRotationSize(rotationFormat)];
+                break;
+        }
+
+        if (tracksAligned != 0) {
+            local int pos = FTell();
+            local int padding = (4 - (pos % 4)) % 4;
+            if (padding > 0) {
+                ubyte rotationValuePadding[padding];
+            }
+        }
+
+        switch (rotationTimeFormat) {
+            case eF32:
+            case eF32StartStop:
+                F32KeyTime rotationTimes[numRotationKeys];
+                break;
+            case eUINT16:
+            case eUINT16StartStop:
+            case eBitset:
+                Uint16KeyTime rotationTimes[numRotationKeys];
+                break;
+            case eByte:
+            case eByteStartStop:
+                ByteKeyTime rotationTimes[numRotationKeys];
+                break;
+            default:
+                ubyte rotationTimeData[numRotationKeys * GetTimeKeySize(rotationTimeFormat)];
+                break;
+        }
+
+        if (tracksAligned != 0) {
+            local int pos = FTell();
+            local int padding = (4 - (pos % 4)) % 4;
+            if (padding > 0) {
+                ubyte rotationTimePadding[padding];
+            }
+        }
+    }
+
+    // Position Data
+    if (numPositionKeys > 0) {
+        switch (positionFormat) {
+            case eNoCompress:
+            case eNoCompressVec3:
+                Vector3 positionKeys[numPositionKeys];
+                break;
+            default:
+                ubyte positionData[numPositionKeys * GetPositionSize(positionFormat)];
+                break;
+        }
+
+        if (tracksAligned != 0) {
+            local int pos = FTell();
+            local int padding = (4 - (pos % 4)) % 4;
+            if (padding > 0) {
+                ubyte positionValuePadding[padding];
+            }
+        }
+
+        if (positionKeyInfo != 0) {
+            switch (positionTimeFormat) {
+                case eF32:
+                case eF32StartStop:
+                    F32KeyTime positionTimes[numPositionKeys];
+                    break;
+                case eUINT16:
+                case eUINT16StartStop:
+                case eBitset:
+                    Uint16KeyTime positionTimes[numPositionKeys];
+                    break;
+                case eByte:
+                case eByteStartStop:
+                    ByteKeyTime positionTimes[numPositionKeys];
+                    break;
+                default:
+                    ubyte positionTimeData[numPositionKeys * GetTimeKeySize(positionTimeFormat)];
+                    break;
+            }
+
+            if (tracksAligned != 0) {
+                local int pos = FTell();
+                local int padding = (4 - (pos % 4)) % 4;
+                if (padding > 0) {
+                    ubyte positionTimePadding[padding];
+                }
+            }
+        }
+    }
+};
+
+//------------------------------------------------
+// Controller v0905 - CryTek/CrChF format
+//------------------------------------------------
+
+struct Controller905_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+
+    ControllerChunkDesc905 header;
+
+    uint16 keyTimeSizes[header.numKeyTime];
+    KeyTimesFormatCounts keyTimeFormatCounts;
+    uint16 positionSizes[header.numKeyPos];
+    CompressionFormatCounts positionFormatCounts;
+    uint16 rotationSizes[header.numKeyRot];
+    CompressionFormatCounts rotationFormatCounts;
+
+    int32 keyTimeOffsets[header.numKeyTime];
+    int32 positionOffsets[header.numKeyPos];
+    int32 rotationOffsets[header.numKeyRot + 1];
+
+    local int pos = FTell();
+    local int padding = (4 - (pos % 4)) % 4;
+    if (padding > 0) {
+        ubyte alignPadding[padding];
+    }
+
+    local int trackDataStart = FTell();
+    local int trackDataSize = 0;
+    if (header.numKeyRot > 0) {
+        trackDataSize = rotationOffsets[header.numKeyRot];
+    }
+
+    if (trackDataSize > 0) {
+        ubyte trackData[trackDataSize];
+    }
+
+    struct {
+        local int i;
+        for (i = 0; i < header.numAnims; i++) {
+            AnimationEntry animation;
+        }
+    } animations;
+};
+
+//===========================================
+// Ivo Animation Structures (CAF/DBA)
+//===========================================
+
+//------------------------------------------------
+// Animation Info Chunk (CAF files, Version 0x0901)
+//------------------------------------------------
+
+struct AnimInfoChunk_Ivo {
+    uint32 flags;
+    uint16 unknown1;
+    uint16 numBones;
+    uint32 unknown2;
+    uint32 numPositionTracks;
+    float boundMin[3];
+    float scale;
+    double precision;
+    uint32 padding[2];
+};
+
+string PrintAnimInfo_Ivo(AnimInfoChunk_Ivo &info) {
+    string result;
+    SPrintf(result, "Bones: %d, PosTracks: %d, Scale: %f",
+        info.numBones, info.numPositionTracks, info.scale);
+    return result;
+}
+
+//------------------------------------------------
+// Controller Entry (shared by #caf and #dba)
+//------------------------------------------------
+
+struct AnimControllerEntry_Ivo {
+    ubyte numKeys;
+    ubyte padding;
+    uint16 formatFlags;
+    uint32 rotDataOffset;
+    uint32 rotTimeOffset;
+    uint32 posDataOffset;
+    uint32 posTimeOffset;
+    uint32 reserved;
+};
+
+string PrintControllerEntry_Ivo(AnimControllerEntry_Ivo &ctrl) {
+    string result;
+    if ((ctrl.formatFlags & 0xC000) == 0xC000) {
+        SPrintf(result, "Keys:%d Fmt:0x%04X Rot@0x%X Pos@0x%X",
+            ctrl.numKeys, ctrl.formatFlags, ctrl.rotDataOffset, ctrl.posDataOffset);
+    } else {
+        SPrintf(result, "Keys:%d Fmt:0x%04X Rot@0x%X (no pos)",
+            ctrl.numKeys, ctrl.formatFlags, ctrl.rotDataOffset);
+    }
+    return result;
+}
+
+//------------------------------------------------
+// Animation Block Header (12 bytes)
+//------------------------------------------------
+
+struct AnimBlockHeader_Ivo {
+    char signature[4];
+    ubyte boneCount;
+    ubyte padding;
+    uint16 magic;
+    uint32 dataSize;
+};
+
+string PrintAnimBlockHeader_Ivo(AnimBlockHeader_Ivo &hdr) {
+    string result;
+    SPrintf(result, "%c%c%c%c Bones: %d, Magic: 0x%04X, Size: %d",
+        hdr.signature[0], hdr.signature[1], hdr.signature[2], hdr.signature[3],
+        hdr.boneCount, hdr.magic, hdr.dataSize);
+    return result;
+}
+
+//------------------------------------------------
+// CAF Chunk (single animation)
+//------------------------------------------------
+
+struct CAFChunk_Ivo {
+    AnimBlockHeader_Ivo header <bgcolor=cLtBlue, comment=PrintAnimBlockHeader_Ivo>;
+
+    local int numBones = header.boneCount;
+    local int64 blockStart = FTell() - 12;
+
+    uint32 boneHashes[numBones] <bgcolor=cLtGreen, comment="CRC32 bone identifiers">;
+    AnimControllerEntry_Ivo controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry_Ivo>;
+
+    local int64 blockEnd = blockStart + 12 + header.dataSize;
+    local int keyframeDataSize = blockEnd - FTell();
+    if (keyframeDataSize > 0) {
+        ubyte keyframeData[keyframeDataSize] <bgcolor=cSilver, comment="Compressed keyframe data">;
+    }
+};
+
+string PrintCAFChunk_Ivo(CAFChunk_Ivo &caf) {
+    string result;
+    SPrintf(result, "#caf - %d bones, %d bytes",
+        caf.header.boneCount, caf.header.dataSize);
+    return result;
+}
+
+//------------------------------------------------
+// DBA Animation Block (one animation in library)
+//------------------------------------------------
+
+struct DBAAnimationBlock_Ivo {
+    AnimBlockHeader_Ivo header <bgcolor=cLtBlue, comment=PrintAnimBlockHeader_Ivo>;
+
+    local int numBones = header.boneCount;
+    local int64 blockStart = FTell() - 12;
+
+    uint32 boneHashes[numBones] <bgcolor=cLtPurple, comment="CRC32 bone identifiers">;
+    AnimControllerEntry_Ivo controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry_Ivo>;
+
+    local int64 blockEnd = blockStart + 12 + header.dataSize;
+    local int keyframeDataSize = blockEnd - FTell();
+    if (keyframeDataSize > 0) {
+        ubyte keyframeData[keyframeDataSize] <bgcolor=cDkGray, comment="Compressed keyframe data">;
+    }
+};
+
+string PrintDBABlock_Ivo(DBAAnimationBlock_Ivo &dba) {
+    string result;
+    SPrintf(result, "#dba - %d bones, %d bytes",
+        dba.header.boneCount, dba.header.dataSize);
+    return result;
+}
+
+//------------------------------------------------
+// DBA Data Chunk (contains multiple #dba blocks)
+//------------------------------------------------
+
+struct DBADataChunk_Ivo {
+    uint32 totalDataSize <comment="Total size of all animation blocks">;
+
+    local int64 dataEnd = FTell() + totalDataSize - 4;
+    local int animIndex = 0;
+    local char sig[4];
+
+    while (FTell() < dataEnd) {
+        ReadBytes(sig, FTell(), 4);
+        if (sig[0] == '#' && sig[1] == 'd' && sig[2] == 'b' && sig[3] == 'a') {
+            DBAAnimationBlock_Ivo animation <comment=PrintDBABlock_Ivo>;
+            animIndex++;
+        } else {
+            break;
+        }
+    }
+};
+
+//------------------------------------------------
+// DBA Metadata Entry (44 bytes each)
+//------------------------------------------------
+
+struct DBAMetaEntry_Ivo {
+    uint16 numKeys;
+    uint16 boneCount;
+    uint32 flags;
+    uint32 pathLength;
+    Vector3 startPosition;
+    Quaternion startRotation;
+    uint32 padding;
+};
+
+string PrintDBAMetaEntry_Ivo(DBAMetaEntry_Ivo &entry) {
+    string result;
+    SPrintf(result, "Keys:%d Bones:%d PathLen:%d",
+        entry.numKeys, entry.boneCount, entry.pathLength);
+    return result;
+}
+
+//------------------------------------------------
+// Animation Path String
+//------------------------------------------------
+
+struct AnimPathString_Ivo {
+    string path;
+};
+
+string PrintAnimPath_Ivo(AnimPathString_Ivo &p) {
+    return p.path;
+}
+
+//------------------------------------------------
+// DBA Metadata Chunk
+//------------------------------------------------
+
+struct DBAMetadataChunk_Ivo {
+    uint32 animCount <comment="Number of animations in library">;
+    uint32 reserved;
+
+    DBAMetaEntry_Ivo entries[animCount] <bgcolor=cLtRed, comment=PrintDBAMetaEntry_Ivo>;
+
+    local int i;
+    for (i = 0; i < animCount; i++) {
+        AnimPathString_Ivo animPath <bgcolor=cWhite, comment=PrintAnimPath_Ivo>;
+    }
+};
+
+#endif // CHUNKS_ANIMATION_BT

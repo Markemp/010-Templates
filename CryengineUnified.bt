@@ -1,0 +1,339 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: CryengineUnified.bt
+//   Authors: Geoff Gerber
+//   Version: 2.0
+//   Purpose: Unified CryEngine binary file parser
+//            Supports CryTek, CrChF, and Ivo formats
+//  Category: Games
+// File Mask: *.cgf, *.chr, *.skin, *.caf, *.dba
+//  ID Bytes:
+//   History:
+//     2.0 - Unified entry point for all formats
+//     1.x - Separate parsers for each format
+//------------------------------------------------
+
+// Core modules
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "core/Utilities.bt"
+
+// Chunk modules
+#include "chunks/Header.bt"
+#include "chunks/Mesh.bt"
+#include "chunks/Bones.bt"
+#include "chunks/Materials.bt"
+#include "chunks/Animation.bt"
+#include "chunks/Node.bt"
+
+// Display functions
+#include "display/PrintFunctions.bt"
+
+//------------------------------------------------
+// Local variables
+//------------------------------------------------
+
+local uint i;
+local FileFormat detectedFormat;
+local char animSig[4];
+local uint chunkVersion;
+local uint chunkSize;
+local int boneSize;
+local uint chunkVersionCrChF;
+local uint chunkSizeCrChF;
+local int boneSizeCrChF;
+
+//------------------------------------------------
+// Detect file format from magic header
+//------------------------------------------------
+
+char magic[4] <hidden=true>;
+
+if (magic[0] == '#' && magic[1] == 'i' && magic[2] == 'v' && magic[3] == 'o') {
+    detectedFormat = Ivo;
+} else if (magic[0] == 'C' && magic[1] == 'r' && magic[2] == 'y' && magic[3] == 'T') {
+    detectedFormat = CryTek;
+} else if (magic[0] == 'C' && magic[1] == 'r' && magic[2] == 'C' && magic[3] == 'h') {
+    detectedFormat = CrChF;
+} else {
+    Warning("Unknown file format: %c%c%c%c", magic[0], magic[1], magic[2], magic[3]);
+}
+
+FSeek(0);
+
+//------------------------------------------------
+// Parse header
+//------------------------------------------------
+
+Header headerInfo(detectedFormat) <bgcolor=cLtBlue>;
+
+//------------------------------------------------
+// Parse chunk table
+//------------------------------------------------
+
+// CryTek format requires +4 offset adjustment
+if (detectedFormat == CryTek) {
+    FSeek(headerInfo.chunkTableOffset + 4);
+} else {
+    FSeek(headerInfo.chunkTableOffset);
+}
+ChunkTable chunkTable(detectedFormat, headerInfo.numChunks, headerInfo.version);
+
+//------------------------------------------------
+// Parse chunks based on format
+//------------------------------------------------
+
+if (detectedFormat == Ivo) {
+    // Ivo format parsing
+    for (i = 0; i < headerInfo.numChunks; i++) {
+        FSeek(chunkTable.tableEntry[i].entry.offset);
+
+        switch (chunkTable.tableEntry[i].entry.chunkType) {
+            case MeshInfo_Ivo:
+                MeshInfoData_Ivo meshInfo <bgcolor=cPurple>;
+                break;
+
+            case MeshChunk_Ivo:
+                MeshChunkData_Ivo meshChunk <bgcolor=cPurple>;
+                break;
+
+            case CompiledBones_Ivo:
+            case CompiledBonesSkin_Ivo:
+                CompiledBonesData_Ivo compiledBones(chunkTable.tableEntry[i].entry.version) <bgcolor=cDkRed>;
+                break;
+
+            case CompiledPhysicalBones_Ivo:
+                CompiledPhysicalBonesData_Ivo compiledPhysicalBones <bgcolor=cLtGreen>;
+                break;
+
+            case SkinMesh_Ivo:
+            case SkinMesh2_Ivo:
+                SkinMeshData_Ivo skinMesh(chunkTable.tableEntry[i].entry.chunkType);
+                break;
+
+            case MaterialInfo_Ivo:
+            case MaterialName_Ivo:
+                MtlName_Ivo materialName <bgcolor=cDkGreen>;
+                break;
+
+            case LODDistance_Ivo:
+                LODDistanceData_Ivo lodDistance <bgcolor=cLtBlue>;
+                break;
+
+            case StatObjPhysics_Ivo:
+                StatObjPhysicsData_Ivo statObjPhys <bgcolor=cLtGreen>;
+                break;
+
+            case NodeMeshCombos_Ivo:
+                NodeMeshComboChunk_Ivo nodeMeshCombo <bgcolor=cLtBlue>;
+                break;
+
+            case AnimationInfo_Ivo:
+                AnimInfoChunk_Ivo animInfo <bgcolor=cLtYellow, comment=PrintAnimInfo_Ivo>;
+                break;
+
+            case CAFData_Ivo:
+                CAFChunk_Ivo cafChunk <bgcolor=cLtPurple, comment=PrintCAFChunk_Ivo>;
+                break;
+
+            case DBAData_Ivo:
+                DBADataChunk_Ivo dbaDataChunk <bgcolor=cDkAqua>;
+                break;
+
+            case DBA_Ivo:
+                DBAMetadataChunk_Ivo dbaMetadataChunk <bgcolor=cLtRed>;
+                break;
+
+            default:
+                // Check for #caf or #dba signature in case chunk type ID doesn't match enum
+                ReadBytes(animSig, FTell(), 4);
+                if (animSig[0] == '#' && animSig[1] == 'c' && animSig[2] == 'a' && animSig[3] == 'f') {
+                    CAFChunk_Ivo cafChunk <bgcolor=cLtPurple, comment=PrintCAFChunk_Ivo>;
+                } else if (animSig[0] == '#' && animSig[1] == 'd' && animSig[2] == 'b' && animSig[3] == 'a') {
+                    DBAAnimationBlock_Ivo dbaBlock <bgcolor=cDkAqua, comment=PrintDBABlock_Ivo>;
+                }
+                break;
+        }
+    }
+} else {
+    // CryTek and CrChF format parsing
+    for (i = 0; i < headerInfo.numChunks; i++) {
+        if (detectedFormat == CryTek) {
+            FSeek(chunkTable.tableEntry[i].entry.offset);
+            chunkVersion = chunkTable.tableEntry[i].entry.version;
+            // Size field only exists in v0x745+
+            if (headerInfo.version >= 0x745) {
+                chunkSize = chunkTable.tableEntry[i].entry.size;
+            } else {
+                chunkSize = 0;
+            }
+
+            switch (chunkTable.tableEntry[i].entry.chunkType) {
+                case SourceInfo_CryTek:
+                    SourceInfo_Cry sourceInfo(detectedFormat) <comment=PrintSourceInfo>;
+                    break;
+
+                case CompiledPhysicalBones_CryTek:
+                    if (chunkSize > 0) {
+                        CompiledPhysicalBones_Cry compiledPhysicalBones((chunkSize - 32) / 584, detectedFormat) <bgcolor=cLtGreen>;
+                    }
+                    break;
+
+                case CompiledPhysicalProxies_CryTek:
+                    CompiledPhysicalProxies_Cry compiledPhysicalProxy(detectedFormat);
+                    break;
+
+                case CompiledBones_CryTek:
+                    boneSize = (chunkVersion == 0x0801) ? 324 : 584;
+                    if (chunkSize > 0) {
+                        CompiledBones_Cry compiledBones((chunkSize - 32) / boneSize, chunkVersion, detectedFormat) <bgcolor=cDkRed, comment=GetCompiledBonesInfo_Cry>;
+                    }
+                    break;
+
+                case MtlName_CryTek:
+                    MtlName_Cry mtlName(detectedFormat, chunkVersion) <bgcolor=cDkGreen, comment=GetMaterialName_Cry>;
+                    break;
+
+                case Node_CryTek:
+                    NodeChunk_Cry nodeChunk(detectedFormat) <comment=GetNodeName_Cry, bgcolor=cDkPurple>;
+                    break;
+
+                case Mesh_CryTek:
+                    MeshChunk_Cry meshChunk(detectedFormat, chunkVersion) <bgcolor=cPurple, comment=GetMeshInfo_Cry>;
+                    break;
+
+                case MeshSubsets_CryTek:
+                    MeshSubsets_Cry meshSubsets(detectedFormat) <bgcolor=cLtBlue, comment=GetMeshSubsetsInfo_Cry>;
+                    break;
+
+                case DataStream_CryTek:
+                    DataStreamChunk_Cry dataStream(detectedFormat) <bgcolor=cSilver, comment=GetDataStreamType_Cry>;
+                    break;
+
+                case CompiledIntSkinVertices_CryTek:
+                    CompiledIntSkinVertices_Cry compiledIntSkinVertices(10, detectedFormat);
+                    break;
+
+                case CompiledExt2IntMap_CryTek:
+                    CompiledExt2IntMap_Cry compiledExt2IntMap(detectedFormat);
+                    break;
+
+                case Controller_CryTek:
+                    if (chunkVersion == 0x0829) {
+                        Controller829_Cry controller(detectedFormat);
+                    } else if (chunkVersion == 0x0905) {
+                        Controller905_Cry controller(detectedFormat);
+                    }
+                    break;
+
+                case Helper_CryTek:
+                    Helper_Cry helper(detectedFormat);
+                    break;
+
+                case SpeedInfo_CryTek:
+                    SpeedInfo_Cry speedInfo(detectedFormat) <bgcolor=cLtRed>;
+                    break;
+
+                case ExportFlags_CryTek:
+                    ExportFlags_Cry exportFlags(detectedFormat) <comment=PrintExportFlags>;
+                    break;
+
+                case TimingInfo_CryTek:
+                    TimingInfo_Cry timingInfo(detectedFormat) <comment=PrintTimingInfo>;
+                    break;
+
+                case MeshPhysicsData_CryTek:
+                    MeshPhysics_Cry meshPhysics(detectedFormat) <bgcolor=cLtGreen>;
+                    break;
+            }
+        } else if (detectedFormat == CrChF) {
+            FSeek(chunkTable.tableEntry[i].entry.offset);
+            chunkVersionCrChF = chunkTable.tableEntry[i].entry.version;
+            chunkSizeCrChF = chunkTable.tableEntry[i].entry.size;
+
+            switch (chunkTable.tableEntry[i].entry.chunkType) {
+                case SourceInfo_CrChF:
+                    SourceInfo_Cry sourceInfo(detectedFormat) <comment=PrintSourceInfo>;
+                    break;
+
+                case CompiledPhysicalBones_CrChF:
+                    CompiledPhysicalBones_Cry compiledPhysicalBones((chunkSizeCrChF - 32) / 584, detectedFormat) <bgcolor=cLtGreen>;
+                    break;
+
+                case CompiledPhysicalProxies_CrChF:
+                    CompiledPhysicalProxies_Cry compiledPhysicalProxy(detectedFormat);
+                    break;
+
+                case CompiledBones_CrChF:
+                    boneSizeCrChF = (chunkVersionCrChF == 0x0801) ? 324 : 584;
+                    CompiledBones_Cry compiledBones((chunkSizeCrChF - 32) / boneSizeCrChF, chunkVersionCrChF, detectedFormat) <bgcolor=cDkRed, comment=GetCompiledBonesInfo_Cry>;
+                    break;
+
+                case MtlName_CrChF:
+                    MtlName_Cry mtlName(detectedFormat, chunkVersionCrChF) <bgcolor=cDkGreen, comment=GetMaterialName_Cry>;
+                    break;
+
+                case Node_CrChF:
+                    NodeChunk_Cry nodeChunk(detectedFormat) <comment=GetNodeName_Cry, bgcolor=cDkPurple>;
+                    break;
+
+                case Mesh_CrChF:
+                    MeshChunk_Cry meshChunk(detectedFormat, chunkVersionCrChF) <bgcolor=cPurple, comment=GetMeshInfo_Cry>;
+                    break;
+
+                case MeshSubsets_CrChF:
+                    MeshSubsets_Cry meshSubsets(detectedFormat) <bgcolor=cLtBlue, comment=GetMeshSubsetsInfo_Cry>;
+                    break;
+
+                case DataStream_CrChF:
+                    DataStreamChunk_Cry dataStream(detectedFormat) <bgcolor=cSilver, comment=GetDataStreamType_Cry>;
+                    break;
+
+                case CompiledIntSkinVertices_CrChF:
+                    CompiledIntSkinVertices_Cry compiledIntSkinVertices(10, detectedFormat);
+                    break;
+
+                case CompiledExt2IntMap_CrChF:
+                    CompiledExt2IntMap_Cry compiledExt2IntMap(detectedFormat);
+                    break;
+
+                case Controller_CrChF:
+                    if (chunkVersionCrChF == 0x0829) {
+                        Controller829_Cry controller(detectedFormat);
+                    } else if (chunkVersionCrChF == 0x0905) {
+                        Controller905_Cry controller(detectedFormat);
+                    }
+                    break;
+
+                case Helper_CrChF:
+                    Helper_Cry helper(detectedFormat);
+                    break;
+
+                case SpeedInfo_CrChF:
+                    SpeedInfo_Cry speedInfo(detectedFormat) <bgcolor=cLtRed>;
+                    break;
+
+                case ExportFlags_CrChF:
+                    ExportFlags_Cry exportFlags(detectedFormat) <comment=PrintExportFlags>;
+                    break;
+
+                case TimingInfo_CrChF:
+                    TimingInfo_Cry timingInfo(detectedFormat) <comment=PrintTimingInfo>;
+                    break;
+
+                case Unknown11_CrChF:
+                    BBox unknown1 <bgcolor=cDkBlue, comment=PrintBBox>;
+                    break;
+
+                case Unknown21Anim_CrChF:
+                    Unknown21_Cry unknown21(chunkSizeCrChF) <bgcolor=cDkGreen>;
+                    break;
+
+                case MeshPhysicsData_CrChF:
+                    MeshPhysics_Cry meshPhysics(detectedFormat) <bgcolor=cLtGreen>;
+                    break;
+            }
+        }
+    }
+}

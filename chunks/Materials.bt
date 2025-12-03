@@ -1,0 +1,279 @@
+//------------------------------------------------
+//--- 010 Editor Binary Template
+//
+//      File: Materials.bt
+//   Authors: Geoff Gerber
+//   Purpose: Material structures for all CryEngine formats
+//------------------------------------------------
+
+#ifndef CHUNKS_MATERIALS_BT
+#define CHUNKS_MATERIALS_BT
+
+#include "core/BaseTypes.bt"
+#include "core/Enums.bt"
+#include "display/PrintFunctions.bt"
+#include "chunks/Header.bt"
+
+//------------------------------------------------
+// Material Name - CryTek/CrChF format
+//------------------------------------------------
+
+struct MtlName_Cry(FileFormat format, uint entryVersion) {
+    // CryTek format always has embedded chunk header
+    if (format == CryTek) {
+        ChunkHeader chunkHeader(format);
+    }
+
+    if (entryVersion == 0x0800) {
+        if (format != CryTek) {
+            ChunkHeader chunkHeader(format);
+        }
+        if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+            BigEndian();
+        }
+        MtlNameType mtlType;
+        int nFlags2;
+        char name[128];
+        int physicalizeType;
+        int numSubmaterials;
+        int subMaterialChunkID[32];
+        int advancedDataChunkID;
+        float opacity;
+        int reserved[32];
+        if (exists(chunkHeader.version) && chunkHeader.version == 0x80000800) {
+            LittleEndian();
+        }
+    } else if (entryVersion == 0x0802) {
+        char name[128];
+        int numSubmaterials;
+        MtlNamePhysicsType subMaterialChunkID[numSubmaterials];
+    } else if (entryVersion == 0x0804) {
+        char assetId[38];
+        char skip[26];
+        uint numMaterials;
+        int skip3[numMaterials];
+    }
+};
+
+string GetMaterialName_Cry(MtlName_Cry &chunk) {
+    string result;
+    if (exists(chunk.mtlType)) {
+        SPrintf(result, "Name: %s, Type: %s", chunk.name, EnumToString(chunk.mtlType));
+    } else {
+        SPrintf(result, "Name: %s, Submats: %i", chunk.name, chunk.numSubmaterials);
+    }
+    return result;
+}
+
+//------------------------------------------------
+// Material Name - Ivo format
+//------------------------------------------------
+
+struct MtlName_Ivo {
+    char name[128];
+};
+
+//------------------------------------------------
+// Source Info
+//------------------------------------------------
+
+struct SourceInfo_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    string sourceFile;
+    string fileDate;
+    string author;
+};
+
+string PrintSourceInfo(SourceInfo_Cry &info) {
+    string result;
+    SPrintf(result, "%s", info.sourceFile);
+    return result;
+}
+
+//------------------------------------------------
+// Export Flags
+//------------------------------------------------
+
+struct ExportFlags_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    uint skipBytes;
+    uint major;
+    uint minor;
+    uint build;
+    uint revision;
+    char rcVersionString[0x90];
+};
+
+string PrintExportFlags(ExportFlags_Cry &flags) {
+    string result;
+    SPrintf(result, "%s", flags.rcVersionString);
+    return result;
+}
+
+//------------------------------------------------
+// Timing Info
+//------------------------------------------------
+
+struct TimingInfo_Cry(FileFormat format) {
+    if (format == CryTek) {
+        ChunkHeader chunkHeader(format);
+    }
+    float secondsPerTick;
+    int ticksPerFrame;
+    char globalName[32];
+    int globalRangeStart;
+    int globalRangeEnd;
+    int numSubRanges;
+};
+
+string PrintTimingInfo(TimingInfo_Cry &info) {
+    string result;
+    SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
+    return result;
+}
+
+//------------------------------------------------
+// Speed Info
+//------------------------------------------------
+
+struct SpeedInfo_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    float speed;
+    float distance;
+    float slope;
+    int animFlags;
+    Vector3 moveDir <comment=PrintVector3>;
+    Quaternion startPosition;
+};
+
+//------------------------------------------------
+// Helper Chunk
+//------------------------------------------------
+
+struct Helper_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    HelperType type;
+    Vector3 size <comment=PrintVector3>;
+};
+
+//------------------------------------------------
+// Physical Proxy
+//------------------------------------------------
+
+struct PhysicalProxy_Cry(uint32 numVertices, uint32 numIndices, uint32 numMaterials) {
+    uint32 chunkID;
+    Vector3 vertex[numVertices];
+    uint16 index[numIndices];
+    char materials[numMaterials];
+};
+
+//------------------------------------------------
+// Compiled Physical Proxies
+//------------------------------------------------
+
+struct CompiledPhysicalProxies_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    if (chunkHeader.version == 0x0800 || chunkHeader.version == 0x0801) {
+        uint numProxies;
+        local uint i;
+        for (i = 0; i < numProxies; i++) {
+            uint id;
+            uint numVertices;
+            uint numIndices;
+            uint material;
+            Vector3 v;
+        }
+    }
+};
+
+//------------------------------------------------
+// Breakable Physics
+//------------------------------------------------
+
+struct BreakablePhysicsChunk_Cry {
+    uint granularity;
+    int nMode;
+    int nRetVtx;
+    int nRetTets;
+    int reserved[10];
+};
+
+//------------------------------------------------
+// Cry Link
+//------------------------------------------------
+
+struct CryLink {
+    int boneID;
+    Vector3 offset;
+    float blending;
+};
+
+//------------------------------------------------
+// Stored Skinning Info
+//------------------------------------------------
+
+struct StoredSkinningInfo {
+    int ticksPerFrame;
+    float secsPerTick;
+    int start;
+    int end;
+    float speed;
+    float distance;
+    float slope;
+    int assetFlags;
+    float lHeelStart, lHeelEnd;
+    float lToeStart, lToeEnd;
+    float rHeelStart, rHeelEnd;
+    float rToeStart, rToeEnd;
+    Vector3 moveDirection;
+};
+
+//------------------------------------------------
+// LOD Distance - Ivo format
+//------------------------------------------------
+
+struct LODDistanceData_Ivo {
+    uint unknown;
+    Vector3 unkBound1 <comment=PrintVector3>;
+    Vector3 unkBound2 <comment=PrintVector3>;
+};
+
+//------------------------------------------------
+// StatObj Physics - Ivo format
+//------------------------------------------------
+
+struct StatObjPhysicsData_Ivo {
+    uint baseIter;
+    uint unkIter1;
+    uint unkIter2;
+    uint unkIter3;
+    uint unkIter4;
+    uint unkIter5;
+    uint unkIter6;
+    uint unkIter7;
+    uint unkIter8;
+    uint unkIter9;
+    uint endIter;
+    uint unkVal1;
+    uint unkVal2;
+
+    struct PhysVecs {
+        ushort index1;
+        ushort unk;
+        uint unk1;
+    };
+
+    PhysVecs baseVec[baseIter * 2];
+    PhysVecs unk1Vec[unkIter1 * 2];
+    PhysVecs unk2Vec[unkIter2 * 2];
+    PhysVecs unk3Vec[unkIter3 * 2];
+    PhysVecs unk4Vec[unkIter4 * 2];
+    PhysVecs unk5Vec[unkIter5 * 2];
+    PhysVecs unk6Vec[unkIter6 * 2];
+    PhysVecs unk7Vec[unkIter7 * 2];
+    PhysVecs unk8Vec[unkIter8 * 2];
+    PhysVecs unk9Vec[unkIter9 * 2];
+    PhysVecs endVec[endIter * 2];
+};
+
+#endif // CHUNKS_MATERIALS_BT
