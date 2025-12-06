@@ -127,9 +127,8 @@ struct Controller829_Cry(FileFormat format) {
     ubyte positionKeyInfo;
     ubyte positionTimeFormat;
     ubyte tracksAligned;
-
-    local int alignment = (tracksAligned != 0) ? 4 : 1;
-
+    ushort padding;
+   
     // Rotation Data
     if (numRotationKeys > 0) {
         switch (rotationFormat) {
@@ -138,11 +137,13 @@ struct Controller829_Cry(FileFormat format) {
                 NoCompressQuat rotationKeys[numRotationKeys];
                 break;
             case eSmallTree48BitQuat:
-                SmallTree48BitQuat rotationKeys[numRotationKeys];
+                SmallTree48BitQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree48BitQuat>;
                 break;
             case eSmallTree64BitQuat:
+                SmallTree64BitQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree64BitQuat>;
+                break;
             case eSmallTree64BitExtQuat:
-                SmallTree64BitQuat rotationKeys[numRotationKeys];
+                SmallTree64BitExtQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree64BitExtQuat>;
                 break;
             default:
                 ubyte rotationData[numRotationKeys * GetRotationSize(rotationFormat)];
@@ -190,7 +191,7 @@ struct Controller829_Cry(FileFormat format) {
         switch (positionFormat) {
             case eNoCompress:
             case eNoCompressVec3:
-                Vector3 positionKeys[numPositionKeys];
+                Vector3 positionKeys[numPositionKeys] <comment=PrintVector3>;
                 break;
             default:
                 ubyte positionData[numPositionKeys * GetPositionSize(positionFormat)];

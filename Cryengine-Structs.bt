@@ -93,6 +93,15 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
   local int alignment = (tracksAligned != 0) ? 4 : 1;
   local int i;
 
+  // Align before first track data if tracksAligned is set
+  if (tracksAligned != 0) {
+      local int initialPos = FTell();
+      local int initialPadding = (4 - (initialPos % 4)) % 4;
+      if (initialPadding > 0) {
+          ubyte initialAlignmentPadding[initialPadding];
+      }
+  }
+
   // --- Rotation Data ---
   if (numberOfRotationKeys > 0) {
       // Rotation values
@@ -102,11 +111,13 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
               NoCompressQuat rotationKeys[numberOfRotationKeys];
               break;
           case eSmallTree48BitQuat:
-              SmallTree48BitQuat rotationKeys[numberOfRotationKeys];
+              SmallTree48BitQuat rotationKeys[numberOfRotationKeys] <comment=PrintSmallTree48BitQuat>;
               break;
           case eSmallTree64BitQuat:
+              SmallTree64BitQuat rotationKeys[numberOfRotationKeys] <comment=PrintSmallTree64BitQuat>;
+              break;
           case eSmallTree64BitExtQuat:
-              SmallTree64BitQuat rotationKeys[numberOfRotationKeys];
+              SmallTree64BitExtQuat rotationKeys[numberOfRotationKeys] <comment=PrintSmallTree64BitExtQuat>;
               break;
           default:
               ubyte rotationData[numberOfRotationKeys * GetRotationSize(rotationFormat)];
@@ -158,7 +169,7 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
       switch (positionFormat) {
           case eNoCompress:
           case eNoCompressVec3:
-              VECTOR3 positionKeys[numberOfPositionKeys];
+              VECTOR3 positionKeys[numberOfPositionKeys] <comment=PrintVector3>;
               break;
           default:
               ubyte positionData[numberOfPositionKeys * GetPositionSize(positionFormat)];

@@ -254,6 +254,10 @@ struct SmallTree64BitQuat {
   ubyte data[8];
 };
 
+struct SmallTree64BitExtQuat {
+  ubyte data[8];
+};
+
 // Time key structures
 struct F32KeyTime {
   float time;

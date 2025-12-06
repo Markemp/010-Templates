@@ -66,6 +66,198 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+string PrintSmallTree48BitQuat(SmallTree48BitQuat &q) {
+    // Decode SmallTree48BitQuat compression
+    // Constants from CryEngine
+    local float MAX_15BITf = 23170.0;
+    local float RANGE_15BIT = 0.707106781186;
+
+    // Reconstruct the 3 ushorts from raw bytes
+    local uint m1 = q.data[0] | ((uint)q.data[1] << 8);
+    local uint m2 = q.data[2] | ((uint)q.data[3] << 8);
+    local uint m3 = q.data[4] | ((uint)q.data[5] << 8);
+
+    // Combine into 64-bit value (use two 32-bit parts)
+    local uint low32 = (m2 << 16) | m1;
+    local uint high16 = m3;
+
+    // maxComponentIndex is at bits 46-47
+    local int maxIdx = (high16 >> 14) & 0x3;
+
+    // Extract three 15-bit packed values
+    local uint packed0 = low32 & 0x7FFF;
+    local uint packed1 = (low32 >> 15) & 0x7FFF;
+    local uint packed2 = ((low32 >> 30) | (high16 << 2)) & 0x7FFF;
+
+    // Decode the three packed values
+    local float decoded0 = packed0 / MAX_15BITf - RANGE_15BIT;
+    local float decoded1 = packed1 / MAX_15BITf - RANGE_15BIT;
+    local float decoded2 = packed2 / MAX_15BITf - RANGE_15BIT;
+
+    // Assign to component array based on maxIdx
+    local float comp0, comp1, comp2, comp3;
+    local int srcIdx = 0;
+    local int i;
+    for (i = 0; i < 4; i++) {
+        if (i == maxIdx) continue;
+        if (srcIdx == 0) {
+            if (i == 0) comp0 = decoded0;
+            else if (i == 1) comp1 = decoded0;
+            else if (i == 2) comp2 = decoded0;
+            else comp3 = decoded0;
+        } else if (srcIdx == 1) {
+            if (i == 0) comp0 = decoded1;
+            else if (i == 1) comp1 = decoded1;
+            else if (i == 2) comp2 = decoded1;
+            else comp3 = decoded1;
+        } else {
+            if (i == 0) comp0 = decoded2;
+            else if (i == 1) comp1 = decoded2;
+            else if (i == 2) comp2 = decoded2;
+            else comp3 = decoded2;
+        }
+        srcIdx++;
+    }
+
+    // Reconstruct the max component: sqrt(1 - sum of squares)
+    local float sqrsum = comp0*comp0 + comp1*comp1 + comp2*comp2 + comp3*comp3;
+    local float maxComp = Sqrt(Max(0.0, 1.0 - sqrsum));
+
+    if (maxIdx == 0) comp0 = maxComp;
+    else if (maxIdx == 1) comp1 = maxComp;
+    else if (maxIdx == 2) comp2 = maxComp;
+    else comp3 = maxComp;
+
+    string result;
+    SPrintf(result, "x: %.4f, y: %.4f, z: %.4f, w: %.4f", comp0, comp1, comp2, comp3);
+    return result;
+};
+
+string PrintSmallTree64BitQuat(SmallTree64BitQuat &q) {
+    // Decode SmallTree64BitQuat compression
+    local float MAX_20BITf = 741454.0;
+    local float RANGE_20BIT = 0.707106781186;
+
+    // Reconstruct the 2 uints from raw bytes
+    local uint m1 = q.data[0] | ((uint)q.data[1] << 8) | ((uint)q.data[2] << 16) | ((uint)q.data[3] << 24);
+    local uint m2 = q.data[4] | ((uint)q.data[5] << 8) | ((uint)q.data[6] << 16) | ((uint)q.data[7] << 24);
+
+    // maxComponentIndex is at bits 62-63 (in m2 bits 30-31)
+    local int maxIdx = (m2 >> 30) & 0x3;
+
+    // Extract three 20-bit packed values
+    local uint packed0 = m1 & 0xFFFFF;
+    local uint packed1 = ((m1 >> 20) | (m2 << 12)) & 0xFFFFF;
+    local uint packed2 = (m2 >> 8) & 0xFFFFF;
+
+    // Decode the three packed values
+    local float decoded0 = packed0 / MAX_20BITf - RANGE_20BIT;
+    local float decoded1 = packed1 / MAX_20BITf - RANGE_20BIT;
+    local float decoded2 = packed2 / MAX_20BITf - RANGE_20BIT;
+
+    // Assign to component array based on maxIdx
+    local float comp0, comp1, comp2, comp3;
+    local int srcIdx = 0;
+    local int i;
+    for (i = 0; i < 4; i++) {
+        if (i == maxIdx) continue;
+        if (srcIdx == 0) {
+            if (i == 0) comp0 = decoded0;
+            else if (i == 1) comp1 = decoded0;
+            else if (i == 2) comp2 = decoded0;
+            else comp3 = decoded0;
+        } else if (srcIdx == 1) {
+            if (i == 0) comp0 = decoded1;
+            else if (i == 1) comp1 = decoded1;
+            else if (i == 2) comp2 = decoded1;
+            else comp3 = decoded1;
+        } else {
+            if (i == 0) comp0 = decoded2;
+            else if (i == 1) comp1 = decoded2;
+            else if (i == 2) comp2 = decoded2;
+            else comp3 = decoded2;
+        }
+        srcIdx++;
+    }
+
+    // Reconstruct the max component
+    local float sqrsum = comp0*comp0 + comp1*comp1 + comp2*comp2 + comp3*comp3;
+    local float maxComp = Sqrt(Max(0.0, 1.0 - sqrsum));
+
+    if (maxIdx == 0) comp0 = maxComp;
+    else if (maxIdx == 1) comp1 = maxComp;
+    else if (maxIdx == 2) comp2 = maxComp;
+    else comp3 = maxComp;
+
+    string result;
+    SPrintf(result, "x: %.4f, y: %.4f, z: %.4f, w: %.4f", comp0, comp1, comp2, comp3);
+    return result;
+};
+
+string PrintSmallTree64BitExtQuat(SmallTree64BitExtQuat &q) {
+    // Decode SmallTree64BitExtQuat compression
+    // First two components use 21 bits, third uses 20 bits
+    local float MAX_20BITf = 741454.0;
+    local float RANGE_20BIT = 0.707106781186;
+    local float MAX_21BITf = 1482909.0;
+    local float RANGE_21BIT = 0.707106781186;
+
+    // Reconstruct the 2 uints from raw bytes
+    local uint m1 = q.data[0] | ((uint)q.data[1] << 8) | ((uint)q.data[2] << 16) | ((uint)q.data[3] << 24);
+    local uint m2 = q.data[4] | ((uint)q.data[5] << 8) | ((uint)q.data[6] << 16) | ((uint)q.data[7] << 24);
+
+    // maxComponentIndex is at bits 62-63 (in m2 bits 30-31)
+    local int maxIdx = (m2 >> 30) & 0x3;
+
+    // Extract packed values: 21 bits, 21 bits, 20 bits
+    local uint packed0 = m1 & 0x1FFFFF;
+    local uint packed1 = ((m1 >> 21) | (m2 << 11)) & 0x1FFFFF;
+    local uint packed2 = (m2 >> 10) & 0xFFFFF;
+
+    // Decode: first two use 21-bit constants, third uses 20-bit
+    local float decoded0 = packed0 / MAX_21BITf - RANGE_21BIT;
+    local float decoded1 = packed1 / MAX_21BITf - RANGE_21BIT;
+    local float decoded2 = packed2 / MAX_20BITf - RANGE_20BIT;
+
+    // Assign to component array based on maxIdx
+    local float comp0, comp1, comp2, comp3;
+    local int srcIdx = 0;
+    local int i;
+    for (i = 0; i < 4; i++) {
+        if (i == maxIdx) continue;
+        if (srcIdx == 0) {
+            if (i == 0) comp0 = decoded0;
+            else if (i == 1) comp1 = decoded0;
+            else if (i == 2) comp2 = decoded0;
+            else comp3 = decoded0;
+        } else if (srcIdx == 1) {
+            if (i == 0) comp0 = decoded1;
+            else if (i == 1) comp1 = decoded1;
+            else if (i == 2) comp2 = decoded1;
+            else comp3 = decoded1;
+        } else {
+            if (i == 0) comp0 = decoded2;
+            else if (i == 1) comp1 = decoded2;
+            else if (i == 2) comp2 = decoded2;
+            else comp3 = decoded2;
+        }
+        srcIdx++;
+    }
+
+    // Reconstruct the max component
+    local float sqrsum = comp0*comp0 + comp1*comp1 + comp2*comp2 + comp3*comp3;
+    local float maxComp = Sqrt(Max(0.0, 1.0 - sqrsum));
+
+    if (maxIdx == 0) comp0 = maxComp;
+    else if (maxIdx == 1) comp1 = maxComp;
+    else if (maxIdx == 2) comp2 = maxComp;
+    else comp3 = maxComp;
+
+    string result;
+    SPrintf(result, "x: %.4f, y: %.4f, z: %.4f, w: %.4f", comp0, comp1, comp2, comp3);
+    return result;
+};
+
 //string PrintCryNormal(CRYNORMAL &vertex) {
 //    string result;
 //    SPrintf(result, "%f, %f", vertex.x / 32767.0, vertex.y / 32767.0);
