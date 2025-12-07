@@ -362,9 +362,14 @@ struct CONTROLLER_905(FILETYPE fileVersion) {
   // Align to 4 bytes after size/offset block
   AlignTo4();
 
-  // Track data - size is the last rotation offset (end marker)
-  local int trackDataSize = (header.numKeyRot > 0) ? rotationOffsets[header.numKeyRot] : 0;
-  if (trackDataSize > 0) {
+  // Track data size from terminator offset
+  local int trackDataSize = 0;
+  if (header.numKeyRot > 0) {
+      trackDataSize = isInPlaceStream ? -rotationOffsets[header.numKeyRot] : rotationOffsets[header.numKeyRot];
+  }
+
+  // Non-in-place streaming: track data comes before animation entries
+  if (!isInPlaceStream && trackDataSize > 0) {
       ubyte trackData[trackDataSize];
   }
 
@@ -376,7 +381,7 @@ struct CONTROLLER_905(FILETYPE fileVersion) {
       }
   } animations;
 
-  // In-place streaming: controller headers are stored after all animation entries
+  // In-place streaming: controller headers and track data after animation entries
   if (isInPlaceStream) {
       // Calculate total controllers from all animation entries
       local int totalControllers = 0;
@@ -386,6 +391,12 @@ struct CONTROLLER_905(FILETYPE fileVersion) {
       }
       if (totalControllers > 0) {
           CControllerInfo controllerBlock[totalControllers];
+      }
+
+      // Track data is at the very end for in-place streaming
+      AlignTo4();
+      if (trackDataSize > 0) {
+          ubyte trackData[trackDataSize];
       }
   }
 };
