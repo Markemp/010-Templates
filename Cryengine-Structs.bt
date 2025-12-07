@@ -239,6 +239,13 @@ struct CONTROLLER_CHUNK_DESC_0905 {
   uint32 numAnims;     // Number of animations in database
 };
 
+string PrintControllerChunkDesc905(CONTROLLER_CHUNK_DESC_0905 &desc) {
+    string result;
+    SPrintf(result, "Pos:%d Rot:%d Time:%d Anims:%d",
+        desc.numKeyPos, desc.numKeyRot, desc.numKeyTime, desc.numAnims);
+    return result;
+}
+
 // Forward declarations of size arrays (populated from chunk data)
 local uint32 g_numKeyTime;
 local uint32 g_numKeyPos;
@@ -285,7 +292,7 @@ struct CControllerInfo {
 };  // Total: 20 bytes
 
 // Animation entry in the database
-struct AnimationEntry {
+struct AnimationEntry(int isInPlaceStream) {
   uint16 filePathLength;
   if (filePathLength > 0) {
       char filePath[filePathLength];
@@ -296,16 +303,29 @@ struct AnimationEntry {
       ubyte footPlantBits[footPlantBitsCount];
   }
   uint16 controllerCount;
-  // Note: In in-place streaming mode, there's an additional int32 offset here
-  // For standard files, controllers follow immediately or at end of anim block
-  CControllerInfo controllers[controllerCount];
+  if (isInPlaceStream) {
+      // In-place streaming: controllers are in separate block, just store offset
+      int32 offsetToControllerHeaders;
+  } else {
+      // Standard: controllers inline
+      if (controllerCount > 0) {
+          CControllerInfo controllers[controllerCount];
+      }
+  }
 };
+
+string PrintAnimationEntry(AnimationEntry &entry) {
+    if (exists(entry.filePath)) {
+        return entry.filePath;
+    }
+    return "<no path>";
+}
 
 struct CONTROLLER_905(FILETYPE fileVersion) {
   CHUNKHEADER chunkHeader(fileVersion);
 
   // Main header
-  CONTROLLER_CHUNK_DESC_0905 header;
+  CONTROLLER_CHUNK_DESC_0905 header <comment=PrintControllerChunkDesc905>;
 
   // Store counts for later use
   g_numKeyTime = header.numKeyTime;
@@ -325,17 +345,25 @@ struct CONTROLLER_905(FILETYPE fileVersion) {
   uint16 rotationSizes[header.numKeyRot];
   CompressionFormatCounts rotationFormatCounts;
 
-  // Offset arrays
+  // Offset arrays (+1 for end marker on rotation offsets)
   int32 keyTimeOffsets[header.numKeyTime];
   int32 positionOffsets[header.numKeyPos];
-  int32 rotationOffsets[header.numKeyRot];
+  int32 rotationOffsets[header.numKeyRot + 1];
 
-  // === Track Data Storage ===
-  uint32 trackDataSize;
+  // Detect in-place streaming mode (negative offsets)
+  local int isInPlaceStream = (header.numKeyTime > 0 && keyTimeOffsets[0] < 0);
+  if (isInPlaceStream) {
+      uint32 paddingLength;
+      if (paddingLength > 0) {
+          ubyte streamPadding[paddingLength];
+      }
+  }
 
   // Align to 4 bytes after size/offset block
   AlignTo4();
 
+  // Track data - size is the last rotation offset (end marker)
+  local int trackDataSize = (header.numKeyRot > 0) ? rotationOffsets[header.numKeyRot] : 0;
   if (trackDataSize > 0) {
       ubyte trackData[trackDataSize];
   }
@@ -344,9 +372,22 @@ struct CONTROLLER_905(FILETYPE fileVersion) {
   struct {
       local int i;
       for (i = 0; i < header.numAnims; i++) {
-          AnimationEntry animation;
+          AnimationEntry animation(isInPlaceStream) <comment=PrintAnimationEntry>;
       }
   } animations;
+
+  // In-place streaming: controller headers are stored after all animation entries
+  if (isInPlaceStream) {
+      // Calculate total controllers from all animation entries
+      local int totalControllers = 0;
+      local int j;
+      for (j = 0; j < header.numAnims; j++) {
+          totalControllers += animations.animation[j].controllerCount;
+      }
+      if (totalControllers > 0) {
+          CControllerInfo controllerBlock[totalControllers];
+      }
+  }
 };
 
 struct MESHSUBSET {
