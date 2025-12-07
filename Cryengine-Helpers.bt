@@ -66,6 +66,14 @@ string PrintQuaternion(QUATERNION &quat) {
     return result;
 };
 
+string PrintQuatT(QuatT &qt) {
+    string result;
+    SPrintf(result, "q(%f, %f, %f, %f) t(%f, %f, %f)",
+        qt.q.x, qt.q.y, qt.q.z, qt.q.w,
+        qt.t.x, qt.t.y, qt.t.z);
+    return result;
+};
+
 string PrintSmallTree48BitQuat(SmallTree48BitQuat &q) {
     // Decode SmallTree48BitQuat compression
     // Constants from CryEngine
@@ -255,6 +263,12 @@ string PrintSmallTree64BitExtQuat(SmallTree64BitExtQuat &q) {
 
     string result;
     SPrintf(result, "x: %.4f, y: %.4f, z: %.4f, w: %.4f", comp0, comp1, comp2, comp3);
+    return result;
+};
+
+string PrintByteKeyTime(ByteKeyTime &k) {
+    string result;
+    SPrintf(result, "%d", k.time);
     return result;
 };
 

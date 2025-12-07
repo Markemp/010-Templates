@@ -133,17 +133,45 @@ string PrintTimingInfo(TimingInfo_Cry &info) {
 }
 
 //------------------------------------------------
-// Speed Info
+// Speed Info / Motion Parameters
 //------------------------------------------------
 
 struct SpeedInfo_Cry(FileFormat format) {
     ChunkHeader chunkHeader(format);
-    float speed;
-    float distance;
-    float slope;
-    int animFlags;
-    Vector3 moveDir <comment=PrintVector3>;
-    Quaternion startPosition;
+
+    // Version 0x0925 uses MotionParams905 structure
+    if (chunkHeader.version == 0x0925) {
+        uint32 assetFlags;
+        uint32 compression;
+        int32 ticksPerFrame;
+        float secsPerTick;
+        int32 startFrame;
+        int32 endFrame;
+        float moveSpeed;
+        float turnSpeed;
+        float assetTurn;
+        float distance;
+        float slope;
+        QuatT startLocation <comment=PrintQuatT>;
+        QuatT endLocation <comment=PrintQuatT>;
+        // Foot plant timing for IK
+        float lHeelStart;
+        float lHeelEnd;
+        float lToe0Start;
+        float lToe0End;
+        float rHeelStart;
+        float rHeelEnd;
+        float rToe0Start;
+        float rToe0End;
+    } else {
+        // Older/unknown version - basic fields
+        float speed;
+        float distance;
+        float slope;
+        int animFlags;
+        Vector3 moveDir <comment=PrintVector3>;
+        Quaternion startPosition;
+    }
 };
 
 //------------------------------------------------

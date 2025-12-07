@@ -12,6 +12,7 @@
 
 #include "core/BaseTypes.bt"
 #include "core/Enums.bt"
+#include "core/Utilities.bt"
 #include "display/PrintFunctions.bt"
 #include "chunks/Header.bt"
 
@@ -20,16 +21,8 @@
 //===========================================
 
 //------------------------------------------------
-// QuatT - Quaternion + Translation
-//------------------------------------------------
-
-struct QuatT {
-    Quaternion q;
-    Vector3 t;
-};
-
-//------------------------------------------------
 // Key Times Format Counts
+// Stores count of tracks using each format type
 //------------------------------------------------
 
 struct KeyTimesFormatCounts {
@@ -58,8 +51,8 @@ struct MotionParams905 {
     float assetTurn;
     float distance;
     float slope;
-    QuatT startLocation;
-    QuatT endLocation;
+    QuatT startLocation <comment=PrintQuatT>;
+    QuatT endLocation <comment=PrintQuatT>;
     float lHeelStart;
     float lHeelEnd;
     float lToe0Start;
@@ -121,11 +114,11 @@ struct Controller829_Cry(FileFormat format) {
     uint controllerId;
     uint16 numRotationKeys;
     uint16 numPositionKeys;
-    ubyte rotationFormat;
-    ubyte rotationTimeFormat;
-    ubyte positionFormat;
+    ECompressionFormat rotationFormat;
+    EKeyTimesFormat rotationTimeFormat;
+    ECompressionFormat positionFormat;
     ubyte positionKeyInfo;
-    ubyte positionTimeFormat;
+    EKeyTimesFormat positionTimeFormat;
     ubyte tracksAligned;
     ushort padding;
    
@@ -170,7 +163,7 @@ struct Controller829_Cry(FileFormat format) {
                 break;
             case eByte:
             case eByteStartStop:
-                ByteKeyTime rotationTimes[numRotationKeys];
+                ByteKeyTime rotationTimes[numRotationKeys] <comment=PrintByteKeyTime>;
                 break;
             default:
                 ubyte rotationTimeData[numRotationKeys * GetTimeKeySize(rotationTimeFormat)];
@@ -219,7 +212,7 @@ struct Controller829_Cry(FileFormat format) {
                     break;
                 case eByte:
                 case eByteStartStop:
-                    ByteKeyTime positionTimes[numPositionKeys];
+                    ByteKeyTime positionTimes[numPositionKeys] <comment=PrintByteKeyTime>;
                     break;
                 default:
                     ubyte positionTimeData[numPositionKeys * GetTimeKeySize(positionTimeFormat)];
@@ -246,6 +239,9 @@ struct Controller905_Cry(FileFormat format) {
 
     ControllerChunkDesc905 header;
 
+    // Size/format block
+    // Note: Format is stored as count structures (counts per format type),
+    // not as per-track format values
     uint16 keyTimeSizes[header.numKeyTime];
     KeyTimesFormatCounts keyTimeFormatCounts;
     uint16 positionSizes[header.numKeyPos];
@@ -253,26 +249,23 @@ struct Controller905_Cry(FileFormat format) {
     uint16 rotationSizes[header.numKeyRot];
     CompressionFormatCounts rotationFormatCounts;
 
+    // Offset arrays
     int32 keyTimeOffsets[header.numKeyTime];
     int32 positionOffsets[header.numKeyPos];
-    int32 rotationOffsets[header.numKeyRot + 1];
+    int32 rotationOffsets[header.numKeyRot];
 
-    local int pos = FTell();
-    local int padding = (4 - (pos % 4)) % 4;
-    if (padding > 0) {
-        ubyte alignPadding[padding];
-    }
+    // Track data size
+    uint32 trackDataSize;
 
-    local int trackDataStart = FTell();
-    local int trackDataSize = 0;
-    if (header.numKeyRot > 0) {
-        trackDataSize = rotationOffsets[header.numKeyRot];
-    }
+    // Align to 4 bytes after size/offset block
+    AlignTo4();
 
+    // Track data block
     if (trackDataSize > 0) {
         ubyte trackData[trackDataSize];
     }
 
+    // Animation entries
     struct {
         local int i;
         for (i = 0; i < header.numAnims; i++) {

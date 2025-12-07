@@ -124,6 +124,12 @@ struct Quaternion {
     float w;
 };
 
+// Quaternion + Translation (28 bytes)
+struct QuatT {
+    Quaternion q;
+    Vector3 t;
+};
+
 struct QTangent {
     short x;
     short y;
@@ -299,6 +305,7 @@ struct ByteKeyTime {
 
 //------------------------------------------------
 // Compression format counts array
+// Stores count of tracks using each format type
 //------------------------------------------------
 
 struct CompressionFormatCounts {
@@ -311,7 +318,7 @@ struct CompressionFormatCounts {
     uint32 eSmallTree64BitQuat;
     uint32 ePolarQuat;
     uint32 eSmallTree64BitExtQuat;
-    uint32 eAutomaticQuat;
+    //uint32 eAutomaticQuat;
 };
 
 #endif // CORE_BASETYPES_BT

@@ -83,11 +83,11 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
   uint controllerId;
   uint16 numberOfRotationKeys;
   uint16 numberOfPositionKeys;
-  ubyte rotationFormat;
-  ubyte rotationTimeFormat;
-  ubyte positionFormat;
+  ECompressionFormat rotationFormat;
+  EKeyTimesFormat rotationTimeFormat;
+  ECompressionFormat positionFormat;
   ubyte positionKeyInfo;
-  ubyte positionTimeFormat;
+  EKeyTimesFormat positionTimeFormat;
   ubyte tracksAligned;
 
   local int alignment = (tracksAligned != 0) ? 4 : 1;
@@ -146,7 +146,7 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
               break;
           case eByte:
           case eByteStartStop:
-              ByteKeyTime rotationTimes[numberOfRotationKeys];
+              ByteKeyTime rotationTimes[numberOfRotationKeys] <comment=PrintByteKeyTime>;
               break;
           default:
               ubyte rotationTimeData[numberOfRotationKeys * GetTimeKeySize(rotationTimeFormat)];
@@ -200,7 +200,7 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
                   break;
               case eByte:
               case eByteStartStop:
-                  ByteKeyTime positionTimes[numberOfPositionKeys];
+                  ByteKeyTime positionTimes[numberOfPositionKeys] <comment=PrintByteKeyTime>;
                   break;
               default:
                   ubyte positionTimeData[numberOfPositionKeys * GetTimeKeySize(positionTimeFormat)];
@@ -219,7 +219,8 @@ struct CONTROLLER_829(FILETYPE fileVersion) {
   }
 };
 
-// Key times format count array (one count per EKeyTimesFormat, 7 values)
+// Key times format count array
+// Stores count of tracks using each format type
 struct KeyTimesFormatCounts {
   uint32 eF32;
   uint32 eUINT16;
@@ -262,8 +263,8 @@ struct MotionParams905 {
   float  m_fAssetTurn;
   float  m_fDistance;
   float  m_fSlope;
-  QuatT  m_StartLocation;
-  QuatT  m_EndLocation;
+  QuatT  m_StartLocation <comment=PrintQuatT>;
+  QuatT  m_EndLocation <comment=PrintQuatT>;
   float  m_LHeelStart;
   float  m_LHeelEnd;
   float  m_LToe0Start;
@@ -312,64 +313,34 @@ struct CONTROLLER_905(FILETYPE fileVersion) {
   g_numKeyRot = header.numKeyRot;
   g_numAnims = header.numAnims;
 
-  // === Size/Offset Block ===
+  // === Size/Format Block ===
+  // Format is stored as count structures (counts per format type)
 
-  // Key time sizes (number of keys in each key time track)
   uint16 keyTimeSizes[header.numKeyTime];
-
-  // Key time format counts (cumulative counts per format type)
   KeyTimesFormatCounts keyTimeFormatCounts;
 
-  // Position sizes (number of keys in each position track)
   uint16 positionSizes[header.numKeyPos];
-
-  // Position format counts
   CompressionFormatCounts positionFormatCounts;
 
-  // Rotation sizes (number of keys in each rotation track)
   uint16 rotationSizes[header.numKeyRot];
-
-  // Rotation format counts
   CompressionFormatCounts rotationFormatCounts;
 
-  // Offsets into track storage (can be negative for in-place streaming)
+  // Offset arrays
   int32 keyTimeOffsets[header.numKeyTime];
   int32 positionOffsets[header.numKeyPos];
-  int32 rotationOffsets[header.numKeyRot + 1];  // +1 for end marker
-
-  // Optional: padding length for in-place streaming
-  // uint32 paddingLength;  // Only present in in-place streaming mode
-
-  // Align to 4 bytes
-  local int pos = FTell();
-  local int padding = (4 - (pos % 4)) % 4;
-  if (padding > 0) {
-      ubyte alignPadding[padding];
-  }
+  int32 rotationOffsets[header.numKeyRot];
 
   // === Track Data Storage ===
-  // The actual track data is stored at the offsets specified above.
-  // For non-streaming files, offsets are positive from current position.
-  // For streaming files, offsets are negative from end of storage.
+  uint32 trackDataSize;
 
-  // We'll read the raw track storage as a blob - actual parsing requires
-  // interpreting the format counts to know the format of each track
-  local int trackDataStart = FTell();
-
-  // Calculate total track size from the last rotation offset
-  // (rotationOffsets[numKeyRot] marks the end of track storage)
-  local int trackDataSize = 0;
-  if (header.numKeyRot > 0) {
-      // In standard mode, offsets are positive
-      trackDataSize = rotationOffsets[header.numKeyRot];
-  }
+  // Align to 4 bytes after size/offset block
+  AlignTo4();
 
   if (trackDataSize > 0) {
       ubyte trackData[trackDataSize];
   }
 
   // === Animation Entries ===
-  // Each animation has its own header with motion params and controller list
   struct {
       local int i;
       for (i = 0; i < header.numAnims; i++) {
@@ -790,12 +761,40 @@ struct EXPORTFLAGS(int fileVersion) {
 
 struct SPEEDINFO(FILETYPE fileType) {
     CHUNKHEADER chunkHeader(fileType);
-    float speed;
-    float distance;
-    float slope;
-    int animFlags;
-    VECTOR3 moveDir <comment=PrintVector3>;
-    QUATERNION startPosition;
+
+    // Version 0x0925 uses MotionParams905 structure
+    if (chunkHeader.version == 0x0925) {
+        uint32 assetFlags;
+        uint32 compression;
+        int32 ticksPerFrame;
+        float secsPerTick;
+        int32 startFrame;
+        int32 endFrame;
+        float moveSpeed;
+        float turnSpeed;
+        float assetTurn;
+        float distance;
+        float slope;
+        QuatT startLocation <comment=PrintQuatT>;
+        QuatT endLocation <comment=PrintQuatT>;
+        // Foot plant timing for IK
+        float lHeelStart;
+        float lHeelEnd;
+        float lToe0Start;
+        float lToe0End;
+        float rHeelStart;
+        float rHeelEnd;
+        float rToe0Start;
+        float rToe0End;
+    } else {
+        // Older/unknown version - basic fields
+        float speed;
+        float distance;
+        float slope;
+        int animFlags;
+        VECTOR3 moveDir <comment=PrintVector3>;
+        QUATERNION startPosition;
+    }
 };
 
 struct DATASTREAMCHUNK(FILETYPE fileType) {
