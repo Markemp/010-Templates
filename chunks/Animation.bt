@@ -333,50 +333,65 @@ struct Controller905_Cry(FileFormat format) {
 
 //------------------------------------------------
 // Animation Info Chunk (CAF files, Version 0x0901)
+// Contains metadata about the animation
 //------------------------------------------------
 
 struct AnimInfoChunk_Ivo {
-    uint32 flags;
-    uint16 unknown1;
-    uint16 numBones;
-    uint32 unknown2;
-    uint32 numPositionTracks;
-    float boundMin[3];
-    float scale;
-    double precision;
-    uint32 padding[2];
+    uint32 flags;                    // Animation flags (0=normal, 2=pose?)
+    uint16 framesPerSecond;          // FPS - typically 30
+    uint16 numBones;                 // Number of animated bones
+    uint32 unknown2;                 // Reserved
+    uint32 numPositionTracks;        // Number of bones with position animation
+    float boundMin[3];               // Bounding box minimum (often 0,0,0)
+    float scale;                     // Scale factor (typically ~1.0)
+    double precision;                // Precision value for compression
+    uint32 padding[2];               // Reserved padding
 };
 
 string PrintAnimInfo_Ivo(AnimInfoChunk_Ivo &info) {
     string result;
-    SPrintf(result, "Bones: %d, PosTracks: %d, Scale: %f",
-        info.numBones, info.numPositionTracks, info.scale);
+    SPrintf(result, "Flags:%d FPS:%d Bones:%d PosTracks:%d Scale:%.4f",
+        info.flags, info.framesPerSecond, info.numBones, info.numPositionTracks, info.scale);
     return result;
 }
 
 //------------------------------------------------
 // Controller Entry (shared by #caf and #dba)
+// 24 bytes total - contains rotation and optional position track info
+// Offsets are relative to the start of the keyframe data section
 //------------------------------------------------
 
+// Format flags for rotation/position tracks
+// 0x8040 = rotation track present
+// 0xC040 = position track present (bit 14 = 0x4000)
+// Bit 6 (0x0040) and bit 15 (0x8000) appear always set for valid tracks
+
 struct AnimControllerEntry_Ivo {
-    ubyte numKeys;
-    ubyte padding;
-    uint16 formatFlags;
-    uint32 rotDataOffset;
-    uint32 rotTimeOffset;
-    uint32 posDataOffset;
-    uint32 posTimeOffset;
-    uint32 reserved;
+    // Rotation track info (12 bytes)
+    ubyte numRotKeys;              // Number of rotation keyframes
+    ubyte rotPadding;
+    uint16 rotFormatFlags;         // 0x8040 = standard rotation track
+    uint32 rotDataOffset;          // Offset to rotation quaternion data
+    uint32 rotTimeOffset;          // Offset to rotation time keys
+
+    // Position track info (12 bytes) - only valid if posFormatFlags != 0
+    ubyte numPosKeys;              // Number of position keyframes (0 if none)
+    ubyte posPadding;
+    uint16 posFormatFlags;         // 0xC040 = has position, 0x0000 = none
+    uint32 posDataOffset;          // Offset to position vector data
+    uint32 posTimeOffset;          // Offset to position time keys
 };
 
 string PrintControllerEntry_Ivo(AnimControllerEntry_Ivo &ctrl) {
     string result;
-    if ((ctrl.formatFlags & 0xC000) == 0xC000) {
-        SPrintf(result, "Keys:%d Fmt:0x%04X Rot@0x%X Pos@0x%X",
-            ctrl.numKeys, ctrl.formatFlags, ctrl.rotDataOffset, ctrl.posDataOffset);
+    local int hasPos = (ctrl.posFormatFlags != 0);
+    if (hasPos) {
+        SPrintf(result, "Rot:%dkeys@0x%X Pos:%dkeys@0x%X",
+            ctrl.numRotKeys, ctrl.rotDataOffset,
+            ctrl.numPosKeys, ctrl.posDataOffset);
     } else {
-        SPrintf(result, "Keys:%d Fmt:0x%04X Rot@0x%X (no pos)",
-            ctrl.numKeys, ctrl.formatFlags, ctrl.rotDataOffset);
+        SPrintf(result, "Rot:%dkeys@0x%X (no pos)",
+            ctrl.numRotKeys, ctrl.rotDataOffset);
     }
     return result;
 }
@@ -402,7 +417,26 @@ string PrintAnimBlockHeader_Ivo(AnimBlockHeader_Ivo &hdr) {
 }
 
 //------------------------------------------------
+// Keyframe Data Structures for Ivo CAF
+//------------------------------------------------
+
+// Uncompressed quaternion (16 bytes) - used in Ivo CAF
+struct UncompressedQuat_Ivo {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+string PrintUncompressedQuat_Ivo(UncompressedQuat_Ivo &q) {
+    string result;
+    SPrintf(result, "(%.4f, %.4f, %.4f, %.4f)", q.x, q.y, q.z, q.w);
+    return result;
+}
+
+//------------------------------------------------
 // CAF Chunk (single animation)
+// Contains bone hashes, controller entries, and keyframe data
 //------------------------------------------------
 
 struct CAFChunk_Ivo {
@@ -411,25 +445,79 @@ struct CAFChunk_Ivo {
     local int numBones = header.boneCount;
     local int64 blockStart = FTell() - 12;
 
+    // Bone identification - CRC32 hashes matching skeleton bones
     uint32 boneHashes[numBones] <bgcolor=cLtGreen, comment="CRC32 bone identifiers">;
+
+    // Controller entries - one per bone, 24 bytes each
     AnimControllerEntry_Ivo controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry_Ivo>;
 
-    local int64 blockEnd = blockStart + 12 + header.dataSize;
-    local int keyframeDataSize = blockEnd - FTell();
+    // Mark the start of keyframe data section
+    // All controller offsets are relative to this position
+    local int64 keyframeDataStart = FTell();
+
+    // Calculate block end based on header dataSize
+    // Note: dataSize appears to INCLUDE the 12-byte header
+    local int64 blockEnd = blockStart + header.dataSize;
+    local int64 keyframeDataSize = blockEnd - keyframeDataStart;
+
+    // Count total keys for display
+    local int i;
+    local int totalRotKeys = 0;
+    local int totalPosKeys = 0;
+    for (i = 0; i < numBones; i++) {
+        totalRotKeys += controllers[i].numRotKeys;
+        if (controllers[i].posFormatFlags != 0) {
+            totalPosKeys += controllers[i].numPosKeys;
+        }
+    }
+
+    // Parse the keyframe data section
+    // Layout observed:
+    //   0x37C: 4-byte header (0x00000100)
+    //   0x380: Rotation quaternions start (uncompressed 16-byte quats)
+    //   Then: Time data
+    //   Then: Position data (for bones with position tracks)
+    //
+    // Controller offsets are relative to keyframeDataStart (0x37C)
+    // but the actual quaternion data starts at offset 0x4 (after the header)
+
     if (keyframeDataSize > 0) {
-        ubyte keyframeData[keyframeDataSize] <bgcolor=cSilver, comment="Compressed keyframe data">;
+        // Read the 4-byte keyframe section header
+        if (keyframeDataSize >= 4) {
+            uint32 keyframeHeader <bgcolor=cDkGray, comment="Keyframe section header">;
+        }
+
+        // Read rotation quaternions
+        // Total quaternions = sum of all numRotKeys
+        if (totalRotKeys > 0 && (keyframeDataSize - 4) >= (totalRotKeys * 16)) {
+            UncompressedQuat_Ivo rotationQuats[totalRotKeys] <bgcolor=cLtPurple, comment=PrintUncompressedQuat_Ivo>;
+        }
+
+        // Read remaining data (time keys, position data)
+        local int64 remainingSize = blockEnd - FTell();
+        if (remainingSize > 0) {
+            ubyte timeAndPositionData[remainingSize] <bgcolor=cSilver, comment="Time keys and position data">;
+        }
     }
 };
 
 string PrintCAFChunk_Ivo(CAFChunk_Ivo &caf) {
     string result;
-    SPrintf(result, "#caf - %d bones, %d bytes",
-        caf.header.boneCount, caf.header.dataSize);
+    local int posCount = 0;
+    local int i;
+    for (i = 0; i < caf.numBones; i++) {
+        if (caf.controllers[i].posFormatFlags != 0) {
+            posCount++;
+        }
+    }
+    SPrintf(result, "#caf - %d bones (%d with pos), %d bytes",
+        caf.header.boneCount, posCount, caf.header.dataSize);
     return result;
 }
 
 //------------------------------------------------
 // DBA Animation Block (one animation in library)
+// Similar structure to CAFChunk_Ivo but within a DBA container
 //------------------------------------------------
 
 struct DBAAnimationBlock_Ivo {
@@ -438,20 +526,36 @@ struct DBAAnimationBlock_Ivo {
     local int numBones = header.boneCount;
     local int64 blockStart = FTell() - 12;
 
+    // Bone identification - CRC32 hashes matching skeleton bones
     uint32 boneHashes[numBones] <bgcolor=cLtPurple, comment="CRC32 bone identifiers">;
+
+    // Controller entries - one per bone, 24 bytes each
     AnimControllerEntry_Ivo controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry_Ivo>;
 
-    local int64 blockEnd = blockStart + 12 + header.dataSize;
-    local int keyframeDataSize = blockEnd - FTell();
+    // Mark the start of keyframe data section
+    // Note: dataSize appears to INCLUDE the 12-byte header
+    local int64 keyframeDataStart = FTell();
+    local int64 blockEnd = blockStart + header.dataSize;
+    local int64 keyframeDataSize = blockEnd - keyframeDataStart;
+
+    // For DBA blocks, just read the keyframe data as raw bytes for now
+    // (can be expanded later with same logic as CAFChunk_Ivo)
     if (keyframeDataSize > 0) {
-        ubyte keyframeData[keyframeDataSize] <bgcolor=cDkGray, comment="Compressed keyframe data">;
+        ubyte keyframeData[keyframeDataSize] <bgcolor=cDkGray, comment="Keyframe data (rotation, time, position)">;
     }
 };
 
 string PrintDBABlock_Ivo(DBAAnimationBlock_Ivo &dba) {
     string result;
-    SPrintf(result, "#dba - %d bones, %d bytes",
-        dba.header.boneCount, dba.header.dataSize);
+    local int posCount = 0;
+    local int i;
+    for (i = 0; i < dba.numBones; i++) {
+        if (dba.controllers[i].posFormatFlags != 0) {
+            posCount++;
+        }
+    }
+    SPrintf(result, "#dba - %d bones (%d with pos), %d bytes",
+        dba.header.boneCount, posCount, dba.header.dataSize);
     return result;
 }
 
