@@ -202,13 +202,13 @@ enum DataStreamType_Cry {
 
 enum <uint32> DataStreamType_Ivo {
     Normals2_Ivo        = 0x38A581FE,
-    BoneMap_Ivo         = 0x677C7B23,
+    BoneMap_Ivo         = 0x677C7B23,      // Multi-bone skinning (4 bones per vertex)
     Unknown6_Ivo        = 0x69655CD8,
-    BoneMap32_Ivo       = 0x6ECA3708,
+    BoneMap32_Ivo       = 0x6ECA3708,      // Multi-bone skinning (4 bones, 32-bit indices)
     Unknown5_Ivo        = 0x7E216CAB,
     VertsUvs_Ivo        = 0x91329AE9,
     Normals_Ivo         = 0x9CF3F615,
-    Unknown3_Ivo        = 0x9D51C5EE,
+    SimpleBoneMap_Ivo   = 0x9D51C5EE,      // Single-bone skinning per vertex (ushort bone index, weight implied 1.0)
     Unknown4_Ivo        = 0xA596C0E6,
     Tangents_Ivo        = 0xB95E9A1B,
     VertsUvsCGF_Ivo     = 0xB3A70D5E,
@@ -231,7 +231,7 @@ int IsIvoDataStreamType(uint32 type) {
         case Indices_Ivo:
         case VertsUvsCGF_Ivo:
         case TangentsCGF_Ivo:
-        case Unknown3_Ivo:
+        case SimpleBoneMap_Ivo:
         case Unknown4_Ivo:
         case Unknown5_Ivo:
         case Unknown6_Ivo:

@@ -194,6 +194,12 @@ string PrintUVCryHalf(UVCRYHALF &uv) {
     return result;
 };
 
+string PrintSimpleBoneMap(SIMPLE_BONEMAP_ENTRY &entry) {
+    string result;
+    SPrintf(result, "Bone: %d", entry.boneIndex);
+    return result;
+};
+
 float CryHalfToFloat(ushort value) {
     uint Mantissa;
     uint Exponent;

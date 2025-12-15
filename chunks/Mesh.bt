@@ -16,6 +16,21 @@
 #include "chunks/Header.bt"
 
 //------------------------------------------------
+// Simple Bone Map Entry (single bone per vertex)
+// Weight is implied 1.0 (100%) since there's only one influence
+//------------------------------------------------
+
+struct SimpleBoneMapEntry {
+    ushort boneIndex;    // Index into CompiledBones array
+};
+
+string PrintSimpleBoneMapEntry(SimpleBoneMapEntry &entry) {
+    string result;
+    SPrintf(result, "Bone: %d", entry.boneIndex);
+    return result;
+}
+
+//------------------------------------------------
 // Bone Map Data (must be defined before DataStreamChunk)
 //------------------------------------------------
 
@@ -522,12 +537,14 @@ struct SkinMeshData_Ivo(uint32 chunkType) {
             case BoneMap32_Ivo:
                 IvoBoneMapData bonemap(geometryMeshDetails.numVertices) <bgcolor=cLtGreen>;
                 break;
-            case Unknown3_Ivo:
+            case SimpleBoneMap_Ivo:
+                // Simple bone mapping: 1 bone index + 1 weight byte per vertex
+                // Used for rigid attachment meshes where each vertex is influenced by a single bone
                 struct {
-                    uint bytesPerElement;
-                    struct { byte x; byte y; } unk[geometryMeshDetails.numVertices];
+                    uint bytesPerElement;  // Should be 2 (1 byte index + 1 byte weight)
+                    SimpleBoneMapEntry boneMap[geometryMeshDetails.numVertices] <optimize=false, comment=PrintSimpleBoneMapEntry>;
                     AlignTo8();
-                } ivoUnk3 <bgcolor=cBlue>;
+                } simpleBoneMap <bgcolor=cLtGreen>;
                 break;
         }
     }

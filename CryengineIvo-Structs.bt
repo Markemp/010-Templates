@@ -306,9 +306,16 @@ struct UNKNOWN_2BYTE {
     byte y;
 };
 
-struct IVOUNK3(int numberOfVertices) {
-    uint bytesPerElement;
-    UNKNOWN_2BYTE unk[numberOfVertices];
+// Simple bone mapping: single bone index per vertex.
+// Used when each vertex is influenced by a single bone (rigid attachment meshes).
+// Weight is implied 1.0 (100%) since there's only one influence.
+struct SIMPLE_BONEMAP_ENTRY {
+    ushort boneIndex;    // Index into CompiledBones array
+};
+
+struct SIMPLE_BONEMAPDATA(int numberOfVertices) {
+    uint bytesPerElement;  // Should be 2 (ushort bone index, weight implied 1.0)
+    SIMPLE_BONEMAP_ENTRY boneMap[numberOfVertices] <comment=PrintSimpleBoneMap>;
     AlignTo8ByteBoundary();
 };
 
@@ -438,8 +445,8 @@ struct SKINMESH(CHUNKTYPE chunkType) {
                 TANGENTS tangents(geometryMeshDetails.numberOfVertices) <bgcolor=cLtYellow>;
                 break;
             }
-            case IvoUnknown3: {
-                IVOUNK3 unk(geometryMeshDetails.numberOfVertices) <bgcolor=cBlue>;
+            case IvoSimpleBoneMap: {
+                SIMPLE_BONEMAPDATA simpleBoneMap(geometryMeshDetails.numberOfVertices) <bgcolor=cLtGreen>;
                 break;
             }
         }

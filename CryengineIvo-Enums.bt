@@ -93,13 +93,13 @@ enum VERTEXFORMAT {
 
 enum <uint> DatastreamType {
     IvoNormals2 = 0x38A581FE, // [6], size 04h
-    IvoBoneMap = 0x677C7B23, // [4], size 0ch
+    IvoBoneMap = 0x677C7B23, // [4], size 0ch - Multi-bone skinning (4 bones per vertex)
     IvoUnknown6 = 0x69655CD8, // [12], size 04h
-    IvoBoneMap32 = 0x6ECA3708, // [5], size 18h
+    IvoBoneMap32 = 0x6ECA3708, // [5], size 18h - Multi-bone skinning (4 bones, 32-bit indices)
     IvoUnknown5 = 0x7E216CAB, // [11], size 0ch
     IvoVertsUvs = 0x91329AE9, // [0], size 14h
     IvoNormals = 0x9CF3F615, // [1], size 04h
-    IvoUnknown3 = 0x9D51C5EE, // [9], size 02h
+    IvoSimpleBoneMap = 0x9D51C5EE, // [9], size 02h - Single-bone skinning per vertex (ushort bone index, weight implied 1.0)
     IvoUnknown4 = 0xA596C0E6, // [10], size 0ch
     IvoTangents = 0xB95E9A1B, // [3], size 08h
     IvoVertsUvsCGF = 0xB3A70D5E, // [7], size 0ch
@@ -109,26 +109,26 @@ enum <uint> DatastreamType {
     IvoTangentsCGF = 0xEE057252, // [8], size 08h
 };
 
-// Check if value is in a given enum. 
+// Check if value is in a given enum.
 int isInEnum(DatastreamType type) {
     local int found = false;
     switch(type){
-        case IvoNormals2: 
-        case IvoBoneMap: 
-        case IvoBoneMap32: 
-        case IvoVertsUvs: 
-        case IvoNormals: 
-        case IvoTangents: 
-        case IvoColors2: 
-        case IvoIndices: 
-        case IvoVertsUvsCGF: 
+        case IvoNormals2:
+        case IvoBoneMap:
+        case IvoBoneMap32:
+        case IvoVertsUvs:
+        case IvoNormals:
+        case IvoTangents:
+        case IvoColors2:
+        case IvoIndices:
+        case IvoVertsUvsCGF:
         case IvoTangentsCGF:
-        case IvoUnknown3:
+        case IvoSimpleBoneMap:
         case IvoUnknown4:
         case IvoUnknown5:
         case IvoUnknown6:
         case IvoUnknown7:
-            found = true; 
+            found = true;
             break;
     }
     return found;
