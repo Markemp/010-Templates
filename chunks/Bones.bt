@@ -47,6 +47,14 @@ struct BoneName {
     string boneName;
 };
 
+string PrintBoneName_Ivo(BoneName &bone) {
+    string result;
+    // Calculate CRC32 of bone name (excluding null terminator)
+    local int64 crc = Checksum(CHECKSUM_CRC32, startof(bone.boneName), Strlen(bone.boneName));
+    SPrintf(result, "%s (CRC32: %u / 0x%08X)", bone.boneName, crc, crc);
+    return result;
+}
+
 //------------------------------------------------
 // Compiled Bone - CryTek/CrChF format
 //------------------------------------------------
@@ -174,7 +182,7 @@ struct CompiledBonesData_Ivo(int version) {
             Bone_Ivo bone(version) <comment=PrintBoneInfo_Ivo>;
         }
         for (i = 0; i < numBones; i++) {
-            BoneName boneName;
+            BoneName boneName <comment=PrintBoneName_Ivo>;
         }
     } else if (version == 0x0901) {
         int numBones;
@@ -185,7 +193,7 @@ struct CompiledBonesData_Ivo(int version) {
             Bone_Ivo bone(version) <comment=PrintBoneInfo_Ivo>;
         }
         for (i = 0; i < numBones; i++) {
-            BoneName boneName;
+            BoneName boneName <comment=PrintBoneName_Ivo>;
         }
         BoneTransforms_Ivo boneTransformData[numBones];
     }
