@@ -2,7 +2,7 @@
 
 This document describes the `#ivo` CAF animation file format used by Star Citizen, compared to the older CryTek CAF format.
 
-**Last Updated:** 2024-12-08
+**Last Updated:** 2024-12-19
 **Reference Files:**
 - New format: `D:\depot\SC4.1\Data\Animations\Characters\Creatures\aloprat\pose_ai_aloprat_stand_idle_01.caf`
 - Old format: `D:\depot\ArmoredWarfare\animations\animals\birds\chicken\walk.caf`
@@ -59,10 +59,9 @@ struct AnimInfoChunk_Ivo {
     uint16 numBones;                  // Number of animated bones
     uint32 unknown2;                  // Reserved/padding
     uint32 numPositionTracks;         // Bones with position animation
-    float boundMin[3];                // Bounding box minimum
-    float scale;                      // Scale factor (~1.0)
-    double precision;                 // Precision value
-    uint32 padding[2];                // Reserved
+    Quaternion startRotation;         // Reference pose rotation (x, y, z, w)
+    Vector3 startPosition;            // Reference pose position (x, y, z)
+    uint32 padding;                   // Reserved
 };  // Total: 48 bytes
 ```
 
@@ -77,7 +76,8 @@ struct AnimInfoChunk_Ivo {
 - framesPerSecond: 30
 - numBones: 28
 - numPositionTracks: 1
-- scale: 0.9999999
+- startRotation: (-0.707, 0, 0, 0.707) - 90° around X
+- startPosition: (0, 0, 0)
 
 **Example values (walk cycle):**
 - flags: 0
@@ -147,9 +147,19 @@ struct AnimControllerEntry_Ivo {
 ```
 
 **Format Flags:**
-- `0x8040` - Rotation track present
-- `0xC040` - Position track present (bit 14 = 0x4000 indicates position)
-- `0x0000` - No track data
+
+Rotation flags:
+- `0x8040` - Rotation track, ubyte time keys
+- `0x8042` - Rotation track, uint16 time with header
+
+Position flags (high byte determines data format):
+- `0x0000` - No position track
+- `0xC040` - Float Vector3, ubyte time keys
+- `0xC042` - Float Vector3, uint16 time with header
+- `0xC140` - SNORM full (all channels), ubyte time
+- `0xC142` - SNORM full (all channels), uint16 time
+- `0xC240` - SNORM packed (active channels only), ubyte time
+- `0xC242` - SNORM packed (active channels only), uint16 time
 
 **Offset behavior:**
 - `rotDataOffset` values **decrease** across controllers (0x2A0 → 0x18)
@@ -182,6 +192,57 @@ absolute_position = keyframe_section_start + offset
 ```
 
 Where `keyframe_section_start` is the position immediately after the controller array.
+
+---
+
+## Position Data Formats
+
+Position data format is determined by the high byte of the position format flags.
+
+### 0xC0xx - Float Vector3 (No Header)
+
+Direct float Vector3 values, 12 bytes per key. No header required.
+
+```
+Position[0]: float x, float y, float z  (12 bytes)
+Position[1]: float x, float y, float z  (12 bytes)
+...
+```
+
+### 0xC1xx - SNORM with Header (Full Channels)
+
+24-byte header followed by full SNORM Vector3 values (6 bytes per key):
+
+```
+Header (24 bytes):
+├── channelMask: Vector3 (12 bytes) - FLT_MAX = channel not animated
+└── scale: Vector3 (12 bytes) - Scale factors for decompression
+
+Position[0]: int16 x, int16 y, int16 z  (6 bytes)
+Position[1]: int16 x, int16 y, int16 z  (6 bytes)
+...
+```
+
+### 0xC2xx - SNORM with Header (Packed Active Channels)
+
+24-byte header followed by packed SNORM values for active channels only:
+
+```
+Header (24 bytes):
+├── channelMask: Vector3 (12 bytes) - FLT_MAX (0x7F7FFFFF) = channel not animated
+└── scale: Vector3 (12 bytes) - Scale factors for decompression
+
+Position data: only stores int16 values for channels where channelMask != FLT_MAX
+```
+
+**Example:** If only Y is animated (X and Z have FLT_MAX in channelMask):
+- Each position key is 2 bytes (single int16 for Y)
+- X and Z values are assumed to be 0
+
+**Decompression formula:**
+```
+actual_position[channel] = (snorm_value / 32767.0) * scale[channel]
+```
 
 ---
 
@@ -255,18 +316,15 @@ The following structures are implemented in `chunks/Animation.bt`:
 
 **Keyframe data parsing:**
 - Rotation quaternions are parsed as `UncompressedQuat_Ivo` array
-- Time data and position data are read as raw bytes (further parsing TBD)
+- Position data supports three formats: float Vector3, SNORM full, SNORM packed
+- Time data parsed as ubyte array or uint16 with header based on format flags
 
 ---
 
 ## Open Questions
 
 1. **4-byte keyframe header (0x00000100)**: What does this value represent? Possibly a format version or flags.
-2. **formatFlags bit meanings**: Only bits 6, 14, 15 observed set. What do other bits control?
-3. **Time data format**: Need to verify time value encoding (float vs uint16 vs byte)
-4. **Position data layout**: Need more samples with position animation to verify structure
-5. **Compression options**: Does the Ivo format support compressed quaternions?
-6. **Offset base**: Offsets appear relative to keyframe section start, but the 4-byte header complicates this
+2. **Compression options**: Does the Ivo format support compressed quaternions?
 
 ---
 
@@ -279,3 +337,6 @@ The following structures are implemented in `chunks/Animation.bt`:
 | 2024-12-08 | Updated CAFChunk_Ivo to parse rotation quaternions |
 | 2024-12-08 | Fixed dataSize interpretation (includes 12-byte header) |
 | 2024-12-08 | Confirmed framesPerSecond field by comparing idle (2 keys) vs walk (31 keys) |
+| 2024-12-19 | Fixed AnimInfoChunk_Ivo: boundMin/scale/precision → startRotation + startPosition |
+| 2024-12-19 | Added position format documentation (0xC0 float, 0xC1/0xC2 SNORM) |
+| 2024-12-19 | Documented SNORM packed format with FLT_MAX channel mask |
