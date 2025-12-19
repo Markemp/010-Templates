@@ -138,11 +138,13 @@ if (detectedFormat == Ivo) {
                 break;
 
             case DBAData_Ivo:
-                DBADataChunk_Ivo dbaDataChunk <bgcolor=cDkAqua>;
+                // DBA data chunk contains one or more #dba blocks
+                DbaDataChunk_Ivo dbaData <bgcolor=cDkAqua, comment=PrintDbaDataChunk_Ivo>;
                 break;
 
             case DBA_Ivo:
-                DBAMetadataChunk_Ivo dbaMetadataChunk <bgcolor=cLtRed>;
+                // AnimInfo-style chunk: numAnimations + entries (44 bytes each) + path strings
+                DBAAnimInfoChunk_Ivo dbaAnimInfo <bgcolor=cLtRed, comment=PrintDBAAnimInfoChunk_Ivo>;
                 break;
 
             default:
@@ -151,7 +153,8 @@ if (detectedFormat == Ivo) {
                 if (animSig[0] == '#' && animSig[1] == 'c' && animSig[2] == 'a' && animSig[3] == 'f') {
                     CAFChunk_Ivo cafChunk <bgcolor=cLtPurple, comment=PrintCAFChunk_Ivo>;
                 } else if (animSig[0] == '#' && animSig[1] == 'd' && animSig[2] == 'b' && animSig[3] == 'a') {
-                    DBAAnimationBlock_Ivo dbaBlock <bgcolor=cDkAqua, comment=PrintDBABlock_Ivo>;
+                    // Single DBA block
+                    DBABlock_Ivo dbaBlock <bgcolor=cDkAqua, comment=PrintDBABlock_Ivo2>;
                 }
                 break;
         }

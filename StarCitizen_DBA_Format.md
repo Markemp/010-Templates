@@ -2,249 +2,267 @@
 
 ## Overview
 
-Star Citizen uses a custom animation format based on CryEngine, wrapped in an `#ivo` container format. DBA (Database Animation) files contain multiple animations bundled together for efficient loading.
+Star Citizen uses a custom animation format based on CryEngine, wrapped in an `#ivo` container. DBA (Database Animation) files contain one or more animations bundled together for efficient loading.
 
-**File analyzed:** `ursa.dba` - Contains 22 animations for the RSI Ursa Rover vehicle
+**Files analyzed:**
+- `BEHR_LaserCannon_S2.dba` - 1 animation, 1 controller (264 bytes)
+- `BEHR_LaserCannon_S3.dba` - 1 animation, 1 controller (264 bytes)
+- `NOVP.dba` - 1 animation, 4 controllers (448 bytes)
+- `SuckerPunch.dba` - 2 animations with multiple controllers (768 bytes)
+
+---
 
 ## File Structure
 
 ```
 #ivo Container
 ├── Header (16 bytes)
-├── Chunk Table (16 bytes × numChunks)
-├── Chunk 0: Animation Data (#dba blocks)
-│   ├── Total chunk size (4 bytes)
+├── Chunk Table (2 × 16 bytes)
+├── Chunk 0: DBA Data (0x194FBC50)
+│   ├── Chunk size (4 bytes)
 │   ├── #dba Block 1
-│   ├── #dba Block 2
-│   └── ... (one per animation)
-└── Chunk 1: Animation Metadata
-    ├── Header (8 bytes)
-    ├── Animation Entries (44 bytes each, last is 40)
-    └── String Table (null-terminated paths)
+│   │   ├── Header (12 bytes)
+│   │   ├── Controller hashes (4 × numControllers)
+│   │   ├── Controller entries (24 × numControllers)
+│   │   └── Keyframe data
+│   ├── #dba Block 2 (if multiple animations)
+│   └── ...
+└── Chunk 1: Animation Info (0xF7351608)
+    ├── Number of animations (4 bytes)
+    ├── AnimInfo entries (44 × numAnimations)
+    └── Path strings (null-terminated)
 ```
 
 ---
 
-## #ivo Container Header
+## #ivo Container Header (16 bytes)
 
 | Offset | Size | Type     | Description              | Example Value |
 |--------|------|----------|--------------------------|---------------|
 | 0x00   | 4    | char[4]  | Signature                | "#ivo"        |
-| 0x04   | 2    | uint16   | Version (little endian)  | 0x0900        |
+| 0x04   | 2    | uint16   | Version                  | 0x0900        |
 | 0x06   | 2    | uint16   | Reserved                 | 0x0000        |
 | 0x08   | 4    | uint32   | Number of chunks         | 2             |
-| 0x0C   | 4    | uint32   | Header size              | 0x10          |
+| 0x0C   | 4    | uint32   | Chunk table offset       | 0x10          |
 
 ## Chunk Table Entry (16 bytes each)
 
-| Offset | Size | Type   | Description        |
-|--------|------|--------|--------------------|
-| 0x00   | 4    | uint32 | Chunk ID           |
-| 0x04   | 2    | uint16 | Version            |
-| 0x06   | 2    | uint16 | Reserved           |
+| Offset | Size | Type   | Description            |
+|--------|------|--------|------------------------|
+| 0x00   | 4    | uint32 | Chunk ID               |
+| 0x04   | 2    | uint16 | Version                |
+| 0x06   | 2    | uint16 | Reserved               |
 | 0x08   | 4    | uint32 | Offset from file start |
-| 0x0C   | 4    | uint32 | Reserved           |
+| 0x0C   | 4    | uint32 | Reserved               |
 
 ### Known Chunk IDs
 
-| Chunk ID     | Version | Description                    |
-|--------------|---------|--------------------------------|
-| 0x194FBC50   | 0x0900  | Animation Data (contains #dba) |
-| 0xF7351608   | 0x0901  | Animation Metadata             |
+| Chunk ID     | Version | Description        |
+|--------------|---------|-------------------|
+| 0x194FBC50   | 0x0900  | DBA Data          |
+| 0xF7351608   | 0x0901  | Animation Info    |
 
 ---
 
-## Chunk 0: Animation Data
+## Chunk 0: DBA Data (0x194FBC50)
 
-### Chunk 0 Header
-
-| Offset | Size | Type   | Description                    |
-|--------|------|--------|--------------------------------|
-| 0x00   | 4    | uint32 | Total chunk data size (bytes)  |
-
-After this 4-byte size field, the animation blocks follow consecutively.
-
-### #dba Animation Block
-
-Each animation in the DBA is stored as a `#dba` block:
-
-| Offset | Size | Type     | Description              |
-|--------|------|----------|--------------------------|
-| 0x00   | 4    | char[4]  | Signature "#dba"         |
-| 0x04   | 1    | uint8    | Bone count               |
-| 0x05   | 1    | uint8    | Padding (always 0)       |
-| 0x06   | 2    | uint16   | Magic marker (0xAA55)    |
-| 0x08   | 4    | uint32   | Animation data size      |
-| 0x0C   | var  | uint32[] | Bone hash array          |
-| var    | var  | struct[] | Controller entries       |
-| var    | var  | bytes    | Keyframe data            |
-
-**Bone Hash Array:** `boneCount × 4 bytes` (CRC32 hashes of bone names)
-
-**Controller Entries:** `boneCount × 24 bytes`
-
-### Controller Entry (24 bytes)
-
-| Offset | Size | Type   | Description               |
-|--------|------|--------|---------------------------|
-| 0x00   | 1    | uint8  | Number of keyframes       |
-| 0x01   | 1    | uint8  | Padding                   |
-| 0x02   | 2    | uint16 | Format flags              |
-| 0x04   | 4    | uint32 | Rotation data offset      |
-| 0x08   | 4    | uint32 | Rotation time offset      |
-| 0x0C   | 4    | uint32 | Position data offset      |
-| 0x10   | 4    | uint32 | Position time offset      |
-| 0x14   | 4    | uint32 | Reserved                  |
-
-### Format Flags
-
-The format flags field (2 bytes) encodes compression information:
-
-| Bit Pattern | Meaning                    |
-|-------------|----------------------------|
-| 0x8042      | Rotation only, SmallTree48 |
-| 0xC242      | Has position, SmallTree48  |
-| 0x80xx      | Rotation only flag         |
-| 0xC0xx      | Has position flag          |
-
-**Rotation Compression Formats** (low byte):
-- 0x42 = SmallTree48BitQuat (6 bytes per key)
-- 0x43 = SmallTree64BitQuat (8 bytes per key)
-- 0x00 = NoCompressQuat (16 bytes per key)
-
-**Position Compression Formats:**
-- Similar to CAF controller formats
-
-### Keyframe Data Layout
-
-For each bone controller, keyframe data is stored at the specified offsets:
-
-1. **Rotation values:** `numKeys × compressionSize` bytes
-2. **Rotation times:** `numKeys × timeFormat` bytes
-3. **Position values:** (if present) `numKeys × posFormat` bytes
-4. **Position times:** (if present) `numKeys × timeFormat` bytes
-
----
-
-## Chunk 1: Animation Metadata
-
-### Metadata Header
+### DBA Data Header
 
 | Offset | Size | Type   | Description        |
 |--------|------|--------|--------------------|
-| 0x00   | 4    | uint32 | Animation count    |
-| 0x04   | 4    | uint32 | Reserved           |
+| 0x00   | 4    | uint32 | Total chunk size   |
 
-### Animation Entry (44 bytes, last entry is 40 bytes)
+After the chunk size, one or more `#dba` blocks follow sequentially.
 
-| Offset | Size | Type    | Description               |
-|--------|------|---------|---------------------------|
-| 0x00   | 2    | uint16  | Number of keys/frames     |
-| 0x02   | 2    | uint16  | Bone count                |
-| 0x04   | 4    | uint32  | Flags                     |
-| 0x08   | 4    | uint32  | Path length               |
-| 0x0C   | 12   | Vec3    | Start position (x,y,z)    |
-| 0x18   | 16   | Quat    | Start rotation (x,y,z,w)  |
-| 0x28   | 4    | uint32  | Extra field (padding)*    |
+### #dba Block Header (12 bytes)
 
-*The last entry in the array does not have the 4-byte extra field.
+| Offset | Size | Type     | Description                    |
+|--------|------|----------|--------------------------------|
+| 0x00   | 4    | char[4]  | Signature "#dba"               |
+| 0x04   | 2    | uint16   | Number of controllers (bones)  |
+| 0x06   | 2    | uint16   | Magic marker (0xAA55)          |
+| 0x08   | 4    | uint32   | Block size                     |
 
-### String Table
+### Controller Hash Array
 
-Immediately after the animation entries, null-terminated animation paths are stored consecutively:
+Immediately after the header: `numControllers × 4 bytes`
+
+Each hash is a CRC32 of the bone name (e.g., `housing_left_bottom_panel` → `0x16955904`).
+
+### Controller Entry (24 bytes)
+
+Same structure as CAF animation controllers:
+
+| Offset | Size | Type   | Description                    |
+|--------|------|--------|--------------------------------|
+| 0x00   | 2    | uint16 | Number of rotation keys        |
+| 0x02   | 2    | uint16 | Rotation format flags          |
+| 0x04   | 4    | uint32 | Rotation time offset           |
+| 0x08   | 4    | uint32 | Rotation data offset           |
+| 0x0C   | 2    | uint16 | Number of position keys        |
+| 0x0E   | 2    | uint16 | Position format flags          |
+| 0x10   | 4    | uint32 | Position time offset           |
+| 0x14   | 4    | uint32 | Position data offset           |
+
+**Offsets are relative to the start of the controller entry.**
+
+Controllers with no rotation data have `numRotKeys=0` and zero offsets for rotation fields.
+
+### Format Flags
+
+| Value  | Description                              |
+|--------|------------------------------------------|
+| 0x0000 | No track                                 |
+| 0x8040 | Rotation only, ubyte time keys           |
+| 0x8042 | Rotation only, uint16 time with header   |
+| 0xC040 | Position, ubyte time keys                |
+| 0xC240 | Position, uint16 time with header        |
+
+**Low nibble:**
+- 0x00 = ubyte time array
+- 0x02 = uint16 time with 8-byte header (startTime, endTime, marker)
+
+**High byte bits:**
+- 0x80 = rotation track present
+- 0x40 = position track present
+
+### Keyframe Data
+
+Rotation data is stored as uncompressed quaternions (16 bytes each: x, y, z, w as floats).
+
+Position data is stored as Vector3 (12 bytes each: x, y, z as floats).
+
+**Note:** Some position data may be stored as SNORMs (normalized signed integers) rather than floats. This is still being investigated.
+
+Time keys are stored as:
+- ubyte array (1 byte per key) for format 0x40
+- 8-byte header (uint16 startTime, uint16 endTime, uint32 marker) for format 0x42
+
+---
+
+## Chunk 1: Animation Info (0xF7351608)
+
+### AnimInfo Header
+
+| Offset | Size | Type   | Description            |
+|--------|------|--------|------------------------|
+| 0x00   | 4    | uint32 | Number of animations   |
+
+### AnimInfo Entry (44 bytes each)
+
+| Offset | Size | Type       | Description                    |
+|--------|------|------------|--------------------------------|
+| 0x00   | 4    | uint32     | Flags (usually 2)              |
+| 0x04   | 2    | uint16     | Frames per second (typically 30) |
+| 0x06   | 2    | uint16     | Number of controllers          |
+| 0x08   | 4    | uint32     | Unknown1                       |
+| 0x0C   | 4    | uint32     | Unknown2                       |
+| 0x10   | 16   | Quaternion | Start rotation (x, y, z, w)    |
+| 0x20   | 12   | Vector3    | Start position (x, y, z)       |
+
+### Path Strings
+
+After all AnimInfo entries, null-terminated path strings follow (one per animation):
 
 ```
-animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_enter.caf\0
-animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_exit.caf\0
-...
+animations/spaceships/weapons/behr/behr_lasercannon_s2/behr_lasercannon_s2_recoil.caf\0
 ```
 
 ---
 
-## Example: ursa.dba Analysis
+## Example: BEHR_LaserCannon_S2.dba (264 bytes)
 
-**File size:** 2,682,360 bytes
+```
+Offset  Data                                      Description
+------  ----------------------------------------  -----------
+0x00    23 69 76 6F 00 09 00 00 02 00 00 00 ...  #ivo header
+0x10    50 BC 4F 19 00 09 00 00 30 00 00 00 ...  Chunk 0 @ 0x30
+0x20    08 16 35 F7 01 09 00 00 80 00 00 00 ...  Chunk 1 @ 0x80
 
-**Animations (22 total):**
-| Index | Bones | Keys | Path |
-|-------|-------|------|------|
-| 0     | 112   | 30   | rsi_ursa_rover_gunner_enter.caf |
-| 1     | 112   | 30   | rsi_ursa_rover_gunner_exit.caf |
-| 2     | 107   | 30   | rsi_ursa_rover_gunner_idle.caf |
-| 3     | 107   | 30   | rsi_ursa_rover_gunner_mobiglas_enter.caf |
-| ...   | ...   | ...  | ... |
-| 21    | 116   | 30   | rsi_ursa_rover_pilot_steer_fullrange.caf |
+Chunk 0 (DBA Data):
+0x30    4C 00 00 00                              Chunk size: 76 bytes
+0x34    23 64 62 61                              "#dba"
+0x38    01 00                                    1 controller
+0x3A    55 AA                                    Magic marker
+0x3C    4C 00 00 00                              Block size: 76
 
----
+0x40    B7 37 61 9A                              Controller hash (CRC32)
 
-## Differences from Standard CryEngine/Lumberyard
+0x44    00 00 00 00 00 00 00 00 00 00 00 00      No rotation (12 zeros)
+0x50    04 00 40 C2 18 00 00 00 1C 00 00 00      Position: 4 keys, format 0xC240
 
-1. **Container format:** Uses `#ivo` instead of standard CryEngine chunk headers
-2. **Inline bone hashes:** DBA blocks include bone CRC32 hashes directly
-3. **Simplified controller:** 24-byte controller entries vs Lumberyard's variable structures
-4. **Magic marker:** `0xAA55` marker after bone count
+0x5C    00 01 0D 10                              Position time keys (ubyte)
+0x60    FF FF 7F 7F ...                          Time header + position data
 
----
-
-## CAF vs DBA Chunk IDs
-
-Star Citizen uses different chunk IDs for CAF (single animation) and DBA (animation library) files:
-
-| File Type | Chunk ID     | Description           |
-|-----------|--------------|----------------------|
-| **DBA**   | 0x194FBC50   | Animation Data       |
-| **DBA**   | 0xF7351608   | Animation Metadata   |
-| **CAF**   | 0x47338DD8   | Animation Data       |
-| **CAF**   | 0xD8496CA8   | Animation Info       |
+Chunk 1 (AnimInfo):
+0x80    01 00 00 00                              1 animation
+0x84    02 00 00 00 1E 00 01 00 ...              AnimInfo entry (44 bytes)
+0xB0    61 6E 69 6D 61 74 69 6F 6E 73 2F ...    Path string
+```
 
 ---
 
-## 010 Editor Templates
+## Example: SuckerPunch.dba (768 bytes)
 
-Two 010 Editor templates are provided:
+This file has **2 animations** with multiple #dba blocks:
 
-1. **StarCitizen_DBA.bt** - Specialized template for DBA files
-2. **StarCitizen_IVO.bt** - Universal template supporting both CAF and DBA
+```
+Chunk 0 (DBA Data):
+├── #dba Block 0 (deploy animation)
+│   ├── 4 controllers
+│   ├── Controller hashes (bone CRC32s)
+│   └── Keyframe data
+└── #dba Block 1 (recoil animation)
+    ├── 4 controllers
+    └── Keyframe data
 
-To use:
-1. Open the .dba or .caf file in 010 Editor
-2. Run the template (Templates > Run Template)
-3. Navigate the parsed structure in the Template Results panel
+Chunk 1 (AnimInfo):
+├── 2 AnimInfo entries
+├── Path 1: "...suckerpunch_s1_deploy.caf"
+└── Path 2: "...suckerpunch_s1_recoil.caf"
+```
 
 ---
 
-## Related Formats
+## Controller Hash Examples
 
-- **Star Citizen CAF:** Single animation files using same `#ivo` container
-- **Lumberyard DBA:** Standard CryEngine v0905 animation library format
-- **Lumberyard CAF:** Standard CryEngine animation format (v0829, v0831)
+The controller hashes are CRC32 values of bone names from the skeleton:
+
+| Hash       | Bone Name                  |
+|------------|---------------------------|
+| 0x16955904 | housing_left_bottom_panel |
+| 0x61926992 | housing_right_bottom_panel |
+| 0x88F1CCA7 | housing_left_top_panel    |
+| 0xF89B3828 | housing_right_top_panel   |
 
 ---
 
-## Appendix: Full Animation List (ursa.dba)
+## Relationship to CAF Format
 
-| # | Bones | Animation Path |
-|---|-------|----------------|
-| 0 | 112 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_enter.caf |
-| 1 | 112 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_exit.caf |
-| 2 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_idle.caf |
-| 3 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_mobiglas_enter.caf |
-| 4 | 108 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_mobiglas_exit.caf |
-| 5 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_gunner_mobiglas_idle.caf |
-| 6 | 111 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_enter.caf |
-| 7 | 112 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_exit.caf |
-| 8 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_forward.caf |
-| 9 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_forward_high.caf |
-| 10 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_leftbank.caf |
-| 11 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_leftbank_high.caf |
-| 12 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_reverse.caf |
-| 13 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_reverse_high.caf |
-| 14 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_rightbank.caf |
-| 15 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_gforce_rightbank_high.caf |
-| 16 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_idle.caf |
-| 17 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_idledriving.caf |
-| 18 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_mobiglas_enter.caf |
-| 19 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_mobiglas_exit.caf |
-| 20 | 107 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_mobiglas_idle.caf |
-| 21 | 116 | animations/characters/human/male_v7/vehicles/rsi/ursa/rsi_ursa_rover_pilot_steer_fullrange.caf |
+DBA and CAF files share the same controller entry structure (24 bytes). The main differences:
 
+| Aspect           | CAF                    | DBA                         |
+|------------------|------------------------|-----------------------------|
+| Container        | Single animation       | Multiple animations         |
+| Chunk IDs        | 0x47338DD8, 0xD8496CA8 | 0x194FBC50, 0xF7351608     |
+| Block structure  | Single #caf block      | Multiple #dba blocks        |
+| Path storage     | AnimInfo chunk         | Separate path strings       |
+
+---
+
+## 010 Editor Template
+
+Use `CryengineUnified.bt` to parse DBA files. The template will:
+1. Detect the #ivo container format
+2. Parse the chunk table
+3. Read all #dba blocks with controller data
+4. Display rotation quaternions and position vectors
+5. Parse AnimInfo entries and path strings
+
+---
+
+## Notes
+
+- Block boundaries: Each #dba block ends after its controller headers; the next block starts immediately after
+- Position format: Some position data may use SNORM encoding instead of floats (investigation ongoing)
+- Start rotation/position in AnimInfo represents the animation's reference pose

@@ -342,16 +342,15 @@ struct AnimInfoChunk_Ivo {
     uint16 numBones;                 // Number of animated bones
     uint32 unknown2;                 // Reserved
     uint32 numPositionTracks;        // Number of bones with position animation
-    float boundMin[3];               // Bounding box minimum (often 0,0,0)
-    float scale;                     // Scale factor (typically ~1.0)
-    double precision;                // Precision value for compression
-    uint32 padding[2];               // Reserved padding
+    Quaternion startRotation <comment=PrintQuaternion>;
+    Vector3 startPosition <comment=PrintVector3>;
+    uint32 padding;                  // Reserved padding
 };
 
 string PrintAnimInfo_Ivo(AnimInfoChunk_Ivo &info) {
     string result;
-    SPrintf(result, "Flags:%d FPS:%d Bones:%d PosTracks:%d Scale:%.4f",
-        info.flags, info.framesPerSecond, info.numBones, info.numPositionTracks, info.scale);
+    SPrintf(result, "Flags:%d FPS:%d Bones:%d PosTracks:%d",
+        info.flags, info.framesPerSecond, info.numBones, info.numPositionTracks);
     return result;
 }
 
@@ -459,6 +458,63 @@ string PrintUncompressedQuat_Ivo(UncompressedQuat_Ivo &q) {
     return result;
 }
 
+// SNORM Vector3 (6 bytes) - int16 values normalized to -1.0 to 1.0
+struct SNORMVector3_Ivo {
+    int16 x;
+    int16 y;
+    int16 z;
+};
+
+string PrintSNORMVector3_Ivo(SNORMVector3_Ivo &v) {
+    string result;
+    SPrintf(result, "(%d, %d, %d)", v.x, v.y, v.z);
+    return result;
+}
+
+//------------------------------------------------
+// Position Header for 0xC2xx formats (24 bytes)
+// Contains channel mask and scale factors
+//------------------------------------------------
+
+// FLT_MAX threshold for detecting inactive channels
+// 0x7F7FFFFF = 3.4028234e+38
+local float FLT_MAX_THRESHOLD = 3.4e38;
+
+struct PosHeader_C2_Ivo {
+    Vector3 channelMask <comment="FLT_MAX = channel not animated">;
+    Vector3 scale <comment="Scale factors for SNORM decompression">;
+};
+
+string PrintPosHeader_C2_Ivo(PosHeader_C2_Ivo &h) {
+    string result;
+    local string xStatus = (h.channelMask.x > 3.4e38) ? "OFF" : "ON";
+    local string yStatus = (h.channelMask.y > 3.4e38) ? "OFF" : "ON";
+    local string zStatus = (h.channelMask.z > 3.4e38) ? "OFF" : "ON";
+    SPrintf(result, "X=%s Y=%s Z=%s | Scale: (%.6f, %.6f, %.6f)",
+        xStatus, yStatus, zStatus, h.scale.x, h.scale.y, h.scale.z);
+    return result;
+}
+
+//------------------------------------------------
+// Packed SNORM Position - only stores active channels
+// Inactive channels are assumed to be 0
+//------------------------------------------------
+
+struct PackedSNORMPos_Ivo(int xActive, int yActive, int zActive) {
+    if (xActive) int16 x;
+    if (yActive) int16 y;
+    if (zActive) int16 z;
+};
+
+string PrintPackedSNORMPos_Ivo(PackedSNORMPos_Ivo &p) {
+    string result;
+    local int16 vx = exists(p.x) ? p.x : 0;
+    local int16 vy = exists(p.y) ? p.y : 0;
+    local int16 vz = exists(p.z) ? p.z : 0;
+    SPrintf(result, "(%d, %d, %d)", vx, vy, vz);
+    return result;
+}
+
 // Bone rotation track - header + quaternions
 struct BoneRotationTrack_Ivo(int numKeys) {
     BoneDataHeader_Ivo header <bgcolor=cDkGray, comment=PrintBoneDataHeader_Ivo>;
@@ -526,13 +582,11 @@ struct CAFChunk_Ivo {
 
             // Read position time and data if present
             if (numPosKeys > 0 && posFormatFlags != 0) {
-                // Time and position data are at separate locations (not adjacent)
-                // Flag breakdown:
-                //   0xC040: ubyte time (4 bytes), no header, numPosKeys positions
-                //   0xC142: uint16 time + marker (8 bytes), no header, 2 positions
-                //   0xC242: uint16 time + marker (8 bytes), 8-byte header, 1 position
-                local ubyte posFormat = posFormatFlags & 0x0F;         // Low nibble: 0=ubyte time, 2=uint16 time
-                local ubyte posVariant = (posFormatFlags >> 8) & 0x0F; // 0, 1, or 2
+                // Position format flags:
+                //   0xC0xx: float-based Vector3 (12 bytes per key)
+                //   0xC2xx: SNORM int16-based Vector3 (6 bytes per key)
+                // Low nibble: 0x40=ubyte time, 0x42=uint16 time with header
+                local ubyte posFormat = posFormatFlags & 0x0F;
 
                 // Read position time data
                 FSeek(controllerStart + posTimeOffset);
@@ -553,25 +607,35 @@ struct CAFChunk_Ivo {
                 // Read position data (separate location)
                 FSeek(controllerStart + posDataOffset);
 
-                // Position format based on variant (middle nibble):
-                // variant=0 (0xC040): no header, numPosKeys positions
-                // variant=1 (0xC142): no header, 2 positions
-                // variant=2 (0xC242): 8-byte header, 1 position
-                if (posVariant == 0) {
-                    // 0xC040: No header, use numPosKeys as count
+                // Position format based on high byte:
+                // 0xC0xx: float-based Vector3 (12 bytes per key), no header
+                // 0xC1xx: 24-byte header + full SNORMVector3 (all channels, 6 bytes per key)
+                // 0xC2xx: 24-byte header + packed SNORMs for active channels only
+                local ubyte posHighByte = (posFormatFlags >> 8) & 0xFF;
+                if (posHighByte == 0xC0) {
+                    // Float Vector3 - no header
                     Vector3 positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintVector3>;
-                } else if (posVariant == 1) {
-                    // 0xC142: No header, 2 positions
-                    Vector3 positions[2] <bgcolor=cLtGreen, comment=PrintVector3>;
-                } else if (posVariant == 2) {
-                    // 0xC242: 8-byte header, 1 position
-                    struct PosDataBlock {
-                        ubyte posHeader[8] <bgcolor=cDkGray, comment="Position data header">;
-                        Vector3 positions[1] <bgcolor=cLtGreen, comment=PrintVector3>;
-                    } posData;
+                } else if (posHighByte == 0xC1) {
+                    // SNORM with header - all channels present
+                    PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
+                    SNORMVector3_Ivo positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintSNORMVector3_Ivo>;
+                } else if (posHighByte == 0xC2) {
+                    // SNORM with header - read header first
+                    PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
+
+                    // Determine active channels
+                    local int xActive = (posHeader.channelMask.x < 3.4e38) ? 1 : 0;
+                    local int yActive = (posHeader.channelMask.y < 3.4e38) ? 1 : 0;
+                    local int zActive = (posHeader.channelMask.z < 3.4e38) ? 1 : 0;
+
+                    // Read packed SNORM positions (only active channels stored)
+                    local int pk;
+                    for (pk = 0; pk < numPosKeys; pk++) {
+                        PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                    }
                 } else {
-                    // Unknown format - read as raw bytes
-                    ubyte posDataRaw[24] <bgcolor=cRed, comment="Unknown position format">;
+                    // Unknown format - read as raw bytes (estimate 12 bytes per key)
+                    ubyte posDataRaw[numPosKeys * 12] <bgcolor=cRed, comment="Unknown position format">;
                 }
             }
 
@@ -609,23 +673,105 @@ struct DBAAnimationBlock_Ivo {
 
     local int numBones = header.boneCount;
     local int64 blockStart = FTell() - 12;
+    local int64 blockEnd = blockStart + header.chunkSize;
 
     // Bone identification - CRC32 hashes matching skeleton bones
     uint32 boneHashes[numBones] <bgcolor=cLtPurple, comment="CRC32 bone identifiers">;
 
-    // Controller entries - one per bone, 24 bytes each
-    AnimControllerEntry_Ivo controllers[numBones] <bgcolor=cLtYellow, comment=PrintControllerEntry_Ivo>;
+    // Controller entries with keyframe data (same as CAF format)
+    local int c;
+    for (c = 0; c < numBones; c++) {
+        struct DBAAnimController_Ivo {
+            local int64 controllerStart = FTell();
 
-    // Mark the start of keyframe data section
-    local int64 keyframeDataStart = FTell();
-    local int64 blockEnd = blockStart + header.chunkSize;
-    local int64 keyframeDataSize = blockEnd - keyframeDataStart;
+            // Controller header (24 bytes)
+            uint16 numRotKeys;
+            uint16 rotFormatFlags;
+            uint32 rotTimeOffset;
+            uint32 rotDataOffset;
+            uint16 numPosKeys;
+            uint16 posFormatFlags;
+            uint32 posTimeOffset;
+            uint32 posDataOffset;
 
-    // For DBA blocks, just read the keyframe data as raw bytes for now
-    // (can be expanded later with same logic as CAFChunk_Ivo)
-    if (keyframeDataSize > 0) {
-        ubyte keyframeData[keyframeDataSize] <bgcolor=cDkGray, comment="Keyframe data (rotation, time, position)">;
+            local int64 savedPos = FTell();
+
+            // Read rotation time and data if present
+            if (numRotKeys > 0 && rotTimeOffset > 0) {
+                FSeek(controllerStart + rotTimeOffset);
+                local ubyte rotFormat = rotFormatFlags & 0x0F;
+
+                if (rotFormat == 0x00) {
+                    ubyte rotTimeData[numRotKeys] <bgcolor=cDkGray, comment="Rotation time keys (ubyte)">;
+                } else {
+                    AnimTimeHeader_Ivo rotTimeHeader <bgcolor=cDkGray, comment=PrintAnimTimeHeader_Ivo>;
+                }
+
+                FSeek(controllerStart + rotDataOffset);
+                UncompressedQuat_Ivo rotations[numRotKeys] <bgcolor=cLtPurple, comment=PrintUncompressedQuat_Ivo>;
+            }
+
+            // Read position time and data if present
+            if (numPosKeys > 0 && posFormatFlags != 0) {
+                // Position format flags:
+                //   0xC0xx: float-based Vector3 (12 bytes per key)
+                //   0xC2xx: SNORM int16-based Vector3 (6 bytes per key)
+                // Low nibble: 0x40=ubyte time, 0x42=uint16 time with header
+                local ubyte posFormat = posFormatFlags & 0x0F;
+
+                FSeek(controllerStart + posTimeOffset);
+
+                if (posFormat == 0x00) {
+                    ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
+                } else {
+                    struct DBAAnimBlk_PosTimeBlock {
+                        uint16 timeStart;
+                        uint16 timeEnd;
+                        uint32 marker;
+                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                }
+
+                FSeek(controllerStart + posDataOffset);
+
+                // Position format based on high byte:
+                // 0xC0xx: float-based Vector3 (12 bytes per key), no header
+                // 0xC1xx: 24-byte header + full SNORMVector3 (all channels, 6 bytes per key)
+                // 0xC2xx: 24-byte header + packed SNORMs for active channels only
+                local ubyte posHighByte = (posFormatFlags >> 8) & 0xFF;
+                if (posHighByte == 0xC0) {
+                    // Float Vector3 - no header
+                    Vector3 positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintVector3>;
+                } else if (posHighByte == 0xC1) {
+                    // SNORM with header - all channels present
+                    PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
+                    SNORMVector3_Ivo positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintSNORMVector3_Ivo>;
+                } else if (posHighByte == 0xC2) {
+                    // SNORM with header - read header first
+                    PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
+
+                    // Determine active channels
+                    local int xActive = (posHeader.channelMask.x < 3.4e38) ? 1 : 0;
+                    local int yActive = (posHeader.channelMask.y < 3.4e38) ? 1 : 0;
+                    local int zActive = (posHeader.channelMask.z < 3.4e38) ? 1 : 0;
+
+                    // Read packed SNORM positions (only active channels stored)
+                    local int pk;
+                    for (pk = 0; pk < numPosKeys; pk++) {
+                        PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                    }
+                } else {
+                    // Unknown format - read as raw bytes (estimate 12 bytes per key)
+                    ubyte posDataRaw[numPosKeys * 12] <bgcolor=cRed, comment="Unknown position format">;
+                }
+            }
+
+            FSeek(savedPos);
+        } controller <bgcolor=cLtYellow,
+                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
     }
+
+    // Seek to end of block
+    FSeek(blockEnd);
 };
 
 string PrintDBABlock_Ivo(DBAAnimationBlock_Ivo &dba) {
@@ -643,49 +789,6 @@ string PrintDBABlock_Ivo(DBAAnimationBlock_Ivo &dba) {
 }
 
 //------------------------------------------------
-// DBA Data Chunk (contains multiple #dba blocks)
-//------------------------------------------------
-
-struct DBADataChunk_Ivo {
-    uint32 totalDataSize <comment="Total size of all animation blocks">;
-
-    local int64 dataEnd = FTell() + totalDataSize - 4;
-    local int animIndex = 0;
-    local char sig[4];
-
-    while (FTell() < dataEnd) {
-        ReadBytes(sig, FTell(), 4);
-        if (sig[0] == '#' && sig[1] == 'd' && sig[2] == 'b' && sig[3] == 'a') {
-            DBAAnimationBlock_Ivo animation <comment=PrintDBABlock_Ivo>;
-            animIndex++;
-        } else {
-            break;
-        }
-    }
-};
-
-//------------------------------------------------
-// DBA Metadata Entry (44 bytes each)
-//------------------------------------------------
-
-struct DBAMetaEntry_Ivo {
-    uint16 numKeys;
-    uint16 boneCount;
-    uint32 flags;
-    uint32 pathLength;
-    Vector3 startPosition;
-    Quaternion startRotation;
-    uint32 padding;
-};
-
-string PrintDBAMetaEntry_Ivo(DBAMetaEntry_Ivo &entry) {
-    string result;
-    SPrintf(result, "Keys:%d Bones:%d PathLen:%d",
-        entry.numKeys, entry.boneCount, entry.pathLength);
-    return result;
-}
-
-//------------------------------------------------
 // Animation Path String
 //------------------------------------------------
 
@@ -698,19 +801,211 @@ string PrintAnimPath_Ivo(AnimPathString_Ivo &p) {
 }
 
 //------------------------------------------------
-// DBA Metadata Chunk
+// DBA Animation Info Entry (44 bytes)
+// Similar to CAF AnimInfo - metadata for each animation
 //------------------------------------------------
 
-struct DBAMetadataChunk_Ivo {
-    uint32 animCount <comment="Number of animations in library">;
-    uint32 reserved;
+struct DBAAnimInfoEntry_Ivo {
+    uint32 flags;                    // Animation flags (usually 2)
+    uint16 framesPerSecond;          // FPS (typically 30)
+    uint16 numControllers;           // Number of bone controllers
+    uint32 unknown1;                 // Unknown (often 0)
+    uint32 unknown2;                 // Unknown (varies: 17, 25, etc.)
+    Quaternion startRotation <comment=PrintQuaternion>;
+    Vector3 startPosition <comment=PrintVector3>;
+};  // Total: 4+2+2+4+4+16+12 = 44 bytes
 
-    DBAMetaEntry_Ivo entries[animCount] <bgcolor=cLtRed, comment=PrintDBAMetaEntry_Ivo>;
+string PrintDBAAnimInfo_Ivo(DBAAnimInfoEntry_Ivo &entry) {
+    string result;
+    SPrintf(result, "Flags:%d FPS:%d Controllers:%d Rot:(%.2f,%.2f,%.2f,%.2f)",
+        entry.flags, entry.framesPerSecond, entry.numControllers,
+        entry.startRotation.x, entry.startRotation.y, entry.startRotation.z, entry.startRotation.w);
+    return result;
+}
 
+//------------------------------------------------
+// DBA Animation Info Chunk (0xF7351608)
+// Contains animation metadata and path strings
+//------------------------------------------------
+
+struct DBAAnimInfoChunk_Ivo {
+    uint32 numAnimations <comment="Number of animations in this DBA">;
+
+    // Animation info entries (44 bytes each)
+    if (numAnimations > 0) {
+        DBAAnimInfoEntry_Ivo animInfo[numAnimations] <bgcolor=cLtRed, comment=PrintDBAAnimInfo_Ivo>;
+    }
+
+    // Path strings (null-terminated, one per animation)
     local int i;
-    for (i = 0; i < animCount; i++) {
+    for (i = 0; i < numAnimations; i++) {
         AnimPathString_Ivo animPath <bgcolor=cWhite, comment=PrintAnimPath_Ivo>;
     }
 };
+
+string PrintDBAAnimInfoChunk_Ivo(DBAAnimInfoChunk_Ivo &chunk) {
+    string result;
+    SPrintf(result, "DBA AnimInfo: %d animations", chunk.numAnimations);
+    return result;
+}
+
+//------------------------------------------------
+// DBA Animation Block
+// Self-contained block with controller data for one animation
+// Block size is given by blockSize field (includes 12-byte header)
+//------------------------------------------------
+
+struct DBABlock_Ivo {
+    local int64 blockStart = FTell();
+
+    char signature[4] <comment="'#dba' magic">;
+    uint16 numControllers <comment="Number of bone controllers">;
+    uint16 unknown <comment="Unknown (0xAA55)">;
+    uint32 blockSize <comment="Total block size (including header)">;
+
+    local int64 blockEnd = blockStart + blockSize;
+
+    // Controller hashes - CRC32 of bone names
+    if (numControllers > 0) {
+        uint32 controllerHashes[numControllers] <bgcolor=cLtGreen, comment="CRC32 bone name hashes">;
+    }
+
+    // Controller entries with keyframe data (same as CAF format)
+    local int c;
+    for (c = 0; c < numControllers; c++) {
+        struct DBABlockController_Ivo {
+            // Track start of this controller - offsets are relative to here
+            local int64 controllerStart = FTell();
+
+            // Controller header (24 bytes)
+            uint16 numRotKeys;
+            uint16 rotFormatFlags;
+            uint32 rotTimeOffset;
+            uint32 rotDataOffset;
+            uint16 numPosKeys;
+            uint16 posFormatFlags;
+            uint32 posTimeOffset;
+            uint32 posDataOffset;
+
+            // Save position after reading controller header
+            local int64 savedPos = FTell();
+
+            // Read rotation time and data if present
+            if (numRotKeys > 0 && rotTimeOffset > 0) {
+                FSeek(controllerStart + rotTimeOffset);
+                local ubyte rotFormat = rotFormatFlags & 0x0F;
+
+                if (rotFormat == 0x00) {
+                    ubyte rotTimeData[numRotKeys] <bgcolor=cDkGray, comment="Rotation time keys (ubyte)">;
+                } else {
+                    AnimTimeHeader_Ivo rotTimeHeader <bgcolor=cDkGray, comment=PrintAnimTimeHeader_Ivo>;
+                }
+
+                FSeek(controllerStart + rotDataOffset);
+                UncompressedQuat_Ivo rotations[numRotKeys] <bgcolor=cLtPurple, comment=PrintUncompressedQuat_Ivo>;
+            }
+
+            // Read position time and data if present
+            if (numPosKeys > 0 && posFormatFlags != 0) {
+                // Position format flags:
+                //   0xC0xx: float-based Vector3 (12 bytes per key)
+                //   0xC2xx: SNORM int16-based Vector3 (6 bytes per key)
+                // Low nibble: 0x40=ubyte time, 0x42=uint16 time with header
+                local ubyte posFormat = posFormatFlags & 0x0F;
+
+                FSeek(controllerStart + posTimeOffset);
+
+                if (posFormat == 0x00) {
+                    ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
+                } else {
+                    struct DBABlk_PosTimeBlock {
+                        uint16 timeStart;
+                        uint16 timeEnd;
+                        uint32 marker;
+                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                }
+
+                FSeek(controllerStart + posDataOffset);
+
+                // Position format based on high byte:
+                // 0xC0xx: float-based Vector3 (12 bytes per key), no header
+                // 0xC1xx: 24-byte header + full SNORMVector3 (all channels, 6 bytes per key)
+                // 0xC2xx: 24-byte header + packed SNORMs for active channels only
+                local ubyte posHighByte = (posFormatFlags >> 8) & 0xFF;
+                if (posHighByte == 0xC0) {
+                    // Float Vector3 - no header
+                    Vector3 positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintVector3>;
+                } else if (posHighByte == 0xC1) {
+                    // SNORM with header - all channels present
+                    PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
+                    SNORMVector3_Ivo positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintSNORMVector3_Ivo>;
+                } else if (posHighByte == 0xC2) {
+                    // SNORM with header - read header first
+                    PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
+
+                    // Determine active channels
+                    local int xActive = (posHeader.channelMask.x < 3.4e38) ? 1 : 0;
+                    local int yActive = (posHeader.channelMask.y < 3.4e38) ? 1 : 0;
+                    local int zActive = (posHeader.channelMask.z < 3.4e38) ? 1 : 0;
+
+                    // Read packed SNORM positions (only active channels stored)
+                    local int pk;
+                    for (pk = 0; pk < numPosKeys; pk++) {
+                        PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                    }
+                } else {
+                    // Unknown format - read as raw bytes (estimate 12 bytes per key)
+                    ubyte posDataRaw[numPosKeys * 12] <bgcolor=cRed, comment="Unknown position format">;
+                }
+            }
+
+            // Restore position for next controller
+            FSeek(savedPos);
+        } controller <bgcolor=cLtYellow,
+                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+    }
+
+    // Position is now after all controller headers (24 bytes each)
+    // The next #dba block (if any) starts here, not at blockEnd
+};
+
+string PrintDBABlock_Ivo2(DBABlock_Ivo &block) {
+    string result;
+    SPrintf(result, "#dba: %d controllers, size=%d bytes", block.numControllers, block.blockSize);
+    return result;
+}
+
+//------------------------------------------------
+// DBA Data Chunk (0x194FBC50)
+// Contains one or more sequential #dba blocks
+//------------------------------------------------
+
+struct DbaDataChunk_Ivo {
+    local int64 startPos = FTell();
+    local char sig[4];
+
+    // Total chunk size (includes everything from here to end of chunk)
+    uint32 chunkSize <comment="Total chunk size">;
+
+    local int64 chunkEnd = startPos + chunkSize;
+    local int blockIndex = 0;
+
+    // Parse sequential #dba blocks until we reach chunk end
+    while (FTell() < chunkEnd) {
+        ReadBytes(sig, FTell(), 4);
+        if (sig[0] == '#' && sig[1] == 'd' && sig[2] == 'b' && sig[3] == 'a') {
+            DBABlock_Ivo block <bgcolor=(blockIndex == 0 ? cLtBlue : cLtPurple), comment=PrintDBABlock_Ivo2>;
+            blockIndex++;
+        } else {
+            break;
+        }
+    }
+};
+
+string PrintDbaDataChunk_Ivo(DbaDataChunk_Ivo &chunk) {
+    string result;
+    SPrintf(result, "DBA Data: %d bytes", chunk.chunkSize);
+    return result;
+}
 
 #endif // CHUNKS_ANIMATION_BT
