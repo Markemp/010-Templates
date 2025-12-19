@@ -85,7 +85,7 @@ struct AnimInfoChunk_Ivo {
     uint16 framesPerSecond;       // FPS - typically 30
     uint16 numBones;              // Number of animated bones
     uint32 unknown2;              // Reserved
-    uint32 numPositionTracks;     // Bones with position animation
+    uint32 endFrame;              // Last frame number (matches timeEnd in time keys)
     Quaternion startRotation;     // Reference pose rotation (x, y, z, w)
     Vector3 startPosition;        // Reference pose position (x, y, z)
     uint32 padding;               // Reserved
@@ -317,7 +317,7 @@ The controller hashes are CRC32 values of bone names from the skeleton:
 - flags: 2
 - framesPerSecond: 30
 - numBones: 28
-- numPositionTracks: 1
+- endFrame: 1
 - startRotation: (-0.707, 0, 0, 0.707) - 90° around X
 - startPosition: (0, 0, 0)
 ```

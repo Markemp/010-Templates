@@ -341,7 +341,7 @@ struct AnimInfoChunk_Ivo {
     uint16 framesPerSecond;          // FPS - typically 30
     uint16 numBones;                 // Number of animated bones
     uint32 unknown2;                 // Reserved
-    uint32 numPositionTracks;        // Number of bones with position animation
+    uint32 endFrame;                 // Last frame number (matches timeEnd in time keys)
     Quaternion startRotation <comment=PrintQuaternion>;
     Vector3 startPosition <comment=PrintVector3>;
     uint32 padding;                  // Reserved padding
@@ -349,8 +349,8 @@ struct AnimInfoChunk_Ivo {
 
 string PrintAnimInfo_Ivo(AnimInfoChunk_Ivo &info) {
     string result;
-    SPrintf(result, "Flags:%d FPS:%d Bones:%d PosTracks:%d",
-        info.flags, info.framesPerSecond, info.numBones, info.numPositionTracks);
+    SPrintf(result, "Flags:%d FPS:%d Bones:%d EndFrame:%d",
+        info.flags, info.framesPerSecond, info.numBones, info.endFrame);
     return result;
 }
 
@@ -482,7 +482,7 @@ local float FLT_MAX_THRESHOLD = 3.4e38;
 
 struct PosHeader_C2_Ivo {
     Vector3 channelMask <comment="FLT_MAX = channel not animated">;
-    Vector3 scale <comment="Scale factors for SNORM decompression">;
+    Vector3 scale <comment=PrintVector3>;
 };
 
 string PrintPosHeader_C2_Ivo(PosHeader_C2_Ivo &h) {
@@ -627,12 +627,13 @@ struct CAFChunk_Ivo {
                     local int xActive = (posHeader.channelMask.x < 3.4e38) ? 1 : 0;
                     local int yActive = (posHeader.channelMask.y < 3.4e38) ? 1 : 0;
                     local int zActive = (posHeader.channelMask.z < 3.4e38) ? 1 : 0;
-
                     // Read packed SNORM positions (only active channels stored)
-                    local int pk;
-                    for (pk = 0; pk < numPosKeys; pk++) {
-                        PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
-                    }
+                    struct {
+                        local int pk;
+                        for (pk = 0; pk < numPosKeys; pk++) {
+                            PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                        }
+                    } positions <comment="Packed SNORM positions">;
                 } else {
                     // Unknown format - read as raw bytes (estimate 12 bytes per key)
                     ubyte posDataRaw[numPosKeys * 12] <bgcolor=cRed, comment="Unknown position format">;
@@ -753,12 +754,13 @@ struct DBAAnimationBlock_Ivo {
                     local int xActive = (posHeader.channelMask.x < 3.4e38) ? 1 : 0;
                     local int yActive = (posHeader.channelMask.y < 3.4e38) ? 1 : 0;
                     local int zActive = (posHeader.channelMask.z < 3.4e38) ? 1 : 0;
-
                     // Read packed SNORM positions (only active channels stored)
-                    local int pk;
-                    for (pk = 0; pk < numPosKeys; pk++) {
-                        PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
-                    }
+                    struct {
+                        local int pk;
+                        for (pk = 0; pk < numPosKeys; pk++) {
+                            PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                        }
+                    } positions <comment="Packed SNORM positions">;
                 } else {
                     // Unknown format - read as raw bytes (estimate 12 bytes per key)
                     ubyte posDataRaw[numPosKeys * 12] <bgcolor=cRed, comment="Unknown position format">;
@@ -947,12 +949,13 @@ struct DBABlock_Ivo {
                     local int xActive = (posHeader.channelMask.x < 3.4e38) ? 1 : 0;
                     local int yActive = (posHeader.channelMask.y < 3.4e38) ? 1 : 0;
                     local int zActive = (posHeader.channelMask.z < 3.4e38) ? 1 : 0;
-
                     // Read packed SNORM positions (only active channels stored)
-                    local int pk;
-                    for (pk = 0; pk < numPosKeys; pk++) {
-                        PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
-                    }
+                    struct {
+                        local int pk;
+                        for (pk = 0; pk < numPosKeys; pk++) {
+                            PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                        }
+                    } positions <comment="Packed SNORM positions">;
                 } else {
                     // Unknown format - read as raw bytes (estimate 12 bytes per key)
                     ubyte posDataRaw[numPosKeys * 12] <bgcolor=cRed, comment="Unknown position format">;
