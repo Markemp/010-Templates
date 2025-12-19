@@ -113,30 +113,93 @@ Controllers with no rotation data have `numRotKeys=0` and zero offsets for rotat
 | Value  | Description                              |
 |--------|------------------------------------------|
 | 0x0000 | No track                                 |
-| 0x8040 | Rotation only, ubyte time keys           |
-| 0x8042 | Rotation only, uint16 time with header   |
-| 0xC040 | Position, ubyte time keys                |
-| 0xC240 | Position, uint16 time with header        |
+| 0x8040 | Rotation, ubyte time keys                |
+| 0x8042 | Rotation, uint16 time with header        |
+| 0xC040 | Position float Vector3, ubyte time       |
+| 0xC042 | Position float Vector3, uint16 time      |
+| 0xC140 | Position SNORM (full), ubyte time        |
+| 0xC142 | Position SNORM (full), uint16 time       |
+| 0xC240 | Position SNORM (packed), ubyte time      |
+| 0xC242 | Position SNORM (packed), uint16 time     |
 
-**Low nibble:**
-- 0x00 = ubyte time array
-- 0x02 = uint16 time with 8-byte header (startTime, endTime, marker)
+**Low nibble (time format):**
+- 0x40 = ubyte time array (1 byte per key)
+- 0x42 = uint16 time with 8-byte header (startTime, endTime, marker)
 
-**High byte bits:**
+**High byte (data format):**
 - 0x80 = rotation track present
-- 0x40 = position track present
+- 0xC0 = position as float Vector3 (no header)
+- 0xC1 = position as SNORM with header (all channels)
+- 0xC2 = position as SNORM with header (packed active channels only)
 
 ### Keyframe Data
 
-Rotation data is stored as uncompressed quaternions (16 bytes each: x, y, z, w as floats).
+**Rotation data** is stored as uncompressed quaternions (16 bytes each: x, y, z, w as floats).
 
-Position data is stored as Vector3 (12 bytes each: x, y, z as floats).
-
-**Note:** Some position data may be stored as SNORMs (normalized signed integers) rather than floats. This is still being investigated.
-
-Time keys are stored as:
+**Time keys** are stored as:
 - ubyte array (1 byte per key) for format 0x40
 - 8-byte header (uint16 startTime, uint16 endTime, uint32 marker) for format 0x42
+
+---
+
+## Position Data Formats
+
+Position data format is determined by the high byte of the position format flags.
+
+### 0xC0xx - Float Vector3 (No Header)
+
+Direct float Vector3 values, 12 bytes per key:
+
+```
+Position[0]: float x, float y, float z  (12 bytes)
+Position[1]: float x, float y, float z  (12 bytes)
+...
+```
+
+### 0xC1xx - SNORM with Header (Full Channels)
+
+24-byte header followed by full SNORM Vector3 values (6 bytes per key):
+
+```
+Header (24 bytes):
+├── channelMask: Vector3 (12 bytes) - FLT_MAX = channel not animated
+└── scale: Vector3 (12 bytes) - Scale factors for decompression
+
+Position[0]: int16 x, int16 y, int16 z  (6 bytes)
+Position[1]: int16 x, int16 y, int16 z  (6 bytes)
+...
+```
+
+### 0xC2xx - SNORM with Header (Packed Active Channels)
+
+24-byte header followed by packed SNORM values for active channels only:
+
+```
+Header (24 bytes):
+├── channelMask: Vector3 (12 bytes) - FLT_MAX (0x7F7FFFFF) = channel not animated
+└── scale: Vector3 (12 bytes) - Scale factors for decompression
+
+Position data: only stores values for channels where channelMask != FLT_MAX
+```
+
+**Example:** If only Y is animated (X and Z have FLT_MAX in channelMask):
+- Each position key is 2 bytes (single int16 for Y)
+- X and Z values are assumed to be 0
+
+**Decompression:**
+```
+actual_position[channel] = (snorm_value / 32767.0) * scale[channel]
+```
+
+### Channel Mask Examples
+
+| channelMask Value | Meaning |
+|-------------------|---------|
+| (0, 0, 0) | All channels animated |
+| (FLT_MAX, 0.05, FLT_MAX) | Only Y animated, scale=0.05 |
+| (FLT_MAX, FLT_MAX, 0.1) | Only Z animated, scale=0.1 |
+
+This is commonly seen in weapon recoil animations where only one axis moves.
 
 ---
 
@@ -264,5 +327,7 @@ Use `CryengineUnified.bt` to parse DBA files. The template will:
 ## Notes
 
 - Block boundaries: Each #dba block ends after its controller headers; the next block starts immediately after
-- Position format: Some position data may use SNORM encoding instead of floats (investigation ongoing)
+- Position format: Supports float Vector3 (0xC0), SNORM full (0xC1), and SNORM packed (0xC2)
+- SNORM packed format uses FLT_MAX (0x7F7FFFFF) as sentinel for inactive channels
 - Start rotation/position in AnimInfo represents the animation's reference pose
+- Weapon recoil animations typically use 0xC2 format with only one active axis
