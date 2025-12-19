@@ -312,13 +312,13 @@ The controller hashes are CRC32 values of bone names from the skeleton:
 ## Examples
 
 ### CAF File (aloprat idle pose)
-
+D:\depot\SC4.1\Data\Animations\Characters\Creatures\aloprat\ai_aloprat_stand_idle_01.caf
 ```
 - flags: 2
 - framesPerSecond: 30
-- numBones: 28
-- endFrame: 1
-- startRotation: (-0.707, 0, 0, 0.707) - 90° around X
+- numBones: 30
+- endFrame: 128
+- startRotation: (0, 0, 0, 1)
 - startPosition: (0, 0, 0)
 ```
 
