@@ -114,6 +114,23 @@ struct Vector4Unorm {
 };
 
 //------------------------------------------------
+// 10-10-10-2 Packed format (common for tangents/normals)
+// 32 bits total: X(10) Y(10) Z(10) W(2)
+//------------------------------------------------
+
+struct Packed1010102 {
+    uint32 packed;
+};
+
+// Ivo tangent frame: 8 bytes encoding normal + tangent
+struct IvoTangentFrame {
+    uint16 word0;  // bytes 0-1
+    uint16 word1;  // bytes 2-3
+    uint16 word2;  // bytes 4-5
+    uint16 word3;  // bytes 6-7
+};
+
+//------------------------------------------------
 // Quaternion
 //------------------------------------------------
 

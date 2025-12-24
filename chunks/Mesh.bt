@@ -130,23 +130,43 @@ struct VertUV(int bytesPerElement) {
 //------------------------------------------------
 
 struct IvoVertUV {
-    Vector3Snorm vertices <comment=PrintVector3Snorm>;
+    Vector3Snorm vertices;
     short skip;
-    ColorRGBA color <comment=PrintColorRGBA>;
-    UVHalf uv <comment=PrintUVHalf>;
+    ColorRGBA color;
+    UVHalf uv;
 };
+
+string PrintIvoVertUV(IvoVertUV &v) {
+    string result;
+    SPrintf(result, "V:(%.4f,%.4f,%.4f) C:(%d,%d,%d,%d) UV:(%.4f,%.4f)",
+        v.vertices.x / 32767.0, v.vertices.y / 32767.0, v.vertices.z / 32767.0,
+        v.color.r, v.color.g, v.color.b, v.color.a,
+        v.uv.u, v.uv.v);
+    return result;
+}
+
+struct IvoVertUVFloat {
+    Vector3 vertex;
+    ColorRGBA color;
+    UVHalf uv;
+};
+
+string PrintIvoVertUVFloat(IvoVertUVFloat &v) {
+    string result;
+    SPrintf(result, "V:(%.4f,%.4f,%.4f) C:(%d,%d,%d,%d) UV:(%.4f,%.4f)",
+        v.vertex.x, v.vertex.y, v.vertex.z,
+        v.color.r, v.color.g, v.color.b, v.color.a,
+        v.uv.u, v.uv.v);
+    return result;
+}
 
 struct IvoVertsUVs(int numVertices) {
     uint bytesPerElement;
 
     if (bytesPerElement == 0x10) {
-        IvoVertUV vertUvs[numVertices];
+        IvoVertUV vertUvs[numVertices] <comment=PrintIvoVertUV>;
     } else if (bytesPerElement == 0x14) {
-        struct {
-            Vector3 vertex <comment=PrintVector3>;
-            ColorRGBA color <comment=PrintColorRGBA>;
-            UVHalf uv <comment=PrintUVHalf>;
-        } vertUvs[numVertices];
+        IvoVertUVFloat vertUvs[numVertices] <comment=PrintIvoVertUVFloat>;
     }
 
     AlignTo8();
@@ -198,7 +218,8 @@ struct IvoNormals(int numVertices) {
 struct Tangents(int numVertices) {
     uint bytesPerElement;
     if (bytesPerElement == 8) {
-        Vector4Snorm qTangents[numVertices] <comment=PrintVector4Snorm>;
+        // Ivo tangent frame: smallest-three quaternion encoding
+        IvoTangentFrame qTangents[numVertices] <comment=PrintSmallestThreeQTangent>;
     } else if (bytesPerElement == 16) {
         Vector4Snorm tangents[numVertices] <comment=PrintVector4Snorm>;
         Vector4Snorm bitangents[numVertices] <comment=PrintVector4Snorm>;
@@ -228,6 +249,13 @@ struct IvoMeshSubset(uint32 chunkType) {
         uint unknown;
     }
 };
+
+string PrintIvoMeshSubset(IvoMeshSubset &s) {
+    string result;
+    SPrintf(result, "parent=%d mat=%d firstVert=%d numVerts=%d",
+        s.meshParent, s.matId, s.firstVertex, s.numVertices);
+    return result;
+}
 
 //------------------------------------------------
 // Mesh Info - Ivo format
@@ -503,7 +531,7 @@ struct SkinMeshData_Ivo(uint32 chunkType) {
     uint flags;
     GeometryMeshDetails_Ivo geometryMeshDetails;
     char unknown2[92] <fgcolor=cAqua>;
-    IvoMeshSubset meshSubsets(chunkType)[geometryMeshDetails.numSubmeshes] <bgcolor=cLtGreen>;
+    IvoMeshSubset meshSubsets(chunkType)[geometryMeshDetails.numSubmeshes] <bgcolor=cLtGreen, comment=PrintIvoMeshSubset>;
 
     while (!FEof()) {
         DataStreamType_Ivo type <hidden=true, fgcolor=cRed>;

@@ -93,6 +93,61 @@ string PrintVector4Snorm(Vector4Snorm &v) {
     return result;
 }
 
+string PrintQTangentSnorm(Vector4Snorm &v) {
+    string result;
+    // Decode SNORM values
+    local float x = Max(v.x / 32767.0, -1.0);
+    local float y = Max(v.y / 32767.0, -1.0);
+    local float z = Max(v.z / 32767.0, -1.0);
+    local float w = Max(v.w / 32767.0, -1.0);
+
+    // Raw quaternion magnitude (before normalization)
+    local float qMag = Sqrt(x*x + y*y + z*z + w*w);
+    local string qMagStr = (qMag > 0.98 && qMag < 1.02) ? " [OK]" : " [BAD]";
+
+    // Normalize the quaternion (required for proper TBN extraction)
+    if (qMag > 0.0001) {
+        x = x / qMag;
+        y = y / qMag;
+        z = z / qMag;
+        w = w / qMag;
+    }
+
+    // Pre-compute common terms
+    local float fTxx = 2.0 * x * x;
+    local float fTyy = 2.0 * y * y;
+    local float fTzz = 2.0 * z * z;
+    local float fTxy = 2.0 * x * y;
+    local float fTxz = 2.0 * x * z;
+    local float fTyz = 2.0 * y * z;
+    local float fTwx = 2.0 * w * x;
+    local float fTwy = 2.0 * w * y;
+    local float fTwz = 2.0 * w * z;
+
+    // Extract all three axes of TBN matrix
+    // X-axis (often Tangent or Normal depending on convention)
+    local float ax_x = 1.0 - (fTyy + fTzz);
+    local float ax_y = fTxy + fTwz;
+    local float ax_z = fTxz - fTwy;
+
+    // Y-axis
+    local float ay_x = fTxy - fTwz;
+    local float ay_y = 1.0 - (fTxx + fTzz);
+    local float ay_z = fTyz + fTwx;
+
+    // Z-axis
+    local float az_x = fTxz + fTwy;
+    local float az_y = fTyz - fTwx;
+    local float az_z = 1.0 - (fTxx + fTyy);
+
+    // Bitangent sign from w
+    local string signStr = (w < 0) ? "-" : "+";
+
+    SPrintf(result, "X:(%.2f,%.2f,%.2f) Y:(%.2f,%.2f,%.2f) Z:(%.2f,%.2f,%.2f) qMag=%.4f%s b:%s",
+        ax_x, ax_y, ax_z, ay_x, ay_y, ay_z, az_x, az_y, az_z, qMag, qMagStr, signStr);
+    return result;
+}
+
 string PrintVector4Bnorm(Vector4Bnorm &v) {
     string result;
     SPrintf(result, "x: %f, y: %f, z: %f, w: %f",
@@ -104,8 +159,203 @@ string PrintVector4Bnorm(Vector4Bnorm &v) {
 string PrintVector4Unorm(Vector4Unorm &v) {
     string result;
     SPrintf(result, "x: %f, y: %f, z: %f, w: %f",
-        Max(v.x / 32767.0, -1.0), Max(v.y / 32767.0, -1.0),
-        Max(v.z / 32767.0, -1.0), Max(v.w / 32767.0, -1.0));
+        v.x / 65535.0, v.y / 65535.0, v.z / 65535.0, v.w / 65535.0);
+    return result;
+}
+
+string PrintQTangentUnorm(Vector4Unorm &v) {
+    string result;
+    // Decode UNORM values and remap from [0,1] to [-1,1]
+    local float x = (v.x / 65535.0) * 2.0 - 1.0;
+    local float y = (v.y / 65535.0) * 2.0 - 1.0;
+    local float z = (v.z / 65535.0) * 2.0 - 1.0;
+    local float w = (v.w / 65535.0) * 2.0 - 1.0;
+
+    // Raw quaternion magnitude (before normalization)
+    local float qMag = Sqrt(x*x + y*y + z*z + w*w);
+    local string qMagStr = (qMag > 0.98 && qMag < 1.02) ? " [OK]" : " [BAD]";
+
+    // Normalize the quaternion (required for proper TBN extraction)
+    if (qMag > 0.0001) {
+        x = x / qMag;
+        y = y / qMag;
+        z = z / qMag;
+        w = w / qMag;
+    }
+
+    // Pre-compute common terms
+    local float fTxx = 2.0 * x * x;
+    local float fTyy = 2.0 * y * y;
+    local float fTzz = 2.0 * z * z;
+    local float fTxy = 2.0 * x * y;
+    local float fTxz = 2.0 * x * z;
+    local float fTyz = 2.0 * y * z;
+    local float fTwx = 2.0 * w * x;
+    local float fTwy = 2.0 * w * y;
+    local float fTwz = 2.0 * w * z;
+
+    // Extract all three axes of TBN matrix
+    local float ax_x = 1.0 - (fTyy + fTzz);
+    local float ax_y = fTxy + fTwz;
+    local float ax_z = fTxz - fTwy;
+
+    local float ay_x = fTxy - fTwz;
+    local float ay_y = 1.0 - (fTxx + fTzz);
+    local float ay_z = fTyz + fTwx;
+
+    local float az_x = fTxz + fTwy;
+    local float az_y = fTyz - fTwx;
+    local float az_z = 1.0 - (fTxx + fTyy);
+
+    // Bitangent sign from w
+    local string signStr = (w < 0) ? "-" : "+";
+
+    SPrintf(result, "X:(%.2f,%.2f,%.2f) Y:(%.2f,%.2f,%.2f) Z:(%.2f,%.2f,%.2f) qMag=%.4f%s b:%s",
+        ax_x, ax_y, ax_z, ay_x, ay_y, ay_z, az_x, az_y, az_z, qMag, qMagStr, signStr);
+    return result;
+}
+
+//------------------------------------------------
+// 10-10-10-2 Packed Format Print Functions
+//------------------------------------------------
+
+string PrintPacked1010102(Packed1010102 &p) {
+    string result;
+    // Extract 10-bit signed values and 2-bit W
+    local int rawX = p.packed & 0x3FF;
+    local int rawY = (p.packed >> 10) & 0x3FF;
+    local int rawZ = (p.packed >> 20) & 0x3FF;
+    local int rawW = (p.packed >> 30) & 0x3;
+
+    // Sign extend 10-bit to signed int (if bit 9 is set, it's negative)
+    if (rawX >= 512) rawX = rawX - 1024;
+    if (rawY >= 512) rawY = rawY - 1024;
+    if (rawZ >= 512) rawZ = rawZ - 1024;
+
+    // Normalize to [-1, 1] range (divide by 511 for signed)
+    local float x = rawX / 511.0;
+    local float y = rawY / 511.0;
+    local float z = rawZ / 511.0;
+
+    local float mag = Sqrt(x*x + y*y + z*z);
+    local string magStr = (mag > 0.98 && mag < 1.02) ? " [OK]" : " [BAD]";
+
+    SPrintf(result, "(%.3f, %.3f, %.3f) w=%d mag=%.4f%s", x, y, z, rawW, mag, magStr);
+    return result;
+}
+
+// Decode tangent frame with W bits controlling signs
+string PrintTangent1010102(Packed1010102 &p) {
+    string result;
+    local int rawX = p.packed & 0x3FF;
+    local int rawY = (p.packed >> 10) & 0x3FF;
+    local int rawZ = (p.packed >> 20) & 0x3FF;
+    local int rawW = (p.packed >> 30) & 0x3;
+
+    if (rawX >= 512) rawX = rawX - 1024;
+    if (rawY >= 512) rawY = rawY - 1024;
+    if (rawZ >= 512) rawZ = rawZ - 1024;
+
+    local float x = rawX / 511.0;
+    local float y = rawY / 511.0;
+    local float z = rawZ / 511.0;
+
+    // W bits might encode sign flips:
+    // bit 0 (w & 1): possibly X or Y sign
+    // bit 1 (w & 2): possibly Z sign (0 = negate, 1 = keep)
+    if ((rawW & 2) == 0) z = -z;
+
+    local float mag = Sqrt(x*x + y*y + z*z);
+    local string magStr = (mag > 0.98 && mag < 1.02) ? " [OK]" : " [BAD]";
+
+    SPrintf(result, "N:(%.3f, %.3f, %.3f) w=%d mag=%.4f%s", x, y, z, rawW, mag, magStr);
+    return result;
+}
+
+// Decode Ivo tangent frame - determines axis from byte patterns (simple axis-aligned version)
+string PrintIvoTangentFrame(IvoTangentFrame &tf) {
+    string result;
+    local float nx = 0, ny = 0, nz = 0;
+    local string axis = "?";
+
+    local int word2Bit15 = (tf.word2 >> 15) & 1;
+    local int word0Bit15 = (tf.word0 >> 15) & 1;
+    local int sign1 = (tf.word1 >> 15) & 1;
+    local int sign3 = (tf.word3 >> 15) & 1;
+
+    if (word2Bit15 == 0) {
+        axis = "Z";
+        nz = (sign3 == 1) ? 1.0 : -1.0;
+    } else if (word0Bit15 == 0) {
+        axis = "X";
+        nx = (sign1 == 1) ? 1.0 : -1.0;
+    } else {
+        axis = "Y";
+        ny = (sign1 == 1) ? -1.0 : 1.0;
+    }
+
+    SPrintf(result, "N:(%.0f, %.0f, %.0f) axis=%s", nx, ny, nz, axis);
+    return result;
+}
+
+// Smallest-three quaternion decoding for QTangent
+string PrintSmallestThreeQTangent(IvoTangentFrame &tf) {
+    string result;
+
+    // Combine words into uint32 values
+    local uint32 value1 = tf.word0 | ((uint32)tf.word1 << 16);
+    local uint32 value2 = tf.word2 | ((uint32)tf.word3 << 16);
+
+    // Try interpreting as two 10-10-10-2 SNORM vectors (Tangent and Bitangent)
+    // Then compute Normal = Tangent x Bitangent
+
+    // Extract tangent from value1
+    local int tx_raw = value1 & 0x3FF;
+    local int ty_raw = (value1 >> 10) & 0x3FF;
+    local int tz_raw = (value1 >> 20) & 0x3FF;
+
+    // Sign extend 10-bit values (512-1023 are negative)
+    if (tx_raw > 511) tx_raw = tx_raw - 1024;
+    if (ty_raw > 511) ty_raw = ty_raw - 1024;
+    if (tz_raw > 511) tz_raw = tz_raw - 1024;
+
+    // Normalize to [-1, 1] range using 511 scale
+    local float tx = tx_raw / 511.0;
+    local float ty = ty_raw / 511.0;
+    local float tz = tz_raw / 511.0;
+
+    // Normalize tangent vector
+    local float t_len = Sqrt(tx*tx + ty*ty + tz*tz);
+    if (t_len > 0.0001) { tx = tx/t_len; ty = ty/t_len; tz = tz/t_len; }
+
+    // Extract bitangent from value2
+    local int bx_raw = value2 & 0x3FF;
+    local int by_raw = (value2 >> 10) & 0x3FF;
+    local int bz_raw = (value2 >> 20) & 0x3FF;
+
+    if (bx_raw > 511) bx_raw = bx_raw - 1024;
+    if (by_raw > 511) by_raw = by_raw - 1024;
+    if (bz_raw > 511) bz_raw = bz_raw - 1024;
+
+    local float bx = bx_raw / 511.0;
+    local float by = by_raw / 511.0;
+    local float bz = bz_raw / 511.0;
+
+    // Normalize bitangent vector
+    local float b_len = Sqrt(bx*bx + by*by + bz*bz);
+    if (b_len > 0.0001) { bx = bx/b_len; by = by/b_len; bz = bz/b_len; }
+
+    // Compute normal as cross product: N = T x B
+    local float nx = ty*bz - tz*by;
+    local float ny = tz*bx - tx*bz;
+    local float nz = tx*by - ty*bx;
+
+    // Normalize the normal
+    local float n_len = Sqrt(nx*nx + ny*ny + nz*nz);
+    if (n_len > 0.0001) { nx = nx/n_len; ny = ny/n_len; nz = nz/n_len; }
+
+    SPrintf(result, "N:(%.2f,%.2f,%.2f) T:(%.2f,%.2f,%.2f) B:(%.2f,%.2f,%.2f)",
+        nx, ny, nz, tx, ty, tz, bx, by, bz);
     return result;
 }
 
