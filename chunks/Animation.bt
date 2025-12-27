@@ -142,8 +142,13 @@ struct Controller829_Cry(FileFormat format) {
     ubyte positionKeyInfo;
     EKeyTimesFormat positionTimeFormat;
     ubyte tracksAligned;
-    ushort padding;
-   
+    ushort reserved;
+
+    // Local variables for alignment calculations (declared once)
+    local int alignPos;
+    local int alignPad;
+    local int64 fileSize = FileSize();
+
     // Rotation Data
     if (numRotationKeys > 0) {
         switch (rotationFormat) {
@@ -166,10 +171,10 @@ struct Controller829_Cry(FileFormat format) {
         }
 
         if (tracksAligned != 0) {
-            local int pos = FTell();
-            local int padding = (4 - (pos % 4)) % 4;
-            if (padding > 0) {
-                ubyte rotationValuePadding[padding];
+            alignPos = FTell();
+            alignPad = (4 - (alignPos % 4)) % 4;
+            if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                ubyte rotationValuePadding[alignPad];
             }
         }
 
@@ -181,7 +186,7 @@ struct Controller829_Cry(FileFormat format) {
             case eUINT16:
             case eUINT16StartStop:
             case eBitset:
-                Uint16KeyTime rotationTimes[numRotationKeys];
+                Uint16KeyTime rotationTimes[numRotationKeys] <comment=PrintUint16KeyTime>;
                 break;
             case eByte:
             case eByteStartStop:
@@ -193,10 +198,10 @@ struct Controller829_Cry(FileFormat format) {
         }
 
         if (tracksAligned != 0) {
-            local int pos = FTell();
-            local int padding = (4 - (pos % 4)) % 4;
-            if (padding > 0) {
-                ubyte rotationTimePadding[padding];
+            alignPos = FTell();
+            alignPad = (4 - (alignPos % 4)) % 4;
+            if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                ubyte rotationTimePadding[alignPad];
             }
         }
     }
@@ -214,10 +219,10 @@ struct Controller829_Cry(FileFormat format) {
         }
 
         if (tracksAligned != 0) {
-            local int pos = FTell();
-            local int padding = (4 - (pos % 4)) % 4;
-            if (padding > 0) {
-                ubyte positionValuePadding[padding];
+            alignPos = FTell();
+            alignPad = (4 - (alignPos % 4)) % 4;
+            if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                ubyte positionValuePadding[alignPad];
             }
         }
 
@@ -230,7 +235,7 @@ struct Controller829_Cry(FileFormat format) {
                 case eUINT16:
                 case eUINT16StartStop:
                 case eBitset:
-                    Uint16KeyTime positionTimes[numPositionKeys];
+                    Uint16KeyTime positionTimes[numPositionKeys] <comment=PrintUint16KeyTime>;
                     break;
                 case eByte:
                 case eByteStartStop:
@@ -242,10 +247,10 @@ struct Controller829_Cry(FileFormat format) {
             }
 
             if (tracksAligned != 0) {
-                local int pos = FTell();
-                local int padding = (4 - (pos % 4)) % 4;
-                if (padding > 0) {
-                    ubyte positionTimePadding[padding];
+                alignPos = FTell();
+                alignPad = (4 - (alignPos % 4)) % 4;
+                if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                    ubyte positionTimePadding[alignPad];
                 }
             }
         }
@@ -471,6 +476,26 @@ string PrintSNORMVector3_Ivo(SNORMVector3_Ivo &v) {
     return result;
 }
 
+// Scaled SNORM Vector3 - stores scale for comment display
+struct ScaledSNORMPos_Ivo(float scaleX, float scaleY, float scaleZ) {
+    local float sx = scaleX;
+    local float sy = scaleY;
+    local float sz = scaleZ;
+    int16 x;
+    int16 y;
+    int16 z;
+};
+
+string PrintScaledSNORMPos_Ivo(ScaledSNORMPos_Ivo &p) {
+    string result;
+    // Convert SNORM to float: value / 32767.0 * scale
+    local float fx = (p.x / 32767.0) * p.sx;
+    local float fy = (p.y / 32767.0) * p.sy;
+    local float fz = (p.z / 32767.0) * p.sz;
+    SPrintf(result, "(%.6f, %.6f, %.6f)", fx, fy, fz);
+    return result;
+}
+
 //------------------------------------------------
 // Position Header for 0xC2xx formats (24 bytes)
 // Contains channel mask and scale factors
@@ -498,9 +523,16 @@ string PrintPosHeader_C2_Ivo(PosHeader_C2_Ivo &h) {
 //------------------------------------------------
 // Packed SNORM Position - only stores active channels
 // Inactive channels are assumed to be 0
+// Includes scale for proper value display
 //------------------------------------------------
 
-struct PackedSNORMPos_Ivo(int xActive, int yActive, int zActive) {
+struct PackedSNORMPos_Ivo(int xActive, int yActive, int zActive, float scaleX, float scaleY, float scaleZ) {
+    local int ax = xActive;
+    local int ay = yActive;
+    local int az = zActive;
+    local float sx = scaleX;
+    local float sy = scaleY;
+    local float sz = scaleZ;
     if (xActive) int16 x;
     if (yActive) int16 y;
     if (zActive) int16 z;
@@ -508,10 +540,12 @@ struct PackedSNORMPos_Ivo(int xActive, int yActive, int zActive) {
 
 string PrintPackedSNORMPos_Ivo(PackedSNORMPos_Ivo &p) {
     string result;
-    local int16 vx = exists(p.x) ? p.x : 0;
-    local int16 vy = exists(p.y) ? p.y : 0;
-    local int16 vz = exists(p.z) ? p.z : 0;
-    SPrintf(result, "(%d, %d, %d)", vx, vy, vz);
+    // Convert SNORM to float: value / 32767.0 * scale
+    // Inactive channels show 0.0
+    local float fx = p.ax ? ((exists(p.x) ? p.x : 0) / 32767.0) * p.sx : 0.0;
+    local float fy = p.ay ? ((exists(p.y) ? p.y : 0) / 32767.0) * p.sy : 0.0;
+    local float fz = p.az ? ((exists(p.z) ? p.z : 0) / 32767.0) * p.sz : 0.0;
+    SPrintf(result, "(%.6f, %.6f, %.6f)", fx, fy, fz);
     return result;
 }
 
@@ -618,7 +652,12 @@ struct CAFChunk_Ivo {
                 } else if (posHighByte == 0xC1) {
                     // SNORM with header - all channels present
                     PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
-                    SNORMVector3_Ivo positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintSNORMVector3_Ivo>;
+                    struct {
+                        local int pk;
+                        for (pk = 0; pk < numPosKeys; pk++) {
+                            ScaledSNORMPos_Ivo position(posHeader.scale.x, posHeader.scale.y, posHeader.scale.z) <bgcolor=cLtGreen, comment=PrintScaledSNORMPos_Ivo>;
+                        }
+                    } positions <comment="Scaled SNORM positions">;
                 } else if (posHighByte == 0xC2) {
                     // SNORM with header - read header first
                     PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
@@ -631,7 +670,7 @@ struct CAFChunk_Ivo {
                     struct {
                         local int pk;
                         for (pk = 0; pk < numPosKeys; pk++) {
-                            PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                            PackedSNORMPos_Ivo position(xActive, yActive, zActive, posHeader.scale.x, posHeader.scale.y, posHeader.scale.z) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
                         }
                     } positions <comment="Packed SNORM positions">;
                 } else {
@@ -745,7 +784,12 @@ struct DBAAnimationBlock_Ivo {
                 } else if (posHighByte == 0xC1) {
                     // SNORM with header - all channels present
                     PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
-                    SNORMVector3_Ivo positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintSNORMVector3_Ivo>;
+                    struct {
+                        local int pk;
+                        for (pk = 0; pk < numPosKeys; pk++) {
+                            ScaledSNORMPos_Ivo position(posHeader.scale.x, posHeader.scale.y, posHeader.scale.z) <bgcolor=cLtGreen, comment=PrintScaledSNORMPos_Ivo>;
+                        }
+                    } positions <comment="Scaled SNORM positions">;
                 } else if (posHighByte == 0xC2) {
                     // SNORM with header - read header first
                     PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
@@ -758,7 +802,7 @@ struct DBAAnimationBlock_Ivo {
                     struct {
                         local int pk;
                         for (pk = 0; pk < numPosKeys; pk++) {
-                            PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                            PackedSNORMPos_Ivo position(xActive, yActive, zActive, posHeader.scale.x, posHeader.scale.y, posHeader.scale.z) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
                         }
                     } positions <comment="Packed SNORM positions">;
                 } else {
@@ -940,7 +984,12 @@ struct DBABlock_Ivo {
                 } else if (posHighByte == 0xC1) {
                     // SNORM with header - all channels present
                     PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
-                    SNORMVector3_Ivo positions[numPosKeys] <bgcolor=cLtGreen, comment=PrintSNORMVector3_Ivo>;
+                    struct {
+                        local int pk;
+                        for (pk = 0; pk < numPosKeys; pk++) {
+                            ScaledSNORMPos_Ivo position(posHeader.scale.x, posHeader.scale.y, posHeader.scale.z) <bgcolor=cLtGreen, comment=PrintScaledSNORMPos_Ivo>;
+                        }
+                    } positions <comment="Scaled SNORM positions">;
                 } else if (posHighByte == 0xC2) {
                     // SNORM with header - read header first
                     PosHeader_C2_Ivo posHeader <bgcolor=cDkGreen, comment=PrintPosHeader_C2_Ivo>;
@@ -953,7 +1002,7 @@ struct DBABlock_Ivo {
                     struct {
                         local int pk;
                         for (pk = 0; pk < numPosKeys; pk++) {
-                            PackedSNORMPos_Ivo position(xActive, yActive, zActive) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
+                            PackedSNORMPos_Ivo position(xActive, yActive, zActive, posHeader.scale.x, posHeader.scale.y, posHeader.scale.z) <bgcolor=cLtGreen, comment=PrintPackedSNORMPos_Ivo>;
                         }
                     } positions <comment="Packed SNORM positions">;
                 } else {

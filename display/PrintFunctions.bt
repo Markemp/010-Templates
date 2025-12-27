@@ -593,6 +593,12 @@ string PrintByteKeyTime(ByteKeyTime &k) {
     return result;
 }
 
+string PrintUint16KeyTime(Uint16KeyTime &k) {
+    string result;
+    SPrintf(result, "%d", k.time);
+    return result;
+}
+
 //------------------------------------------------
 // Color Print Functions
 //------------------------------------------------
