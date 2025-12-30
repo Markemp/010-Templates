@@ -85,7 +85,8 @@ struct CompiledBone_Cry(int chunkVersion) {
 
 string PrintBoneName_Cry(CompiledBone_Cry &bone) {
     string result;
-    SPrintf(result, "Name = %s", bone.boneName);
+    local uint ctrlId = exists(bone.controllerID) ? bone.controllerID : bone.controllerId;
+    SPrintf(result, "Name = %s, CtrlID = 0x%08X (%u)", bone.boneName, ctrlId, ctrlId);
     return result;
 }
 

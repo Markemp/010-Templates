@@ -309,6 +309,14 @@ if (detectedFormat == Ivo) {
                     }
                     break;
 
+                case MotionParameters_CrChF:
+                    if (chunkVersionCrChF == 0x0925) {
+                        MotionParams925 motionParams <bgcolor=cLtYellow>;
+                    } else if (chunkVersionCrChF == 0x0905) {
+                        MotionParams905 motionParams <bgcolor=cLtYellow>;
+                    }
+                    break;
+
                 case Helper_CrChF:
                     Helper_Cry helper(detectedFormat);
                     break;

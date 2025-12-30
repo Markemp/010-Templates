@@ -36,7 +36,36 @@ struct KeyTimesFormatCounts {
 };
 
 //------------------------------------------------
-// Motion Parameters (v0905)
+// Motion Parameters (v0925) - 0x84 bytes (132 decimal)
+// Same structure as v0905
+//------------------------------------------------
+
+struct MotionParams925 {
+    uint32 assetFlags;
+    uint32 compression;
+    int32 ticksPerFrame;
+    float secsPerTick;
+    int32 start;
+    int32 end;
+    float moveSpeed;
+    float turnSpeed;
+    float assetTurn;
+    float distance;
+    float slope;
+    QuatT startLocation <comment=PrintQuatT>;
+    QuatT endLocation <comment=PrintQuatT>;
+    float lHeelStart;
+    float lHeelEnd;
+    float lToe0Start;
+    float lToe0End;
+    float rHeelStart;
+    float rHeelEnd;
+    float rToe0Start;
+    float rToe0End;
+};
+
+//------------------------------------------------
+// Motion Parameters (v0905) - 132 bytes
 //------------------------------------------------
 
 struct MotionParams905 {
