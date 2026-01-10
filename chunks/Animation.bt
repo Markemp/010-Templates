@@ -98,11 +98,18 @@ struct MotionParams905 {
 
 struct CControllerInfo {
     uint32 controllerID;
-    int32 posKeyTimeTrack;
-    int32 posTrack;
-    int32 rotKeyTimeTrack;
-    int32 rotTrack;
+    uint32 posKeyTimeTrack;   // index into shared keytime array
+    uint32 posTrack;          // index into position track array
+    uint32 rotKeyTimeTrack;   // index into shared keytime array
+    uint32 rotTrack;          // index into rotation track array
 };
+
+string PrintCControllerInfo(CControllerInfo &c) {
+    string result;
+    SPrintf(result, "ID: %u, pos: %u/%u, rot: %u/%u",
+        c.controllerID, c.posKeyTimeTrack, c.posTrack, c.rotKeyTimeTrack, c.rotTrack);
+    return result;
+}
 
 //------------------------------------------------
 // Animation Entry (v0905)
@@ -125,7 +132,7 @@ struct AnimationEntry(int isInPlaceStream) {
     } else {
         // Standard: controllers inline
         if (controllerCount > 0) {
-            CControllerInfo controllers[controllerCount];
+            CControllerInfo controllers[controllerCount] <comment=PrintCControllerInfo>;
         }
     }
 };
@@ -350,7 +357,7 @@ struct Controller905_Cry(FileFormat format) {
             totalControllers += animations.animation[j].controllerCount;
         }
         if (totalControllers > 0) {
-            CControllerInfo controllerBlock[totalControllers];
+            CControllerInfo controllerBlock[totalControllers] <comment=PrintCControllerInfo>;
         }
 
         // Track data is at the very end for in-place streaming
