@@ -61,7 +61,7 @@ string PrintBoneName_Ivo(BoneName &bone) {
 
 struct CompiledBone_Cry(int chunkVersion) {
     if (chunkVersion == 0x0800) {
-        uint controllerID;
+        uint controllerID <format=hex>;
         PhysicsGeometry physicsGeo[2];
         float mass;
         Matrix3x4 worldToBone <comment=PrintMatrix3x4>;
@@ -72,7 +72,7 @@ struct CompiledBone_Cry(int chunkVersion) {
         uint numChildren;
         int offsetChild;
     } else if (chunkVersion == 0x0801) {
-        uint controllerId;
+        uint controllerId <format=hex>;
         uint mass;
         PhysicsGeometry physicsGeo[2];
         char boneName[48];
@@ -115,7 +115,7 @@ struct CompiledPhysicalBone_Cry {
     uint boneIndex;
     uint parentIndex;
     uint numChildren;
-    uint controllerID;
+    uint controllerID <format=hex>;
     char prop[32];
     PhysicsGeometry phys;
 };
@@ -132,7 +132,7 @@ struct CompiledPhysicalBones_Cry(int numBones, FileFormat format) {
 
 struct Bone_Ivo(int version) {
     if (version == 0x0900) {
-        uint controllerId;
+        uint controllerId <format=hex>;
         uint limbId;
         int parentIndex;
         Quaternion relativeQuat <comment=PrintQuaternion>;
@@ -140,7 +140,7 @@ struct Bone_Ivo(int version) {
         Quaternion worldQuat <comment=PrintQuaternion>;
         Vector3 worldTransform <comment=PrintVector3>;
     } else if (version == 0x0901) {
-        uint controllerId;
+        uint controllerId <format=hex>;
         short limbId;
         short numChildren;
         short parentIndex;
@@ -152,10 +152,26 @@ struct Bone_Ivo(int version) {
 
 string PrintBoneInfo_Ivo(Bone_Ivo &bone) {
     string result;
-    if (exists(bone.relativeTransform)) {
-        SPrintf(result, "Relative X, Y, Z: %f, %f, %f, World X, Y, Z: %f, %f, %f",
-            bone.relativeTransform.x, bone.relativeTransform.y, bone.relativeTransform.z,
-            bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z);
+    local int idx = (startof(bone) - startof(parentof(bone).bone[0])) / sizeof(bone);
+    local string name = parentof(bone).boneName[idx].boneName;
+    local uint ctrlId = bone.controllerId;
+    local int parent = bone.parentIndex;
+
+    if (exists(bone.worldTransform)) {
+        SPrintf(result, "%s (0x%08X) parent:%d pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f)",
+            name, ctrlId, parent,
+            bone.worldTransform.x, bone.worldTransform.y, bone.worldTransform.z,
+            bone.worldQuat.x, bone.worldQuat.y, bone.worldQuat.z, bone.worldQuat.w);
+    } else {
+        SPrintf(result, "%s (0x%08X) parent:%d pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f)",
+            name, ctrlId, parent,
+            parentof(bone).boneTransformData[idx].worldTransform.x,
+            parentof(bone).boneTransformData[idx].worldTransform.y,
+            parentof(bone).boneTransformData[idx].worldTransform.z,
+            parentof(bone).boneTransformData[idx].worldQuat.x,
+            parentof(bone).boneTransformData[idx].worldQuat.y,
+            parentof(bone).boneTransformData[idx].worldQuat.z,
+            parentof(bone).boneTransformData[idx].worldQuat.w);
     }
     return result;
 }
@@ -171,32 +187,47 @@ struct BoneTransforms_Ivo {
     Vector3 worldTransform <comment=PrintVector3>;
 };
 
+string ReadBoneTransforms_Ivo(BoneTransforms_Ivo &t) {
+    local int idx = (startof(t) - startof(parentof(t).boneTransformData[0])) / sizeof(t);
+    local string name = parentof(t).boneName[idx].boneName;
+
+    if (t.relativeTransform.x == 0 && t.relativeTransform.y == 0 && t.relativeTransform.z == 0 &&
+        t.relativeQuat.x == 0 && t.relativeQuat.y == 0 && t.relativeQuat.z == 0 && t.relativeQuat.w == 1.0 &&
+        t.worldTransform.x == 0 && t.worldTransform.y == 0 && t.worldTransform.z == 0 &&
+        t.worldQuat.x == 0 && t.worldQuat.y == 0 && t.worldQuat.z == 0 && t.worldQuat.w == 1.0) {
+        return name + " (root)";
+    }
+    return name;
+}
+
+string PrintBoneTransforms_Ivo(BoneTransforms_Ivo &t) {
+    string result;
+    SPrintf(result, "local pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f) | world pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f)",
+        t.relativeTransform.x, t.relativeTransform.y, t.relativeTransform.z,
+        t.relativeQuat.x, t.relativeQuat.y, t.relativeQuat.z, t.relativeQuat.w,
+        t.worldTransform.x, t.worldTransform.y, t.worldTransform.z,
+        t.worldQuat.x, t.worldQuat.y, t.worldQuat.z, t.worldQuat.w);
+    return result;
+}
+
 //------------------------------------------------
 // Compiled Bones - Ivo format
 //------------------------------------------------
 
 struct CompiledBonesData_Ivo(int version) {
-    local int i;
     if (version == 0x0900) {
         int numBones;
-        for (i = 0; i < numBones; i++) {
-            Bone_Ivo bone(version) <comment=PrintBoneInfo_Ivo>;
-        }
-        for (i = 0; i < numBones; i++) {
-            BoneName boneName <comment=PrintBoneName_Ivo>;
-        }
+        Bone_Ivo bone(version)[numBones] <comment=PrintBoneInfo_Ivo>;
+        BoneName boneName[numBones] <optimize=false, comment=PrintBoneName_Ivo>;
     } else if (version == 0x0901) {
         int numBones;
         int stringTableSize;
         int flags1;
         int flags2;
-        for (i = 0; i < numBones; i++) {
-            Bone_Ivo bone(version) <comment=PrintBoneInfo_Ivo>;
-        }
-        for (i = 0; i < numBones; i++) {
-            BoneName boneName <comment=PrintBoneName_Ivo>;
-        }
-        BoneTransforms_Ivo boneTransformData[numBones];
+        byte buffer[32];
+        Bone_Ivo bone(version)[numBones] <comment=PrintBoneInfo_Ivo>;
+        BoneName boneName[numBones] <optimize=false, comment=PrintBoneName_Ivo>;
+        BoneTransforms_Ivo boneTransformData[numBones] <read=ReadBoneTransforms_Ivo, comment=PrintBoneTransforms_Ivo>;
     }
 };
 

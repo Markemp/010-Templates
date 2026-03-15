@@ -105,6 +105,11 @@ struct NodeMeshCombo_Ivo {
     } unknownData;
 };
 
+string ReadNodeMeshCombo_Ivo(NodeMeshCombo_Ivo &node) {
+    local int idx = (startof(node) - startof(parentof(node).nodeMeshCombo[0])) / sizeof(node);
+    return parentof(node).nodeName[idx].nodeName;
+}
+
 string PrintNodeMeshCombo_Ivo(NodeMeshCombo_Ivo &node) {
     string result;
     SPrintf(result, "id: %x, unknown: %x, parentindex: %d, geometryFlag: %x, meshChunkId: %x",
@@ -125,16 +130,13 @@ struct NodeMeshComboChunk_Ivo {
     uint stringTableSize;
     uint unknown2;
     uint unknown3;
-
-    NodeMeshCombo_Ivo nodeMeshCombo[numNodes] <comment=PrintNodeMeshCombo_Ivo>;
+    char padding[32];
+    NodeMeshCombo_Ivo nodeMeshCombo[numNodes] <read=ReadNodeMeshCombo_Ivo, comment=PrintNodeMeshCombo_Ivo>;
 
     ushort unknownIndices[unknown];
     ushort materialIndices[numMeshSubsets];
 
-    local int i;
-    for (i = 0; i < numNodes; i++) {
-        NodeName_Ivo nodeName <comment=PrintNodeName_Ivo>;
-    }
+    NodeName_Ivo nodeName[numNodes] <optimize=false, comment=PrintNodeName_Ivo>;
 
     local int pos = FTell();
     if (pos % 4 != 0) {

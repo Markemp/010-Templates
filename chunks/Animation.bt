@@ -97,7 +97,7 @@ struct MotionParams905 {
 //------------------------------------------------
 
 struct CControllerInfo {
-    uint32 controllerID;
+    uint32 controllerID <format=hex>;
     uint32 posKeyTimeTrack;   // index into shared keytime array
     uint32 posTrack;          // index into position track array
     uint32 rotKeyTimeTrack;   // index into shared keytime array
@@ -169,7 +169,7 @@ string PrintControllerChunkDesc905(ControllerChunkDesc905 &desc) {
 struct Controller829_Cry(FileFormat format) {
     ChunkHeader chunkHeader(format);
 
-    uint controllerId;
+    uint controllerId <format=hex>;
     uint16 numRotationKeys;
     uint16 numPositionKeys;
     ECompressionFormat rotationFormat;
