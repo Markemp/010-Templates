@@ -887,15 +887,21 @@ string PrintAnimPath_Ivo(AnimPathString_Ivo &p) {
 // Similar to CAF AnimInfo - metadata for each animation
 //------------------------------------------------
 
-struct DBAAnimInfoEntry_Ivo {
+struct DBAAnimInfoEntry_Ivo(int version) {
+    if (version >= 0x0902) {
+        uint32 unknown0;             // Unknown (seen as 0x00000000)
+    }
     uint32 flags;                    // Animation flags (usually 2)
     uint16 framesPerSecond;          // FPS (typically 30)
     uint16 numControllers;           // Number of bone controllers
+    if (version >= 0x0902) {
+        uint32 unknown3;             // Unknown (seen as 0x00900000)
+    }
     uint32 unknown1;                 // Unknown (often 0)
     uint32 unknown2;                 // Unknown (varies: 17, 25, etc.)
     Quaternion startRotation <comment=PrintQuaternion>;
     Vector3 startPosition <comment=PrintVector3>;
-};  // Total: 4+2+2+4+4+16+12 = 44 bytes
+};
 
 string PrintDBAAnimInfo_Ivo(DBAAnimInfoEntry_Ivo &entry) {
     string result;
@@ -910,12 +916,12 @@ string PrintDBAAnimInfo_Ivo(DBAAnimInfoEntry_Ivo &entry) {
 // Contains animation metadata and path strings
 //------------------------------------------------
 
-struct DBAAnimInfoChunk_Ivo {
+struct DBAAnimInfoChunk_Ivo(int version) {
     uint32 numAnimations <comment="Number of animations in this DBA">;
 
-    // Animation info entries (44 bytes each)
+    // Animation info entries
     if (numAnimations > 0) {
-        DBAAnimInfoEntry_Ivo animInfo[numAnimations] <bgcolor=cLtRed, comment=PrintDBAAnimInfo_Ivo>;
+        DBAAnimInfoEntry_Ivo animInfo(version)[numAnimations] <bgcolor=cLtRed, comment=PrintDBAAnimInfo_Ivo>;
     }
 
     // Path strings (null-terminated, one per animation)

@@ -72,8 +72,8 @@ struct SomeNodeInfo_Ivo {
 //------------------------------------------------
 
 struct IvoTransforms {
-    Matrix3x4 transMatGlobal <comment=PrintMat3x4Trans>;
-    Matrix3x4 transMatRelative <comment=PrintMat3x4Trans>;
+    Matrix3x4 transMatGlobal <comment=PrintMatrix3x4>;
+    Matrix3x4 transMatRelative <comment=PrintMatrix3x4>;
     Vector3 scaleComponent <comment=PrintVector3>;
 };
 

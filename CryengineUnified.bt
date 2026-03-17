@@ -143,8 +143,8 @@ if (detectedFormat == Ivo) {
                 break;
 
             case DBA_Ivo:
-                // AnimInfo-style chunk: numAnimations + entries (44 bytes each) + path strings
-                DBAAnimInfoChunk_Ivo dbaAnimInfo <bgcolor=cLtRed, comment=PrintDBAAnimInfoChunk_Ivo>;
+                // AnimInfo-style chunk: numAnimations + entries + path strings
+                DBAAnimInfoChunk_Ivo dbaAnimInfo(chunkTable.tableEntry[i].entry.version) <bgcolor=cLtRed, comment=PrintDBAAnimInfoChunk_Ivo>;
                 break;
 
             default:

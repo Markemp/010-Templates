@@ -165,48 +165,47 @@ string PrintBoneInfo_Ivo(Bone_Ivo &bone) {
     } else {
         SPrintf(result, "%s (0x%08X) parent:%d pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f)",
             name, ctrlId, parent,
-            parentof(bone).boneTransformData[idx].worldTransform.x,
-            parentof(bone).boneTransformData[idx].worldTransform.y,
-            parentof(bone).boneTransformData[idx].worldTransform.z,
-            parentof(bone).boneTransformData[idx].worldQuat.x,
-            parentof(bone).boneTransformData[idx].worldQuat.y,
-            parentof(bone).boneTransformData[idx].worldQuat.z,
-            parentof(bone).boneTransformData[idx].worldQuat.w);
+            parentof(bone).worldTransform[idx].position.x,
+            parentof(bone).worldTransform[idx].position.y,
+            parentof(bone).worldTransform[idx].position.z,
+            parentof(bone).worldTransform[idx].quat.x,
+            parentof(bone).worldTransform[idx].quat.y,
+            parentof(bone).worldTransform[idx].quat.z,
+            parentof(bone).worldTransform[idx].quat.w);
     }
     return result;
 }
 
 //------------------------------------------------
-// Bone Transforms - Ivo v0x901
+// Bone Transform - Ivo v0x901
 //------------------------------------------------
 
-struct BoneTransforms_Ivo {
-    Quaternion relativeQuat <comment=PrintQuaternion>;
-    Vector3 relativeTransform <comment=PrintVector3>;
-    Quaternion worldQuat <comment=PrintQuaternion>;
-    Vector3 worldTransform <comment=PrintVector3>;
+struct BoneTransform_Ivo {
+    Quaternion quat <comment=PrintQuaternion>;
+    Vector3 position <comment=PrintVector3>;
 };
 
-string ReadBoneTransforms_Ivo(BoneTransforms_Ivo &t) {
-    local int idx = (startof(t) - startof(parentof(t).boneTransformData[0])) / sizeof(t);
+string ReadRelativeTransform_Ivo(BoneTransform_Ivo &t) {
+    local int idx = (startof(t) - startof(parentof(t).relativeTransform[0])) / sizeof(t);
+    return parentof(t).boneName[idx].boneName;
+}
+
+string ReadWorldTransform_Ivo(BoneTransform_Ivo &t) {
+    local int idx = (startof(t) - startof(parentof(t).worldTransform[0])) / sizeof(t);
     local string name = parentof(t).boneName[idx].boneName;
 
-    if (t.relativeTransform.x == 0 && t.relativeTransform.y == 0 && t.relativeTransform.z == 0 &&
-        t.relativeQuat.x == 0 && t.relativeQuat.y == 0 && t.relativeQuat.z == 0 && t.relativeQuat.w == 1.0 &&
-        t.worldTransform.x == 0 && t.worldTransform.y == 0 && t.worldTransform.z == 0 &&
-        t.worldQuat.x == 0 && t.worldQuat.y == 0 && t.worldQuat.z == 0 && t.worldQuat.w == 1.0) {
+    if (t.position.x == 0 && t.position.y == 0 && t.position.z == 0 &&
+        t.quat.x == 0 && t.quat.y == 0 && t.quat.z == 0 && t.quat.w == 1.0) {
         return name + " (root)";
     }
     return name;
 }
 
-string PrintBoneTransforms_Ivo(BoneTransforms_Ivo &t) {
+string PrintBoneTransform_Ivo(BoneTransform_Ivo &t) {
     string result;
-    SPrintf(result, "local pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f) | world pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f)",
-        t.relativeTransform.x, t.relativeTransform.y, t.relativeTransform.z,
-        t.relativeQuat.x, t.relativeQuat.y, t.relativeQuat.z, t.relativeQuat.w,
-        t.worldTransform.x, t.worldTransform.y, t.worldTransform.z,
-        t.worldQuat.x, t.worldQuat.y, t.worldQuat.z, t.worldQuat.w);
+    SPrintf(result, "pos:(%.3f,%.3f,%.3f) rot:(%.3f,%.3f,%.3f,%.3f)",
+        t.position.x, t.position.y, t.position.z,
+        t.quat.x, t.quat.y, t.quat.z, t.quat.w);
     return result;
 }
 
@@ -227,7 +226,8 @@ struct CompiledBonesData_Ivo(int version) {
         byte buffer[32];
         Bone_Ivo bone(version)[numBones] <comment=PrintBoneInfo_Ivo>;
         BoneName boneName[numBones] <optimize=false, comment=PrintBoneName_Ivo>;
-        BoneTransforms_Ivo boneTransformData[numBones] <read=ReadBoneTransforms_Ivo, comment=PrintBoneTransforms_Ivo>;
+        BoneTransform_Ivo relativeTransform[numBones] <read=ReadRelativeTransform_Ivo, comment=PrintBoneTransform_Ivo>;
+        BoneTransform_Ivo worldTransform[numBones] <read=ReadWorldTransform_Ivo, comment=PrintBoneTransform_Ivo>;
     }
 };
 
