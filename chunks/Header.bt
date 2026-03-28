@@ -86,7 +86,7 @@ struct ChunkTableEntry_CryTek(int fileVersion) {
 
 string PrintChunkTableEntry_CryTek(ChunkTableEntry_CryTek &entry) {
     string result;
-    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    SPrintf(result, "%s v0x%04X", EnumToString(entry.chunkType), entry.version);
     return result;
 }
 
@@ -100,7 +100,7 @@ struct ChunkTableEntry_CrChF {
 
 string PrintChunkTableEntry_CrChF(ChunkTableEntry_CrChF &entry) {
     string result;
-    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    SPrintf(result, "%s v0x%04X", EnumToString(entry.chunkType), entry.version);
     return result;
 }
 
@@ -112,7 +112,7 @@ struct ChunkTableEntry_Ivo {
 
 string PrintChunkTableEntry_Ivo(ChunkTableEntry_Ivo &entry) {
     string result;
-    SPrintf(result, "%s", EnumToString(entry.chunkType));
+    SPrintf(result, "%s v0x%04X", EnumToString(entry.chunkType), entry.version);
     return result;
 }
 
@@ -136,7 +136,9 @@ struct ChunkTableEntry(FileFormat format, int fileVersion) {
 };
 
 string PrintChunkTableEntry(ChunkTableEntry &tableEntry) {
-    return EnumToString(tableEntry.entry.chunkType);
+    string result;
+    SPrintf(result, "%s v0x%04X", EnumToString(tableEntry.entry.chunkType), tableEntry.entry.version);
+    return result;
 }
 
 //------------------------------------------------

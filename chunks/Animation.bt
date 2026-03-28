@@ -888,9 +888,6 @@ string PrintAnimPath_Ivo(AnimPathString_Ivo &p) {
 //------------------------------------------------
 
 struct DBAAnimInfoEntry_Ivo(int version) {
-    if (version >= 0x0902) {
-        uint32 unknown0;             // Unknown (seen as 0x00000000)
-    }
     uint32 flags;                    // Animation flags (usually 2)
     uint16 framesPerSecond;          // FPS (typically 30)
     uint16 numControllers;           // Number of bone controllers
@@ -918,6 +915,9 @@ string PrintDBAAnimInfo_Ivo(DBAAnimInfoEntry_Ivo &entry) {
 
 struct DBAAnimInfoChunk_Ivo(int version) {
     uint32 numAnimations <comment="Number of animations in this DBA">;
+    if (version >= 0x0902) {
+        uint32 unknown;
+    }
 
     // Animation info entries
     if (numAnimations > 0) {

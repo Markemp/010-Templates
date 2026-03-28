@@ -379,7 +379,9 @@ struct NODEMESHCOMBOCHUNK {
     uint stringTableSize;
     uint unknown2;
     uint unknown3;
-           
+    
+
+
     NODEMESHCOMBO nodeMeshCombo[numberOfNodes] <comment=PrintNodeMeshCombo>;
     
     ushort unknownIndices[unknown]; // No idea, but count matches unknown under numberOfMeshes (numberOfMeshes - 1)
