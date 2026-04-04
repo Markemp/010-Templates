@@ -243,7 +243,7 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case TimingInfo_CryTek:
-                    TimingInfo_Cry timingInfo(detectedFormat) <comment=PrintTimingInfo>;
+                    TimingInfo_Cry timingInfo(detectedFormat, chunkVersion) <comment=PrintTimingInfo>;
                     break;
 
                 case MeshPhysicsData_CryTek:
@@ -330,7 +330,7 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case TimingInfo_CrChF:
-                    TimingInfo_Cry timingInfo(detectedFormat) <comment=PrintTimingInfo>;
+                    TimingInfo_Cry timingInfo(detectedFormat, chunkVersionCrChF) <comment=PrintTimingInfo>;
                     break;
 
                 case Unknown11_CrChF:

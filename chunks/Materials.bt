@@ -114,21 +114,33 @@ string PrintExportFlags(ExportFlags_Cry &flags) {
 // Timing Info
 //------------------------------------------------
 
-struct TimingInfo_Cry(FileFormat format) {
+struct TimingInfo_Cry(FileFormat format, int version) {
     if (format == CryTek) {
         ChunkHeader chunkHeader(format);
     }
-    float secondsPerTick;
-    int ticksPerFrame;
-    char globalName[32];
-    int globalRangeStart;
-    int globalRangeEnd;
-    int numSubRanges;
+    if (version == 0x0919) {
+        // Condensed 12-byte layout (v0x0919)
+        int32 flags;
+        float ticksPerSecond;
+        int32 numSubRanges;
+    } else {
+        // Full 52-byte layout (v0x0918 and earlier)
+        float secondsPerTick;
+        int32 ticksPerFrame;
+        char globalName[32];
+        int32 globalRangeStart;
+        int32 globalRangeEnd;
+        int32 numSubRanges;
+    }
 };
 
 string PrintTimingInfo(TimingInfo_Cry &info) {
     string result;
-    SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
+    if (exists(info.globalName)) {
+        SPrintf(result, "%s, range %d to %d", info.globalName, info.globalRangeStart, info.globalRangeEnd);
+    } else {
+        SPrintf(result, "%.1f ticks/sec, flags=0x%08X", info.ticksPerSecond, info.flags);
+    }
     return result;
 }
 

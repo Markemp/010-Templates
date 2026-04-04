@@ -593,6 +593,19 @@ struct BoneRotationTrack_Ivo(int numKeys) {
     }
 };
 
+// Shared position time block (uint16 start/end + uint32 marker)
+struct PosTimeBlock_Ivo {
+    uint16 timeStart;
+    uint16 timeEnd;
+    uint32 marker;
+};
+
+string PrintPosTimeBlock_Ivo(PosTimeBlock_Ivo &b) {
+    string s;
+    SPrintf(s, "time: %d-%d, marker=0x%08X", b.timeStart, b.timeEnd, b.marker);
+    return s;
+}
+
 //------------------------------------------------
 // CAF Chunk (single animation)
 // Contains bone hashes, controller entries, and keyframe data
@@ -667,11 +680,7 @@ struct CAFChunk_Ivo {
                     ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
                 } else {
                     // uint16 time format with marker (8 bytes total)
-                    struct PosTimeBlock {
-                        uint16 timeStart;
-                        uint16 timeEnd;
-                        uint32 marker;
-                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                    PosTimeBlock_Ivo posTimeData <bgcolor=cDkGray, comment=PrintPosTimeBlock_Ivo>;
                 }
 
                 // Read position data (separate location)
@@ -717,13 +726,19 @@ struct CAFChunk_Ivo {
 
             // Restore position for next controller
             FSeek(savedPos);
-        } controller <bgcolor=cLtYellow,
-                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+        } controller <bgcolor=cLtYellow, comment=PrintAnimController_Ivo>;
     }
 
     // Seek to end of block
     FSeek(blockEnd);
 };
+
+string PrintAnimController_Ivo(AnimController_Ivo &ctrl) {
+    string s;
+    SPrintf(s, "Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)",
+            ctrl.numRotKeys, ctrl.rotFormatFlags, ctrl.numPosKeys, ctrl.posFormatFlags);
+    return s;
+}
 
 string PrintCAFChunk_Ivo(CAFChunk_Ivo &caf) {
     string result;
@@ -800,11 +815,7 @@ struct DBAAnimationBlock_Ivo {
                 if (posFormat == 0x00) {
                     ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
                 } else {
-                    struct DBAAnimBlk_PosTimeBlock {
-                        uint16 timeStart;
-                        uint16 timeEnd;
-                        uint32 marker;
-                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                    PosTimeBlock_Ivo posTimeData <bgcolor=cDkGray, comment=PrintPosTimeBlock_Ivo>;
                 }
 
                 FSeek(controllerStart + posDataOffset);
@@ -848,13 +859,19 @@ struct DBAAnimationBlock_Ivo {
             }
 
             FSeek(savedPos);
-        } controller <bgcolor=cLtYellow,
-                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+        } controller <bgcolor=cLtYellow, comment=PrintDBAAnimController_Ivo>;
     }
 
     // Seek to end of block
     FSeek(blockEnd);
 };
+
+string PrintDBAAnimController_Ivo(DBAAnimController_Ivo &ctrl) {
+    string s;
+    SPrintf(s, "Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)",
+            ctrl.numRotKeys, ctrl.rotFormatFlags, ctrl.numPosKeys, ctrl.posFormatFlags);
+    return s;
+}
 
 string PrintDBABlock_Ivo(DBAAnimationBlock_Ivo &dba) {
     string result;
@@ -1006,11 +1023,7 @@ struct DBABlock_Ivo {
                 if (posFormat == 0x00) {
                     ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
                 } else {
-                    struct DBABlk_PosTimeBlock {
-                        uint16 timeStart;
-                        uint16 timeEnd;
-                        uint32 marker;
-                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                    PosTimeBlock_Ivo posTimeData <bgcolor=cDkGray, comment=PrintPosTimeBlock_Ivo>;
                 }
 
                 FSeek(controllerStart + posDataOffset);
@@ -1055,13 +1068,19 @@ struct DBABlock_Ivo {
 
             // Restore position for next controller
             FSeek(savedPos);
-        } controller <bgcolor=cLtYellow,
-                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+        } controller <bgcolor=cLtYellow, comment=PrintDBABlockController_Ivo>;
     }
 
     // Position is now after all controller headers (24 bytes each)
     // The next #dba block (if any) starts here, not at blockEnd
 };
+
+string PrintDBABlockController_Ivo(DBABlockController_Ivo &ctrl) {
+    string s;
+    SPrintf(s, "Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)",
+            ctrl.numRotKeys, ctrl.rotFormatFlags, ctrl.numPosKeys, ctrl.posFormatFlags);
+    return s;
+}
 
 string PrintDBABlock_Ivo2(DBABlock_Ivo &block) {
     string result;
@@ -1088,7 +1107,11 @@ struct DbaDataChunk_Ivo {
     while (FTell() < chunkEnd) {
         ReadBytes(sig, FTell(), 4);
         if (sig[0] == '#' && sig[1] == 'd' && sig[2] == 'b' && sig[3] == 'a') {
-            DBABlock_Ivo block <bgcolor=(blockIndex == 0 ? cLtBlue : cLtPurple), comment=PrintDBABlock_Ivo2>;
+            if (blockIndex % 2 == 0) {
+                DBABlock_Ivo block <bgcolor=cLtBlue, comment=PrintDBABlock_Ivo2>;
+            } else {
+                DBABlock_Ivo block <bgcolor=cLtPurple, comment=PrintDBABlock_Ivo2>;
+            }
             blockIndex++;
         } else {
             break;
