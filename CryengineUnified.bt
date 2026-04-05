@@ -223,12 +223,22 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case Controller_CryTek:
-                    if (chunkVersion == 0x0829) {
+                    if (chunkVersion == 0x0826) {
+                        Controller826_Cry controller(detectedFormat) <comment=PrintController826_Cry>;
+                    } else if (chunkVersion == 0x0827) {
+                        Controller827_Cry controller(detectedFormat) <comment=PrintController827_Cry>;
+                    } else if (chunkVersion == 0x0829) {
                         Controller829_Cry controller(detectedFormat);
-                    } else if (chunkVersion == 0x0905) {
-                        Controller905_Cry controller(detectedFormat);
+                    } else if (chunkVersion == 0x0830) {
+                        Controller830_Cry controller(detectedFormat) <comment=PrintController830_Cry>;
+                    } else if (chunkVersion == 0x0831) {
+                        Controller831_Cry controller(detectedFormat) <comment=PrintController831_Cry>;
+                    } else if (chunkVersion == 0x0832) {
+                        Controller832_Cry controller(detectedFormat) <comment=PrintController832_Cry>;
                     } else if (chunkVersion == 0x0833) {
                         Controller833_Cry controller(detectedFormat) <comment=PrintController833_Cry>;
+                    } else if (chunkVersion == 0x0905) {
+                        Controller905_Cry controller(detectedFormat);
                     }
                     break;
 
@@ -304,12 +314,22 @@ if (detectedFormat == Ivo) {
                     break;
 
                 case Controller_CrChF:
-                    if (chunkVersionCrChF == 0x0829) {
+                    if (chunkVersionCrChF == 0x0826) {
+                        Controller826_Cry controller(detectedFormat) <comment=PrintController826_Cry>;
+                    } else if (chunkVersionCrChF == 0x0827) {
+                        Controller827_Cry controller(detectedFormat) <comment=PrintController827_Cry>;
+                    } else if (chunkVersionCrChF == 0x0829) {
                         Controller829_Cry controller(detectedFormat);
-                    } else if (chunkVersionCrChF == 0x0905) {
-                        Controller905_Cry controller(detectedFormat);
+                    } else if (chunkVersionCrChF == 0x0830) {
+                        Controller830_Cry controller(detectedFormat) <comment=PrintController830_Cry>;
+                    } else if (chunkVersionCrChF == 0x0831) {
+                        Controller831_Cry controller(detectedFormat) <comment=PrintController831_Cry>;
+                    } else if (chunkVersionCrChF == 0x0832) {
+                        Controller832_Cry controller(detectedFormat) <comment=PrintController832_Cry>;
                     } else if (chunkVersionCrChF == 0x0833) {
                         Controller833_Cry controller(detectedFormat) <comment=PrintController833_Cry>;
+                    } else if (chunkVersionCrChF == 0x0905) {
+                        Controller905_Cry controller(detectedFormat);
                     }
                     break;
 

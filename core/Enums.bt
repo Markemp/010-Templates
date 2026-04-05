@@ -345,6 +345,29 @@ enum CtrlType {
 };
 
 //------------------------------------------------
+// Controller Key Types (v0x0826 TCB/Bezier)
+//------------------------------------------------
+
+enum <uint32> CtrlTypes {
+    CTRL_NONE       = 0,
+    CTRL_CRYBONE    = 1,
+    CTRL_LINEER1    = 2,
+    CTRL_LINEER3    = 3,
+    CTRL_LINEERQ    = 4,
+    CTRL_BEZIER1    = 5,
+    CTRL_BEZIER3    = 6,
+    CTRL_BEZIERQ    = 7,
+    CTRL_TCB1       = 8,
+    CTRL_TCB3       = 9,
+    CTRL_TCBQ       = 10,
+    CTRL_BSPLINE_2O = 11,
+    CTRL_BSPLINE_1O = 12,
+    CTRL_BSPLINE_2C = 13,
+    CTRL_BSPLINE_1C = 14,
+    CTRL_CONST      = 15
+};
+
+//------------------------------------------------
 // Compression Formats
 //------------------------------------------------
 
