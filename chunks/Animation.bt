@@ -368,6 +368,40 @@ struct Controller905_Cry(FileFormat format) {
     }
 };
 
+//------------------------------------------------
+// Controller v0833 - CryEngine 5.x only
+// Uncompressed PQS (Position/Quaternion/Scale) keys used in .i_caf files.
+// Times are implicit: time[i] = i (frame index, no time data stored).
+// Positions are stored at 100x scale.
+//------------------------------------------------
+
+struct CryKeyPQS {
+    Vector3    position  <comment=PrintVector3>;   // stored at 100x scale
+    Quaternion rotation  <comment=PrintQuaternion>; // unit quaternion (not log-compressed)
+    Vector3    scale     <comment=PrintVector3>;   // Diag33 diagonal scale
+};
+
+struct Controller833_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    uint32 numKeys                  <comment="Number of keyframes (time is implicit: frame index)">;
+    uint32 controllerId <format=hex, comment="CRC32 of bone name">;
+    CryKeyPQS keys[numKeys] <comment=PrintCryKeyPQS>;
+};
+
+string PrintCryKeyPQS(CryKeyPQS &k) {
+    string s;
+    SPrintf(s, "pos=(%.3f,%.3f,%.3f) rot=(%.3f,%.3f,%.3f,%.3f)",
+            k.position.x / 100.0, k.position.y / 100.0, k.position.z / 100.0,
+            k.rotation.x, k.rotation.y, k.rotation.z, k.rotation.w);
+    return s;
+}
+
+string PrintController833_Cry(Controller833_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, %d uncompressed PQS keys", ctrl.controllerId, ctrl.numKeys);
+    return s;
+}
+
 //===========================================
 // Ivo Animation Structures (CAF/DBA)
 //===========================================
