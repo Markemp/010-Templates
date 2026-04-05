@@ -368,6 +368,450 @@ struct Controller905_Cry(FileFormat format) {
     }
 };
 
+//------------------------------------------------
+// Controller v0826 - Far Cry / CryEngine 1-3 era
+// TCB/Bezier spline keys. Key struct varies by CtrlTypes field.
+// CE5 runtime raises CryFatalError on this version.
+//------------------------------------------------
+
+struct CryTCB3Key {
+    int32  time;
+    Vector3 val <comment=PrintVector3>;
+    float  t;   // tension
+    float  c;   // continuity
+    float  b;   // bias
+    float  ein; // ease in
+    float  eout;// ease out
+};
+
+struct CryTCBQKey {
+    int32      time;
+    Quaternion val <comment=PrintQuaternion>;
+    float  t;
+    float  c;
+    float  b;
+    float  ein;
+    float  eout;
+};
+
+struct CryTCB1Key {
+    int32 time;
+    float val;
+    float t;
+    float c;
+    float b;
+    float ein;
+    float eout;
+};
+
+struct Controller826_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    CtrlTypes type;
+    int32     numKeys;
+    uint32    nFlags;
+    uint32    controllerId <format=hex, comment="CRC32 of bone name">;
+    switch (type) {
+        case CTRL_TCB3:
+        case CTRL_LINEER3:
+        case CTRL_BEZIER3:
+            CryTCB3Key keys[numKeys];
+            break;
+        case CTRL_TCBQ:
+        case CTRL_LINEERQ:
+        case CTRL_BEZIERQ:
+            CryTCBQKey keys[numKeys];
+            break;
+        case CTRL_TCB1:
+        case CTRL_LINEER1:
+        case CTRL_BEZIER1:
+            CryTCB1Key keys[numKeys];
+            break;
+        default:
+            ubyte rawKeys[numKeys * 36] <comment="Unknown TCB key type">;
+            break;
+    }
+};
+
+string PrintController826_Cry(Controller826_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, type=%s, %d keys", ctrl.controllerId,
+            EnumToString(ctrl.type), ctrl.numKeys);
+    return s;
+}
+
+//------------------------------------------------
+// Controller v0827 - CryEngine 3-5 intermediate
+// Uncompressed PQLog keys. Position at 100x scale,
+// rotation stored as log of quaternion (Vec3).
+// Only loaded when bLoadOldChunks is set.
+//------------------------------------------------
+
+struct CryKeyPQLog {
+    int32   nTime;
+    Vector3 vPos    <comment=PrintVector3>;   // stored at 100x scale
+    Vector3 vRotLog <comment=PrintVector3>;   // log of quaternion
+};
+
+struct Controller827_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    uint32 numKeys;
+    uint32 controllerId <format=hex, comment="CRC32 of bone name">;
+    CryKeyPQLog keys[numKeys];
+};
+
+string PrintController827_Cry(Controller827_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, %d uncompressed PQLog keys", ctrl.controllerId, ctrl.numKeys);
+    return s;
+}
+
+//------------------------------------------------
+// Controller v0830 - Lumberyard only
+// Identical to v0827 but adds nFlags to header.
+//------------------------------------------------
+
+struct Controller830_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    uint32 numKeys;
+    uint32 controllerId <format=hex, comment="CRC32 of bone name">;
+    uint32 nFlags;
+    CryKeyPQLog keys[numKeys];
+};
+
+string PrintController830_Cry(Controller830_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, %d uncompressed PQLog keys (flags=0x%08X)",
+            ctrl.controllerId, ctrl.numKeys, ctrl.nFlags);
+    return s;
+}
+
+//------------------------------------------------
+// Controller v0831 - Lumberyard only
+// Extends v0829 with an nFlags field. CE5 raises
+// CryFatalError on this version.
+// Track layout after header is identical to v0829.
+//------------------------------------------------
+
+struct Controller831_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+
+    uint32             controllerId <format=hex>;
+    uint32             nFlags;
+    uint16             numRotationKeys;
+    uint16             numPositionKeys;
+    ECompressionFormat rotationFormat;
+    EKeyTimesFormat    rotationTimeFormat;
+    ECompressionFormat positionFormat;
+    ubyte              positionKeyInfo;
+    EKeyTimesFormat    positionTimeFormat;
+    ubyte              tracksAligned;
+
+    local int alignPos;
+    local int alignPad;
+    local int64 fileSize = FileSize();
+
+    if (numRotationKeys > 0) {
+        switch (rotationFormat) {
+            case eNoCompress:
+            case eNoCompressQuat:
+                NoCompressQuat rotationKeys[numRotationKeys];
+                break;
+            case eSmallTree48BitQuat:
+                SmallTree48BitQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree48BitQuat>;
+                break;
+            case eSmallTree64BitQuat:
+                SmallTree64BitQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree64BitQuat>;
+                break;
+            case eSmallTree64BitExtQuat:
+                SmallTree64BitExtQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree64BitExtQuat>;
+                break;
+            default:
+                ubyte rotationData[numRotationKeys * GetRotationSize(rotationFormat)];
+                break;
+        }
+
+        if (tracksAligned != 0) {
+            alignPos = FTell();
+            alignPad = (4 - (alignPos % 4)) % 4;
+            if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                ubyte rotationValuePadding[alignPad];
+            }
+        }
+
+        switch (rotationTimeFormat) {
+            case eF32:
+            case eF32StartStop:
+                F32KeyTime rotationTimes[numRotationKeys];
+                break;
+            case eUINT16:
+            case eUINT16StartStop:
+            case eBitset:
+                Uint16KeyTime rotationTimes[numRotationKeys] <comment=PrintUint16KeyTime>;
+                break;
+            case eByte:
+            case eByteStartStop:
+                ByteKeyTime rotationTimes[numRotationKeys] <comment=PrintByteKeyTime>;
+                break;
+            default:
+                ubyte rotationTimeData[numRotationKeys * GetTimeKeySize(rotationTimeFormat)];
+                break;
+        }
+
+        if (tracksAligned != 0) {
+            alignPos = FTell();
+            alignPad = (4 - (alignPos % 4)) % 4;
+            if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                ubyte rotationTimePadding[alignPad];
+            }
+        }
+    }
+
+    if (numPositionKeys > 0) {
+        switch (positionFormat) {
+            case eNoCompress:
+            case eNoCompressVec3:
+                Vector3 positionKeys[numPositionKeys] <comment=PrintVector3>;
+                break;
+            default:
+                ubyte positionData[numPositionKeys * GetPositionSize(positionFormat)];
+                break;
+        }
+
+        if (tracksAligned != 0) {
+            alignPos = FTell();
+            alignPad = (4 - (alignPos % 4)) % 4;
+            if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                ubyte positionValuePadding[alignPad];
+            }
+        }
+
+        if (positionKeyInfo != 0) {
+            switch (positionTimeFormat) {
+                case eF32:
+                case eF32StartStop:
+                    F32KeyTime positionTimes[numPositionKeys];
+                    break;
+                case eUINT16:
+                case eUINT16StartStop:
+                case eBitset:
+                    Uint16KeyTime positionTimes[numPositionKeys] <comment=PrintUint16KeyTime>;
+                    break;
+                case eByte:
+                case eByteStartStop:
+                    ByteKeyTime positionTimes[numPositionKeys] <comment=PrintByteKeyTime>;
+                    break;
+                default:
+                    ubyte positionTimeData[numPositionKeys * GetTimeKeySize(positionTimeFormat)];
+                    break;
+            }
+
+            if (tracksAligned != 0) {
+                alignPos = FTell();
+                alignPad = (4 - (alignPos % 4)) % 4;
+                if (alignPad > 0 && alignPos + alignPad <= fileSize) {
+                    ubyte positionTimePadding[alignPad];
+                }
+            }
+        }
+    }
+};
+
+string PrintController831_Cry(Controller831_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, rot=%d keys, pos=%d keys (flags=0x%08X)",
+            ctrl.controllerId, ctrl.numRotationKeys, ctrl.numPositionKeys, ctrl.nFlags);
+    return s;
+}
+
+//------------------------------------------------
+// Controller v0832 - CryEngine 5.x only
+// Extends v0829 with scale tracks. Production
+// runtime .caf format for CE5.
+// positionKeyInfo: 0=shares rot times, 1=own times
+// scaleKeysInfo:   0=shares rot times, 1=shares pos times, 2=own times
+//------------------------------------------------
+
+struct Controller832_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+
+    uint32             controllerId <format=hex>;
+    uint16             numRotationKeys;
+    uint16             numPositionKeys;
+    uint16             numScaleKeys;
+    ECompressionFormat rotationFormat;
+    EKeyTimesFormat    rotationTimeFormat;
+    ECompressionFormat positionFormat;
+    ubyte              positionKeyInfo;
+    EKeyTimesFormat    positionTimeFormat;
+    ECompressionFormat scaleFormat;
+    ubyte              scaleKeysInfo;
+    EKeyTimesFormat    scaleTimeFormat;
+    char               padding[2];
+
+    local int alignPos;
+    local int alignPad;
+    local int64 fileSize = FileSize();
+
+    // Rotation values
+    if (numRotationKeys > 0) {
+        switch (rotationFormat) {
+            case eNoCompress:
+            case eNoCompressQuat:
+                NoCompressQuat rotationKeys[numRotationKeys];
+                break;
+            case eSmallTree48BitQuat:
+                SmallTree48BitQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree48BitQuat>;
+                break;
+            case eSmallTree64BitQuat:
+                SmallTree64BitQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree64BitQuat>;
+                break;
+            case eSmallTree64BitExtQuat:
+                SmallTree64BitExtQuat rotationKeys[numRotationKeys] <comment=PrintSmallTree64BitExtQuat>;
+                break;
+            default:
+                ubyte rotationData[numRotationKeys * GetRotationSize(rotationFormat)];
+                break;
+        }
+        AlignTo4();
+
+        // Rotation times
+        switch (rotationTimeFormat) {
+            case eF32:
+            case eF32StartStop:
+                F32KeyTime rotationTimes[numRotationKeys];
+                break;
+            case eUINT16:
+            case eUINT16StartStop:
+            case eBitset:
+                Uint16KeyTime rotationTimes[numRotationKeys] <comment=PrintUint16KeyTime>;
+                break;
+            case eByte:
+            case eByteStartStop:
+                ByteKeyTime rotationTimes[numRotationKeys] <comment=PrintByteKeyTime>;
+                break;
+            default:
+                ubyte rotationTimeData[numRotationKeys * GetTimeKeySize(rotationTimeFormat)];
+                break;
+        }
+        AlignTo4();
+    }
+
+    // Position values
+    if (numPositionKeys > 0) {
+        switch (positionFormat) {
+            case eNoCompress:
+            case eNoCompressVec3:
+                Vector3 positionKeys[numPositionKeys] <comment=PrintVector3>;
+                break;
+            default:
+                ubyte positionData[numPositionKeys * GetPositionSize(positionFormat)];
+                break;
+        }
+        AlignTo4();
+
+        // Position times (only if not sharing rotation times)
+        if (positionKeyInfo != 0) {
+            switch (positionTimeFormat) {
+                case eF32:
+                case eF32StartStop:
+                    F32KeyTime positionTimes[numPositionKeys];
+                    break;
+                case eUINT16:
+                case eUINT16StartStop:
+                case eBitset:
+                    Uint16KeyTime positionTimes[numPositionKeys] <comment=PrintUint16KeyTime>;
+                    break;
+                case eByte:
+                case eByteStartStop:
+                    ByteKeyTime positionTimes[numPositionKeys] <comment=PrintByteKeyTime>;
+                    break;
+                default:
+                    ubyte positionTimeData[numPositionKeys * GetTimeKeySize(positionTimeFormat)];
+                    break;
+            }
+            AlignTo4();
+        }
+    }
+
+    // Scale values
+    if (numScaleKeys > 0) {
+        switch (scaleFormat) {
+            case eNoCompress:
+            case eNoCompressVec3:
+                Vector3 scaleKeys[numScaleKeys] <comment=PrintVector3>;
+                break;
+            default:
+                ubyte scaleData[numScaleKeys * GetPositionSize(scaleFormat)];
+                break;
+        }
+        AlignTo4();
+
+        // Scale times (only if not sharing rot/pos times)
+        if (scaleKeysInfo == 2) {
+            switch (scaleTimeFormat) {
+                case eF32:
+                case eF32StartStop:
+                    F32KeyTime scaleTimes[numScaleKeys];
+                    break;
+                case eUINT16:
+                case eUINT16StartStop:
+                case eBitset:
+                    Uint16KeyTime scaleTimes[numScaleKeys] <comment=PrintUint16KeyTime>;
+                    break;
+                case eByte:
+                case eByteStartStop:
+                    ByteKeyTime scaleTimes[numScaleKeys] <comment=PrintByteKeyTime>;
+                    break;
+                default:
+                    ubyte scaleTimeData[numScaleKeys * GetTimeKeySize(scaleTimeFormat)];
+                    break;
+            }
+            AlignTo4();
+        }
+    }
+};
+
+string PrintController832_Cry(Controller832_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, rot=%d keys, pos=%d keys, scale=%d keys",
+            ctrl.controllerId, ctrl.numRotationKeys, ctrl.numPositionKeys, ctrl.numScaleKeys);
+    return s;
+}
+
+//------------------------------------------------
+// Controller v0833 - CryEngine 5.x only
+// Uncompressed PQS (Position/Quaternion/Scale) keys used in .i_caf files.
+// Times are implicit: time[i] = i (frame index, no time data stored).
+// Positions are stored at 100x scale.
+//------------------------------------------------
+
+struct CryKeyPQS {
+    Vector3    position  <comment=PrintVector3>;   // stored at 100x scale
+    Quaternion rotation  <comment=PrintQuaternion>; // unit quaternion (not log-compressed)
+    Vector3    scale     <comment=PrintVector3>;   // Diag33 diagonal scale
+};
+
+struct Controller833_Cry(FileFormat format) {
+    ChunkHeader chunkHeader(format);
+    uint32 numKeys                  <comment="Number of keyframes (time is implicit: frame index)">;
+    uint32 controllerId <format=hex, comment="CRC32 of bone name">;
+    CryKeyPQS keys[numKeys] <comment=PrintCryKeyPQS>;
+};
+
+string PrintCryKeyPQS(CryKeyPQS &k) {
+    string s;
+    SPrintf(s, "pos=(%.3f,%.3f,%.3f) rot=(%.3f,%.3f,%.3f,%.3f)",
+            k.position.x / 100.0, k.position.y / 100.0, k.position.z / 100.0,
+            k.rotation.x, k.rotation.y, k.rotation.z, k.rotation.w);
+    return s;
+}
+
+string PrintController833_Cry(Controller833_Cry &ctrl) {
+    string s;
+    SPrintf(s, "id=0x%08X, %d uncompressed PQS keys", ctrl.controllerId, ctrl.numKeys);
+    return s;
+}
+
 //===========================================
 // Ivo Animation Structures (CAF/DBA)
 //===========================================
@@ -593,6 +1037,19 @@ struct BoneRotationTrack_Ivo(int numKeys) {
     }
 };
 
+// Shared position time block (uint16 start/end + uint32 marker)
+struct PosTimeBlock_Ivo {
+    uint16 timeStart;
+    uint16 timeEnd;
+    uint32 marker;
+};
+
+string PrintPosTimeBlock_Ivo(PosTimeBlock_Ivo &b) {
+    string s;
+    SPrintf(s, "time: %d-%d, marker=0x%08X", b.timeStart, b.timeEnd, b.marker);
+    return s;
+}
+
 //------------------------------------------------
 // CAF Chunk (single animation)
 // Contains bone hashes, controller entries, and keyframe data
@@ -667,11 +1124,7 @@ struct CAFChunk_Ivo {
                     ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
                 } else {
                     // uint16 time format with marker (8 bytes total)
-                    struct PosTimeBlock {
-                        uint16 timeStart;
-                        uint16 timeEnd;
-                        uint32 marker;
-                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                    PosTimeBlock_Ivo posTimeData <bgcolor=cDkGray, comment=PrintPosTimeBlock_Ivo>;
                 }
 
                 // Read position data (separate location)
@@ -717,13 +1170,19 @@ struct CAFChunk_Ivo {
 
             // Restore position for next controller
             FSeek(savedPos);
-        } controller <bgcolor=cLtYellow,
-                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+        } controller <bgcolor=cLtYellow, comment=PrintAnimController_Ivo>;
     }
 
     // Seek to end of block
     FSeek(blockEnd);
 };
+
+string PrintAnimController_Ivo(AnimController_Ivo &ctrl) {
+    string s;
+    SPrintf(s, "Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)",
+            ctrl.numRotKeys, ctrl.rotFormatFlags, ctrl.numPosKeys, ctrl.posFormatFlags);
+    return s;
+}
 
 string PrintCAFChunk_Ivo(CAFChunk_Ivo &caf) {
     string result;
@@ -800,11 +1259,7 @@ struct DBAAnimationBlock_Ivo {
                 if (posFormat == 0x00) {
                     ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
                 } else {
-                    struct DBAAnimBlk_PosTimeBlock {
-                        uint16 timeStart;
-                        uint16 timeEnd;
-                        uint32 marker;
-                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                    PosTimeBlock_Ivo posTimeData <bgcolor=cDkGray, comment=PrintPosTimeBlock_Ivo>;
                 }
 
                 FSeek(controllerStart + posDataOffset);
@@ -848,13 +1303,19 @@ struct DBAAnimationBlock_Ivo {
             }
 
             FSeek(savedPos);
-        } controller <bgcolor=cLtYellow,
-                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+        } controller <bgcolor=cLtYellow, comment=PrintDBAAnimController_Ivo>;
     }
 
     // Seek to end of block
     FSeek(blockEnd);
 };
+
+string PrintDBAAnimController_Ivo(DBAAnimController_Ivo &ctrl) {
+    string s;
+    SPrintf(s, "Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)",
+            ctrl.numRotKeys, ctrl.rotFormatFlags, ctrl.numPosKeys, ctrl.posFormatFlags);
+    return s;
+}
 
 string PrintDBABlock_Ivo(DBAAnimationBlock_Ivo &dba) {
     string result;
@@ -1006,11 +1467,7 @@ struct DBABlock_Ivo {
                 if (posFormat == 0x00) {
                     ubyte posTimeData[numPosKeys] <bgcolor=cDkGray, comment="Position time keys (ubyte)">;
                 } else {
-                    struct DBABlk_PosTimeBlock {
-                        uint16 timeStart;
-                        uint16 timeEnd;
-                        uint32 marker;
-                    } posTimeData <bgcolor=cDkGray, comment=Str("time: %d-%d, marker=0x%08X", this.timeStart, this.timeEnd, this.marker)>;
+                    PosTimeBlock_Ivo posTimeData <bgcolor=cDkGray, comment=PrintPosTimeBlock_Ivo>;
                 }
 
                 FSeek(controllerStart + posDataOffset);
@@ -1055,13 +1512,19 @@ struct DBABlock_Ivo {
 
             // Restore position for next controller
             FSeek(savedPos);
-        } controller <bgcolor=cLtYellow,
-                      comment=Str("Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)", this.numRotKeys, this.rotFormatFlags, this.numPosKeys, this.posFormatFlags)>;
+        } controller <bgcolor=cLtYellow, comment=PrintDBABlockController_Ivo>;
     }
 
     // Position is now after all controller headers (24 bytes each)
     // The next #dba block (if any) starts here, not at blockEnd
 };
+
+string PrintDBABlockController_Ivo(DBABlockController_Ivo &ctrl) {
+    string s;
+    SPrintf(s, "Rot=%d keys (flags=0x%04X), Pos=%d keys (flags=0x%04X)",
+            ctrl.numRotKeys, ctrl.rotFormatFlags, ctrl.numPosKeys, ctrl.posFormatFlags);
+    return s;
+}
 
 string PrintDBABlock_Ivo2(DBABlock_Ivo &block) {
     string result;
@@ -1088,7 +1551,11 @@ struct DbaDataChunk_Ivo {
     while (FTell() < chunkEnd) {
         ReadBytes(sig, FTell(), 4);
         if (sig[0] == '#' && sig[1] == 'd' && sig[2] == 'b' && sig[3] == 'a') {
-            DBABlock_Ivo block <bgcolor=(blockIndex == 0 ? cLtBlue : cLtPurple), comment=PrintDBABlock_Ivo2>;
+            if (blockIndex % 2 == 0) {
+                DBABlock_Ivo block <bgcolor=cLtBlue, comment=PrintDBABlock_Ivo2>;
+            } else {
+                DBABlock_Ivo block <bgcolor=cLtPurple, comment=PrintDBABlock_Ivo2>;
+            }
             blockIndex++;
         } else {
             break;
