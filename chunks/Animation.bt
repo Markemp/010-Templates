@@ -490,6 +490,13 @@ string PrintController830_Cry(Controller830_Cry &ctrl) {
 // Extends v0829 with an nFlags field. CE5 raises
 // CryFatalError on this version.
 // Track layout after header is identical to v0829.
+//
+// C++ sizeof(CONTROLLER_CHUNK_DESC_0831) = 20 bytes.
+// The 18 bytes of fields are followed by 2 bytes of
+// compiler alignment padding (struct ends on uint32
+// boundary). The Lumberyard reader uses
+// (pCtrlChunk + 1) to get the data pointer, which
+// advances by sizeof = 20.
 //------------------------------------------------
 
 struct Controller831_Cry(FileFormat format) {
@@ -505,6 +512,7 @@ struct Controller831_Cry(FileFormat format) {
     ubyte              positionKeyInfo;
     EKeyTimesFormat    positionTimeFormat;
     ubyte              tracksAligned;
+    uint16             structPadding <comment="C++ struct alignment padding (sizeof=20)">;
 
     local int alignPos;
     local int alignPad;
